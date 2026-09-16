@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { FlaskConical, RotateCcw, RadioTower } from "lucide-react";
 import MonitoringPage from "../module/client/pages/MonitoringPage";
+import RunDetailPage from "../module/client/pages/RunDetailPage";
+import type { ProgressWorkspaceView } from "../module/client/ModuleWorkspace";
 import { MonitoringDemoContext } from "../module/client/MonitoringDemoContext";
 import {
   demoConfigurations,
@@ -27,7 +29,7 @@ const quote = async (input: RunCostQuoteInput) => ({
 });
 
 /** Standalone synthetic workspace. It has no monitoring or provider API client. */
-export default function MonitoringDemo() {
+export default function MonitoringDemo({ view = "monitoring" }: { view?: ProgressWorkspaceView }) {
   const [runs, setRuns] = useState(initialRuns);
   const [configs, setConfigs] = useState(demoConfigurations);
   const [monitors, setMonitors] = useState(() =>
@@ -80,7 +82,7 @@ export default function MonitoringDemo() {
   };
   return (
     <div className="monitoring-module monitoring-demo-shell">
-      <header className="fm-demo-header">
+      <header className="fm-demo-header module-toolbar">
         <div>
           <RadioTower size={22} />
           <span>
@@ -136,7 +138,7 @@ export default function MonitoringDemo() {
           },
         }}
       >
-        <MonitoringPage
+        {view === "reports" ? <RunDetailPage embedded run={runs.find(run => run.id === selectedRunId) ?? runs[0]} comparisonRuns={runs} allowCancel={false} onCancel={() => setNotice("本地预览不会停止真实监控。")} /> : <MonitoringPage
           demoMode
           project={demoProject}
           monitors={monitors}
@@ -193,7 +195,7 @@ export default function MonitoringDemo() {
           latestRun={runs[0]}
           selectedRunId={selectedRunId}
           onSelectedRunChange={setSelectedRunId}
-        />
+        />}
         <div id="monitoring-module-portals" />
       </MonitoringDemoContext.Provider>
     </div>
