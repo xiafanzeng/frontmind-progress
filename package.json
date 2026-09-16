@@ -1,0 +1,22 @@
+{
+  "name": "frontmind-progress",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "packageManager": "pnpm@10.4.1",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@frontmind/monitoring-contracts": "file:vendor/monitoring-contracts",
+    "drizzle-orm": "0.45.2",
+    "mysql2": "3.24.3",
+    "@frontmind/module-contracts": "file:vendor/module-contracts",
+    "@frontmind/monitoring-provider-moli": "file:vendor/monitoring-provider-moli"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.13.3"
+  }
+}

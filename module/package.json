@@ -1,0 +1,43 @@
+{
+  "name": "@frontmind/module-progress",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@frontmind/monitoring-contracts": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "mysql2": "3.24.3",
+    "@frontmind/module-contracts": "workspace:*",
+    "@frontmind/monitoring-provider-moli": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.13.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/server/monitoring-read-repository.d.ts",
+      "import": "./dist/server/monitoring-read-repository.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js"
+    },
+    "./read-helpers": {
+      "types": "./dist/server/read-helpers.d.ts",
+      "import": "./dist/server/read-helpers.js"
+    },
+    "./worker": {
+      "types": "./worker/index.ts",
+      "import": "./dist/worker/index.js"
+    },
+    "./worker/*": {
+      "types": "./worker/*.ts",
+      "import": "./dist/worker/*.js"
+    }
+  }
+}
