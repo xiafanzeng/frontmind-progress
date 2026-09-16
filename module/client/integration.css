@@ -1,0 +1,290 @@
+.monitoring-module {
+  min-width: 0;
+  border-radius: 18px;
+}
+.monitoring-module .page-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 20px 0;
+}
+.monitoring-module .boot-state {
+  min-height: 0;
+}
+.monitoring-module .module-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+.monitoring-module .module-project-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.monitoring-module .module-project-picker select {
+  max-width: 320px;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+.monitoring-module .module-wallet-link {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+}
+.monitoring-module .module-wallet-link strong {
+  margin-left: 8px;
+  color: var(--purple-700);
+  font-size: 17px;
+}
+.monitoring-module .modal-backdrop {
+  z-index: 110;
+}
+.monitoring-module .modal-card {
+  z-index: 111;
+}
+
+.dashboard-module-content {
+  min-width: 0;
+  padding: 0 24px 24px;
+}
+.dashboard-module-content .monitoring-module {
+  min-width: 0;
+  min-height: calc(100vh - 150px);
+}
+
+.monitoring-module .account-consumption-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.monitoring-module .account-consumption-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px;
+}
+.monitoring-module .account-consumption-card strong {
+  font-size: 24px;
+}
+.monitoring-module .account-consumption-card small {
+  color: #64748b;
+  font-size: 12px;
+}
+.monitoring-module .account-consumption-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.monitoring-module .account-consumption-filters button {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+.monitoring-module .account-consumption-filters button[aria-pressed="true"] {
+  background: #eef2ff;
+  border-color: #818cf8;
+  color: #4338ca;
+}
+@media (max-width: 700px) {
+  .monitoring-module .account-consumption-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.monitoring-module.monitoring-conversation-shell {
+  min-height: 0;
+  border-radius: 0;
+  background: #fff;
+}
+.monitoring-module.monitoring-conversation-shell
+  .monitoring-reference-page:has(.fm-monitoring-workspace) {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0;
+  background: #fff;
+}
+.monitoring-module.monitoring-conversation-shell
+  .is-conversation-flow
+  .fm-monitor-detail,
+.monitoring-module.monitoring-conversation-shell
+  .is-conversation-flow
+  .fm-monitor-body {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.monitoring-module .monitoring-conversation-selector {
+  border-bottom: 1px solid #eceef1;
+  padding-bottom: 20px;
+}
+.monitoring-conversation-selector__heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.monitoring-conversation-selector__heading > div {
+  display: flex;
+  gap: 8px;
+}
+.monitoring-conversation-selector__heading input {
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.monitoring-conversation-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 8px;
+}
+.monitoring-conversation-list > button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid #e7e9ed;
+  border-radius: 9px;
+  background: #fff;
+  text-align: left;
+}
+.monitoring-conversation-list > button[aria-pressed="true"] {
+  border-color: #b4bdc9;
+  background: #f8f9fb;
+}
+.monitoring-conversation-list strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.monitoring-conversation-list span {
+  color: #7a828c;
+  font-size: 12px;
+}
+
+/* An expanded run stays in the shared reading column; its old 330px evidence
+   rail would squeeze the answer into a third narrow column. */
+.monitoring-module.monitoring-inline-report .answer-layout {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+.monitoring-module.monitoring-inline-report .answer-content {
+  padding: 20px 0;
+  font-size: 16px;
+  line-height: 28px;
+  color: #000;
+}
+.monitoring-module.monitoring-inline-report .answer-evidence {
+  border-left: 0;
+  border-top: 1px solid #eaecf0;
+  background: #fff;
+  padding: 16px 0;
+}
+.monitoring-module.monitoring-inline-report .answer-evidence section {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid #eaecf0;
+}
+
+/* Website's question / answer / evidence reading hierarchy, using the
+   Dashboard accent. The workbench remains the vertical scroll owner. */
+.monitoring-module .fm-fullscreen-layout .fm-answer-scroll {
+  font-size: 16px;
+  line-height: 1.9;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) ul {
+  list-style: disc;
+  padding-left: 24px;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) ol {
+  list-style: decimal;
+  padding-left: 24px;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) li + li {
+  margin-top: 6px;
+}
+.monitoring-module .fm-markdown-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 20px 0;
+  border-radius: 10px;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) :is(th, td) {
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+  min-width: 120px;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) th {
+  background: #f6f7f9;
+  font-weight: 600;
+}
+.monitoring-module :is(.fm-answer-scroll, .answer-content) pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 16px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f7f8fa;
+  font-size: 13px;
+}
+@media (max-width: 900px) {
+  .monitoring-module .is-conversation-flow .fm-current-question {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+.monitoring-module.monitoring-inline-report .answer-workspace {
+  border: 1px solid #e5e3df;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+}
+.monitoring-module.monitoring-inline-report .answer-heading {
+  padding: 18px 24px;
+  background: #faf9f6;
+}
+.monitoring-module.monitoring-inline-report .answer-content {
+  min-width: 0;
+  padding: 28px clamp(24px, 4vw, 48px) 32px;
+  line-height: 1.9;
+  color: #34373e;
+  overflow-wrap: anywhere;
+}
+.monitoring-module.monitoring-inline-report .answer-content :is(p, ul, ol) {
+  margin-bottom: 18px;
+}
+.monitoring-module.monitoring-inline-report .answer-evidence {
+  padding: 20px 24px;
+  background: #faf9f6;
+}
+.monitoring-module.monitoring-inline-report .answer-evidence section {
+  padding: 18px;
+  border: 1px solid #e5e3df;
+  border-radius: 12px;
+  background: #fff;
+}

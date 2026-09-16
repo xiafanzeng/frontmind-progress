@@ -1,0 +1,231 @@
+/* This reader owns its layout in both the workspace and the fullscreen dialog.
+   The opt-in desktop pane or narrow shared workbench owns scrolling. */
+.monitoring-module .fm-card.fm-answer-panel {
+  overflow: visible;
+}
+.monitoring-module .fm-answer-workspace.fm-reading-workspace {
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+  scroll-margin-top: 12px;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eaecf0;
+  border-radius: 12px 12px 0 0;
+  background: #fff;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: #667085;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-navigation
+  > span {
+  min-width: 76px;
+  text-align: center;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  :is(.fm-tool-button, .fm-secondary-button) {
+  min-height: 36px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+  border-color: #d0d5dd;
+  background: #fff;
+  color: #344054;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-navigation
+  button:not(:disabled) {
+  color: #2867a5;
+  border-color: #c7daec;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  :is(.fm-tool-button, .fm-secondary-button):not(:disabled):hover {
+  background: #f1f6fb;
+  border-color: #a7c6e2;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-copy-feedback:empty {
+  display: none;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-current-question {
+  padding: 16px 20px;
+  min-width: 0;
+  background: #f8fafc;
+  border: 0;
+  border-bottom: 1px solid #eaecf0;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-current-question
+  > strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  line-height: 28px;
+  font-weight: 600;
+  color: #20232b;
+}
+.monitoring-module .fm-reading-workspace .fm-answer-layout {
+  display: block;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-reader {
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+  border: 0;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-reader
+  > header {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px;
+  background: #fff;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-reader
+  > header
+  > div {
+  flex-wrap: wrap;
+}
+.monitoring-module
+  :is(.fm-reading-workspace, .fm-reading-dialog)
+  .fm-answer-scroll {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  padding: 20px;
+  color: #20232b;
+  font-size: 16px;
+  line-height: 28px;
+}
+.monitoring-module .fm-fullscreen-dialog.fm-reading-dialog {
+  inset: 24px;
+  z-index: 91;
+  border-radius: 18px;
+}
+.monitoring-module .fm-reading-dialog .fm-fullscreen-reading {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.monitoring-module .fm-navigation-error {
+  margin: 0;
+  padding: 12px 20px;
+  color: #b42318;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .monitoring-module .fm-fullscreen-dialog.fm-reading-dialog {
+    inset: 0;
+    border-radius: 0;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-toolbar {
+    padding: 10px 12px;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-navigation
+    > span {
+    min-width: 56px;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-tools {
+    margin-left: 0;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-tools
+    .fm-tool-button {
+    gap: 4px;
+    padding: 6px 7px;
+    font-size: 12px;
+  }
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-current-question,
+  .monitoring-module
+    :is(.fm-reading-workspace, .fm-reading-dialog)
+    .fm-answer-scroll {
+    padding: 16px;
+  }
+}
+
+.monitoring-module .fm-answer-tool-hint {
+  display: inline-flex;
+  border-radius: 8px;
+}
+.monitoring-module .fm-answer-tool-hint:focus-visible {
+  outline: 2px solid #2867a5;
+  outline-offset: 2px;
+}
+.monitoring-module .fm-answer-tool-hint > :disabled {
+  pointer-events: none;
+}
+.fm-answer-tool-tooltip[data-slot="tooltip-content"] {
+  z-index: 150;
+  max-width: 240px;
+}
