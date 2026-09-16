@@ -122,3 +122,15 @@ it("keeps a failed creation open with the entered values and allows retry", asyn
   expect(screen.getByRole("combobox", { name: "监控项目" })).toHaveValue(createdProject.id);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create", "projects.create"]);
 });
+
+it("switches the shared shell report tab without creating a run or losing the selected project", async () => {
+  const server = installServer(async () => { throw new Error("No mutation expected"); });
+  const view = render(<ModuleWorkspace view="monitoring" />);
+  await screen.findByText("已有项目", { selector: '[data-testid="selected-project"]' });
+  view.rerender(<ModuleWorkspace view="reports" />);
+  expect(await screen.findByText("暂无运行报告。完成一次监控后，可在这里查看回答、引用和报告。")).toBeVisible();
+  expect(screen.queryByTestId("selected-project")).not.toBeInTheDocument();
+  view.rerender(<ModuleWorkspace view="monitoring" />);
+  expect(await screen.findByTestId("selected-project")).toHaveTextContent("已有项目");
+  expect(server.mutations).toEqual([]);
+});
