@@ -7,5 +7,8 @@
       "types": "./src/index.ts",
       "import": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
   }
 }

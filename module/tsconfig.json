@@ -7,12 +7,20 @@
     "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true
   },
   "include": [
     "contracts/**/*.ts",
     "schema/**/*.ts",
     "server/**/*.ts",
-    "worker/**/*.ts"
+    "worker/**/*.ts",
+    "client/**/*.ts",
+    "client/**/*.tsx"
+  ],
+  "exclude": [
+    "client/**/*.test.ts",
+    "client/**/*.test.tsx"
   ]
 }

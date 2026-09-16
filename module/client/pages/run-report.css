@@ -1,0 +1,141 @@
+/* Embedded run reports use the same type scale and blue module accent as the
+   monitoring reader. Specificity keeps this stable after legacy lazy CSS loads. */
+.report-reading-main .monitoring-module.monitoring-inline-report .run-page {
+  --purple-600: #2867a5;
+  --purple-700: #225a91;
+  --line: #e7ebef;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: #fff;
+  color: #20232b;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-page-head {
+  padding: 20px 0 0;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-title-row {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-title-row > div {
+  min-width: 0;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-title-row h1 {
+  margin: 8px 0 6px;
+  font-size: 24px;
+  line-height: 34px;
+  font-weight: 600;
+  color: #20232b;
+  overflow-wrap: anywhere;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-title-row p,
+.report-reading-main .monitoring-inline-report .run-page .section-title small,
+.report-reading-main .monitoring-inline-report .run-page .run-metric-card span,
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .run-metric-card
+  small {
+  color: #667085;
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-content {
+  padding: 20px 0 0;
+}
+.report-reading-main .monitoring-inline-report .run-page .section-title {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.report-reading-main .monitoring-inline-report .run-page .section-title h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: #20232b;
+}
+.report-reading-main .monitoring-inline-report .run-page .section-title span {
+  color: #2867a5;
+  font-size: 13px;
+  line-height: 20px;
+  letter-spacing: 0;
+}
+.report-reading-main .monitoring-inline-report .run-page .anchor-nav {
+  padding: 8px 0;
+  gap: 4px;
+  border-color: #e7ebef;
+  background: #fff;
+  backdrop-filter: none;
+}
+.report-reading-main .monitoring-inline-report .run-page .anchor-nav button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #667085;
+  font-size: 14px;
+  line-height: 22px;
+}
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .anchor-nav
+  button.active {
+  background: #f1f6fb;
+  color: #2867a5;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(165px, 100%), 1fr));
+  gap: 12px;
+}
+.report-reading-main .monitoring-inline-report .run-page .run-metric-card {
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .run-metric-card
+  strong {
+  color: #20232b;
+  font-size: 24px;
+  line-height: 32px;
+}
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .run-metric-card.primary {
+  border-color: #aac5df;
+  background: #fff;
+}
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .run-metric-card.primary
+  strong {
+  color: #2867a5;
+}
+.report-reading-main .monitoring-inline-report .run-page .content-card {
+  border-color: #eaecf0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+.report-reading-main
+  .monitoring-inline-report
+  .run-page
+  .detail-actions
+  .secondary-button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-color: #eaecf0;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 22px;
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@frontmind/progress-standalone",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "lucide-react": "^0.453.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.1",
+    "@types/react-dom": "^19.2.1"
+  }
+}

@@ -1232,7 +1232,7 @@ export function positiveInteger(value: number | undefined): number | null {
 }
 
 export interface ProgressScopePorts {
-  tables: ProgressSchema;
+  tables: Pick<ProgressSchema, "attempts"|"attemptResults"|"monitors"|"monitorQuestions"|"monitorVersions"|"monitorPlatforms"|"platformCatalog"|"projectBrandVersions"|"projects"|"resultDiscoveredSources"|"resultMedia"|"resultRevisions"|"resultSources"|"runs"|"projectQuestions"|"scheduleOccurrences">;
   monitoringChildOwnerPredicate(table: ProgressSchema["runs"], ownerId: string): SQL;
   monitoringProjectOwnerPredicate(table: ProgressSchema["projects"], ownerId: string): SQL;
 }
