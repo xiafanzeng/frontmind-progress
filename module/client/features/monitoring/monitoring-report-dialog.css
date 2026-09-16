@@ -1,0 +1,224 @@
+.fm-report-download-dialog {
+  --module-accent: #2867a5;
+  width: min(880px, calc(100vw - 48px));
+  max-width: 880px;
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  border: 1px solid #eaecf0;
+  border-radius: 18px;
+  color: #20232b;
+  background: #fff;
+}
+.fm-report-download-dialog [data-slot="dialog-header"] {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #eaecf0;
+  flex: none;
+}
+.fm-report-download-dialog [data-slot="dialog-title"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  line-height: 28px;
+}
+.fm-report-download-dialog [data-slot="dialog-title"] svg {
+  color: #2867a5;
+}
+.fm-report-download-dialog [data-slot="dialog-description"] {
+  margin-top: 6px;
+  color: #667085;
+  line-height: 22px;
+}
+.fm-report-download-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px 28px;
+}
+.fm-report-date-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+.fm-report-date-fields label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.fm-report-date-fields input,
+.fm-report-search {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #fff;
+}
+@media (max-width: 480px) {
+  .fm-report-date-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.fm-report-note {
+  color: #667085;
+  font-size: 13px;
+  line-height: 20px;
+  margin: 10px 0 16px;
+}
+.fm-report-selections {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 16px;
+}
+.fm-report-selection {
+  min-width: 0;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  padding: 14px;
+}
+.fm-report-selection-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.fm-report-selection-heading h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.fm-report-selection-heading span {
+  color: #667085;
+  margin-right: auto;
+}
+.fm-report-selection-heading button,
+.fm-report-error button {
+  color: #2867a5;
+  cursor: pointer;
+}
+.fm-report-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #98a2b3;
+}
+.fm-report-search input {
+  width: 100%;
+  min-width: 0;
+  outline: none;
+  border: 0;
+  padding: 0;
+  font-size: 14px;
+  background: transparent;
+  color: #20232b;
+}
+.fm-report-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  min-height: 130px;
+  overflow-y: auto;
+  margin-top: 12px;
+  padding-right: 3px;
+}
+.fm-report-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 21px;
+  overflow-wrap: anywhere;
+}
+.fm-report-option.is-selected {
+  background: #f0f6fb;
+}
+.fm-report-option input {
+  accent-color: #2867a5;
+  margin-top: 3px;
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.fm-report-option small {
+  display: block;
+  font-size: 12px;
+  color: #667085;
+  margin-top: 3px;
+}
+.fm-report-empty {
+  font-size: 13px;
+  color: #667085;
+  padding: 20px 0;
+  text-align: center;
+}
+.fm-report-includes {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f7f9fc;
+  border-radius: 10px;
+  margin-top: 18px;
+  font-size: 13px;
+}
+.fm-report-includes svg {
+  color: #2867a5;
+  flex: none;
+  margin-top: 2px;
+}
+.fm-report-includes p {
+  color: #667085;
+  margin: 4px 0 0;
+  line-height: 20px;
+}
+.fm-report-download-dialog [data-slot="dialog-footer"] {
+  padding: 16px 28px;
+  border-top: 1px solid #eaecf0;
+  flex: none;
+  gap: 10px;
+}
+.fm-report-error {
+  color: #b42318;
+  font-size: 13px;
+  line-height: 20px;
+  padding: 10px 0;
+}
+.fm-report-error button {
+  margin-left: 12px;
+}
+@media (max-width: 600px) {
+  .fm-report-download-dialog {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+  .fm-report-download-dialog [data-slot="dialog-header"],
+  .fm-report-download-body {
+    padding: 18px 16px;
+  }
+  .fm-report-selections {
+    grid-template-columns: 1fr;
+  }
+  .fm-report-options {
+    max-height: 190px;
+    min-height: 70px;
+  }
+  .fm-report-download-dialog [data-slot="dialog-footer"] {
+    padding: 14px 16px;
+    flex-direction: row;
+  }
+  .fm-report-download-dialog [data-slot="dialog-footer"] button {
+    flex: 1;
+  }
+}

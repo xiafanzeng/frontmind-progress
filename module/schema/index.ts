@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { type AnyMySqlColumn, bigint, boolean, datetime, decimal, foreignKey, index, int, json, longtext, mysqlEnum, mysqlTable, primaryKey, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 import type { KeywordEvaluation } from "@frontmind/monitoring-contracts";
 import { monitoringQuestionCategories } from "@frontmind/monitoring-contracts";
-export interface ProgressSchemaCore { users: { id: AnyMySqlColumn }; currentMonitoringEnterpriseProjectId(): string | null; }
+export interface ProgressSchemaCore { users: { id: AnyMySqlColumn }; pricingVersions?: {id:AnyMySqlColumn}; pricingItems?: {id:AnyMySqlColumn}; moneyReservations?: {id:AnyMySqlColumn}; currentMonitoringEnterpriseProjectId(): string | null; }
 const id = (name: string) => varchar(name, { length: 36 });
 
 const createdAt = () =>
@@ -64,6 +64,76 @@ export const sentiments = [
   "negative",
   "unknown",
 ] as const;
+export const platformAcceptanceStatuses = [
+  "pending",
+  "running",
+  "passed",
+  "failed",
+  "unsupported",
+  "stale",
+] as const;
+
+export const platformAcceptanceDimensions = [
+  "search_default",
+  "reasoning_search",
+  "screenshot_mention",
+  "screenshot_all",
+  "region_default",
+  "region_domestic",
+  "region_overseas",
+  "mobile_no_region",
+] as const;
+
+export const moneySettlementStatuses = [
+  "reserved",
+  "consumed",
+  "released",
+] as const;
+
+export const jobStatuses = [
+  "ready",
+  "leased",
+  "retry_wait",
+  "succeeded",
+  "dead",
+] as const;
+
+export const jobTypes = [
+  "submit_attempt",
+  "stop_attempt",
+  "poll_attempt",
+  "fetch_result",
+  "archive_media",
+  "schedule_catch_up",
+  "dispatch_occurrences",
+  "purge_soft_deleted",
+  "reconcile_billing",
+  "sync_provider_catalog",
+] as const;
+
+export type RunModelMetric = {
+  platformId: string;
+  providerCode: string;
+  clientType: (typeof clientTypes)[number];
+  mode: (typeof providerModes)[number];
+  effectiveAnswers: number;
+  brandMentionedAnswers: number;
+  mentionPositionSum: number;
+  mentionPositionCount: number;
+  citationCount: number;
+  positiveCount: number;
+  neutralCount: number;
+  negativeCount: number;
+  unknownCount: number;
+};
+
+export type RunCompetitorMetric = {
+  name: string;
+  appearances: number;
+  positionSum: number;
+  positionCount: number;
+};
+
 export function createProgressSchema(core: ProgressSchemaCore) {
 const projects = mysqlTable(
   "projects",
@@ -636,6 +706,418 @@ const scheduleOccurrences = mysqlTable(
     ),
   ],
 );
-return { projects, projectBrandVersions, platformCatalog, monitors, monitorVersions, monitorQuestions, monitorPlatforms, runs, attempts, resultRevisions, attemptResults, resultSources, resultDiscoveredSources, resultMedia, projectQuestions, scheduleOccurrences };
+const runMetrics = mysqlTable("run_metrics", {
+  runId: id("run_id")
+    .primaryKey()
+    .references(() => runs.id, { onDelete: "cascade" }),
+  effectiveAnswers: int("effective_answers", { unsigned: true })
+    .notNull()
+    .default(0),
+  brandMentionedAnswers: int("brand_mentioned_answers", { unsigned: true })
+    .notNull()
+    .default(0),
+  mentionPositionSum: bigint("mention_position_sum", {
+    mode: "number",
+    unsigned: true,
+  })
+    .notNull()
+    .default(0),
+  mentionPositionCount: int("mention_position_count", { unsigned: true })
+    .notNull()
+    .default(0),
+  citationCount: int("citation_count", { unsigned: true }).notNull().default(0),
+  uniqueDomainCount: int("unique_domain_count", { unsigned: true })
+    .notNull()
+    .default(0),
+  positiveCount: int("positive_count", { unsigned: true }).notNull().default(0),
+  neutralCount: int("neutral_count", { unsigned: true }).notNull().default(0),
+  negativeCount: int("negative_count", { unsigned: true }).notNull().default(0),
+  unknownCount: int("unknown_count", { unsigned: true }).notNull().default(0),
+  modelMetrics: json("model_metrics").$type<RunModelMetric[]>().notNull(),
+  competitorMetrics: json("competitor_metrics")
+    .$type<RunCompetitorMetric[]>()
+    .notNull(),
+  updatedAt: updatedAt(),
+});
+
+const runMetricDomains = mysqlTable(
+  "run_metric_domains",
+  {
+    runId: id("run_id")
+      .notNull()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    domain: varchar("domain", { length: 255 }).notNull(),
+    referenceCount: int("reference_count", { unsigned: true }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.runId, table.domain] })],
+);
+
+const platformAcceptanceBatches = mysqlTable(
+  "platform_acceptance_batches",
+  {
+    id: id("id").primaryKey(),
+    ownerId: id("owner_id")
+      .notNull()
+      .references(() => core.users.id, { onDelete: "restrict" }),
+    projectId: id("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "restrict" }),
+    requestedBy: id("requested_by")
+      .notNull()
+      .references(() => core.users.id, { onDelete: "restrict" }),
+    planFingerprint: varchar("plan_fingerprint", { length: 64 }).notNull(),
+    questionHash: varchar("question_hash", { length: 64 }).notNull(),
+    questionSnapshot: text("question_snapshot").notNull(),
+    status: mysqlEnum("status", platformAcceptanceStatuses)
+      .notNull()
+      .default("pending"),
+    attemptCount: int("attempt_count", { unsigned: true }).notNull(),
+    totalAmountTenThousandths: bigint("total_amount_ten_thousandths", {
+      mode: "bigint",
+      unsigned: true,
+    }).notNull(),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }),
+    completedAt: datetime("completed_at", { mode: "date", fsp: 3 }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("platform_acceptance_request_uq").on(
+      table.requestedBy,
+      table.idempotencyKey,
+    ),
+    index("platform_acceptance_owner_created_idx").on(
+      table.ownerId,
+      table.createdAt,
+    ),
+    index("platform_acceptance_status_created_idx").on(
+      table.status,
+      table.createdAt,
+    ),
+  ],
+);
+
+const platformAcceptanceChecks = mysqlTable(
+  "platform_acceptance_checks",
+  {
+    id: id("id").primaryKey(),
+    batchId: id("batch_id").notNull(),
+    platformId: id("platform_id")
+      .notNull()
+      .references(() => platformCatalog.id, { onDelete: "restrict" }),
+    providerCodeSnapshot: varchar("provider_code_snapshot", {
+      length: 64,
+    }).notNull(),
+    displayNameSnapshot: varchar("display_name_snapshot", {
+      length: 100,
+    }).notNull(),
+    clientType: mysqlEnum("client_type", clientTypes).notNull(),
+    platformFingerprint: varchar("platform_fingerprint", {
+      length: 64,
+    }).notNull(),
+    dimension: mysqlEnum("dimension", platformAcceptanceDimensions).notNull(),
+    mode: mysqlEnum("mode", providerModes).notNull(),
+    screenshot: int("screenshot", { unsigned: true }).notNull(),
+    regionCode: varchar("region_code", { length: 64 }),
+    status: mysqlEnum("status", platformAcceptanceStatuses)
+      .notNull()
+      .default("pending"),
+    runId: id("run_id").references(() => runs.id, { onDelete: "set null" }),
+    attemptId: id("attempt_id").references(() => attempts.id, {
+      onDelete: "set null",
+    }),
+    resultHash: varchar("result_hash", { length: 64 }),
+    screenshotHash: varchar("screenshot_hash", { length: 64 }),
+    errorCode: varchar("error_code", { length: 64 }),
+    errorSummary: varchar("error_summary", { length: 240 }),
+    startedAt: datetime("started_at", { mode: "date", fsp: 3 }),
+    completedAt: datetime("completed_at", { mode: "date", fsp: 3 }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "platform_acceptance_checks_batch_fk",
+      columns: [table.batchId],
+      foreignColumns: [platformAcceptanceBatches.id],
+    }).onDelete("cascade"),
+    uniqueIndex("platform_acceptance_batch_dimension_uq").on(
+      table.batchId,
+      table.platformId,
+      table.dimension,
+    ),
+    uniqueIndex("platform_acceptance_attempt_uq").on(table.attemptId),
+    index("platform_acceptance_platform_evidence_idx").on(
+      table.platformId,
+      table.platformFingerprint,
+      table.dimension,
+      table.status,
+    ),
+    index("platform_acceptance_batch_status_idx").on(
+      table.batchId,
+      table.status,
+    ),
+  ],
+);
+
+const jobs = mysqlTable(
+  "jobs",
+  {
+    id: id("id").primaryKey(),
+    type: mysqlEnum("type", jobTypes).notNull(),
+    status: mysqlEnum("status", jobStatuses).notNull().default("ready"),
+    dedupeKey: varchar("dedupe_key", { length: 191 }).notNull(),
+    payload: json("payload").$type<Record<string, unknown>>().notNull(),
+    availableAt: datetime("available_at", { mode: "date", fsp: 3 }).notNull(),
+    leaseOwner: varchar("lease_owner", { length: 128 }),
+    leaseExpiresAt: datetime("lease_expires_at", { mode: "date", fsp: 3 }),
+    attempts: int("attempts", { unsigned: true }).notNull().default(0),
+    maxAttempts: int("max_attempts", { unsigned: true }).notNull().default(20),
+    lastErrorCode: varchar("last_error_code", { length: 64 }),
+    lastErrorMessage: text("last_error_message"),
+    completedAt: datetime("completed_at", { mode: "date", fsp: 3 }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("jobs_dedupe_uq").on(table.dedupeKey),
+    index("jobs_claim_idx").on(
+      table.status,
+      table.availableAt,
+      table.leaseExpiresAt,
+    ),
+  ],
+);
+
+const providerCosts = mysqlTable(
+  "provider_costs",
+  {
+    id: id("id").primaryKey(),
+    attemptId: id("attempt_id").references(() => attempts.id, {
+      onDelete: "restrict",
+    }),
+    providerTaskId: varchar("provider_task_id", { length: 128 }).notNull(),
+    amount: decimal("amount", { precision: 14, scale: 4 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("CNY"),
+    providerRecordId: varchar("provider_record_id", { length: 128 }),
+    occurredAt: datetime("occurred_at", { mode: "date", fsp: 3 }).notNull(),
+    rawMetadata: json("raw_metadata").$type<Record<string, unknown>>(),
+    reconciledAt: datetime("reconciled_at", { mode: "date", fsp: 3 }),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex("provider_costs_record_uq").on(table.providerRecordId),
+    index("provider_costs_task_idx").on(table.providerTaskId),
+  ],
+);
+
+const attemptPriceSnapshots = mysqlTable(
+  "attempt_price_snapshots",
+  {
+    attemptId: id("attempt_id")
+      .primaryKey()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    pricingVersionId: id("pricing_version_id")
+      .notNull()
+      .references(() => core.pricingVersions!.id, { onDelete: "restrict" }),
+    pricingItemId: id("pricing_item_id")
+      .notNull()
+      .references(() => core.pricingItems!.id, { onDelete: "restrict" }),
+    pricingClass: mysqlEnum("pricing_class", platformPricingClasses).notNull(),
+    mode: mysqlEnum("mode", providerModes).notNull(),
+    screenshotEnabled: boolean("screenshot_enabled").notNull(),
+    amountTenThousandths: bigint("amount_ten_thousandths", {
+      mode: "bigint",
+      unsigned: true,
+    }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("CNY"),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("attempt_price_snapshots_version_idx").on(table.pricingVersionId),
+  ],
+);
+
+const attemptMoneySettlements = mysqlTable(
+  "attempt_money_settlements",
+  {
+    attemptId: id("attempt_id")
+      .primaryKey()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    reservationId: id("reservation_id")
+      .notNull()
+      .references(() => core.moneyReservations!.id, { onDelete: "restrict" }),
+    status: mysqlEnum("status", moneySettlementStatuses)
+      .notNull()
+      .default("reserved"),
+    settledTenThousandths: bigint("settled_ten_thousandths", {
+      mode: "bigint",
+      unsigned: true,
+    })
+      .notNull()
+      .default(sql`0`),
+    settledAt: datetime("settled_at", { mode: "date", fsp: 3 }),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("attempt_money_settlements_reservation_idx").on(table.reservationId),
+  ],
+);
+
+const providerTaskTombstones = mysqlTable(
+  "provider_task_tombstones",
+  {
+    providerTaskHash: varchar("provider_task_hash", {
+      length: 64,
+    }).primaryKey(),
+    deletedEntityType: varchar("deleted_entity_type", { length: 32 }).notNull(),
+    deletedEntityIdHash: varchar("deleted_entity_id_hash", {
+      length: 64,
+    }).notNull(),
+    expiresAt: datetime("expires_at", { mode: "date", fsp: 3 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index("provider_task_tombstones_expiry_idx").on(table.expiresAt)],
+);
+
+const workerHeartbeats = mysqlTable("worker_heartbeats", {
+  workerId: varchar("worker_id", { length: 128 }).primaryKey(),
+  heartbeatAt: datetime("heartbeat_at", { mode: "date", fsp: 3 }).notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+const providerDispatchDays = mysqlTable("provider_dispatch_days", {
+  dayKey: varchar("day_key", { length: 10 }).primaryKey(),
+  dispatched: int("dispatched", { unsigned: true }).notNull().default(0),
+  updatedAt: updatedAt(),
+});
+
+const providerDispatchSlots = mysqlTable(
+  "provider_dispatch_slots",
+  {
+    attemptId: id("attempt_id")
+      .primaryKey()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    dayKey: varchar("day_key", { length: 10 }).notNull(),
+    acquiredAt: datetime("acquired_at", { mode: "date", fsp: 3 }).notNull(),
+  },
+  (table) => [index("provider_dispatch_slots_day_idx").on(table.dayKey)],
+);
+
+const providerSubmissionGate = mysqlTable("provider_submission_gate", {
+  id: varchar("id", { length: 32 }).primaryKey(),
+  nextAllowedAt: datetime("next_allowed_at", {
+    mode: "date",
+    fsp: 3,
+  }).notNull(),
+  updatedAt: updatedAt(),
+});
+
+const providerObservations = mysqlTable(
+  "provider_observations",
+  {
+    id: id("id").primaryKey(),
+    attemptId: id("attempt_id")
+      .notNull()
+      .references(() => attempts.id, { onDelete: "cascade" }),
+    type: mysqlEnum("type", [
+      "submission",
+      "status",
+      "stop",
+      "failure",
+    ] as const).notNull(),
+    status: varchar("status", { length: 64 }),
+    payload: json("payload").$type<Record<string, unknown>>(),
+    observedAt: datetime("observed_at", { mode: "date", fsp: 3 }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("provider_observations_attempt_idx").on(
+      table.attemptId,
+      table.observedAt,
+    ),
+  ],
+);
+
+const providerRegions = mysqlTable(
+  "provider_regions",
+  {
+    code: varchar("code", { length: 64 }).notNull(),
+    scope: mysqlEnum("scope", ["domestic", "overseas"] as const).notNull(),
+    name: varchar("name", { length: 120 }).notNull(),
+    providerMetadata: json("provider_metadata")
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    syncedAt: datetime("synced_at", { mode: "date", fsp: 3 }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.code, table.scope] })],
+);
+
+const providerReconciliationState = mysqlTable(
+  "provider_reconciliation_state",
+  {
+    id: varchar("id", { length: 32 }).primaryKey(),
+    cursor: json("cursor")
+      .$type<{
+        startDate: string;
+        endDate: string;
+        page: number;
+        pageSize: number;
+      }>()
+      .notNull(),
+    balance: json("balance").$type<Record<string, unknown>>(),
+    summary: json("summary").$type<Record<string, unknown>>(),
+    reconciledAt: datetime("reconciled_at", { mode: "date", fsp: 3 }),
+    updatedAt: updatedAt(),
+  },
+);
+
+const dailyRunAggregates = mysqlTable(
+  "daily_run_aggregates",
+  {
+    ownerId: id("owner_id")
+      .notNull()
+      .references(() => core.users.id, { onDelete: "restrict" }),
+    monitorId: id("monitor_id")
+      .notNull()
+      .references(() => monitors.id, { onDelete: "cascade" }),
+    monitorVersionId: id("monitor_version_id")
+      .notNull()
+      .references(() => monitorVersions.id, { onDelete: "restrict" }),
+    aggregateDate: datetime("aggregate_date", { mode: "date" }).notNull(),
+    totalAnswers: int("total_answers", { unsigned: true }).notNull().default(0),
+    brandMentions: int("brand_mentions", { unsigned: true })
+      .notNull()
+      .default(0),
+    citationCount: int("citation_count", { unsigned: true })
+      .notNull()
+      .default(0),
+    uniqueDomainCount: int("unique_domain_count", { unsigned: true })
+      .notNull()
+      .default(0),
+    positiveCount: int("positive_count", { unsigned: true })
+      .notNull()
+      .default(0),
+    neutralCount: int("neutral_count", { unsigned: true }).notNull().default(0),
+    negativeCount: int("negative_count", { unsigned: true })
+      .notNull()
+      .default(0),
+    unknownCount: int("unknown_count", { unsigned: true }).notNull().default(0),
+    metrics: json("metrics").$type<Record<string, unknown>>().notNull(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.monitorId, table.monitorVersionId, table.aggregateDate],
+    }),
+    index("daily_run_aggregates_owner_date_idx").on(
+      table.ownerId,
+      table.aggregateDate,
+    ),
+  ],
+);
+return { runMetrics, runMetricDomains, platformAcceptanceBatches, platformAcceptanceChecks, jobs, providerCosts, attemptPriceSnapshots, attemptMoneySettlements, providerTaskTombstones, workerHeartbeats, providerDispatchDays, providerDispatchSlots, providerSubmissionGate, providerObservations, providerRegions, providerReconciliationState, dailyRunAggregates, projects, projectBrandVersions, platformCatalog, monitors, monitorVersions, monitorQuestions, monitorPlatforms, runs, attempts, resultRevisions, attemptResults, resultSources, resultDiscoveredSources, resultMedia, projectQuestions, scheduleOccurrences };
 }
 export type ProgressSchema = ReturnType<typeof createProgressSchema>;

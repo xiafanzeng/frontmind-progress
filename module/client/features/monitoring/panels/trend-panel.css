@@ -1,0 +1,28 @@
+.monitoring-module #monitor-trends .fm-trend-table .fm-data-table {
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;
+  font-size: 13px;
+  line-height: 20px;
+}
+.monitoring-module #monitor-trends .fm-trend-table :is(th, td) {
+  padding: 10px;
+  color: #20232b;
+  border-color: #e7ebef;
+}
+.monitoring-module #monitor-trends .fm-trend-table th {
+  background: #f1f6fb;
+}
+.monitoring-module #monitor-trends .fm-trend-table th:first-child {
+  width: auto;
+}
+.monitoring-module #monitor-trends .fm-trend-table td:first-child {
+  white-space: nowrap;
+}
+.monitoring-module #monitor-trends .fm-trend-controls > span,
+.monitoring-module #monitor-trends .fm-trend-legend,
+.monitoring-module #monitor-trends .fm-trend-plot article > small {
+  font-size: 13px;
+  line-height: 20px;
+  color: #667085;
+}
