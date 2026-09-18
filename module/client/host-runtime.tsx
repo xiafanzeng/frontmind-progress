@@ -1,3 +1,5 @@
+import {BusinessExecutionActivity} from "@frontmind/module-ui/components/BusinessExecutionActivity";
+import {monitoringPublicExecution} from "./execution-adapter";
 import { createContext, useContext, type ReactNode } from 'react';
 import type {MonitorRun} from './domain';
 export type ProgressTaskResource={kind:string;id:string};
@@ -25,4 +27,4 @@ export function enterpriseProjectHeaders(headers:Record<string,string>={}){retur
 export function projectResourceUrl(url:string){return host.projectResourceUrl(url);}
 export function projectWorkspaceUrl(url:string,projectId?:string){return host.projectWorkspaceUrl(url,projectId);}
 export const MonitoringOutcomeControlsContext=createContext<ReactNode>(null);
-export function ProgressExecutionActivity({run}:{run:MonitorRun}){return host.renderExecution?<>{host.renderExecution(run)}</>:<details className="business-execution-disclosure"><summary>查看过程</summary><p>运行状态：{run.status}</p><ul>{run.attempts.map(attempt=><li key={attempt.id}>{attempt.platformName} · {attempt.question} · {attempt.status}</li>)}</ul></details>;}
+export function ProgressExecutionActivity({run}:{run:MonitorRun}){return host.renderExecution?<>{host.renderExecution(run)}</>:<BusinessExecutionActivity execution={monitoringPublicExecution(run)}/>;}
