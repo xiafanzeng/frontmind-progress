@@ -119,6 +119,10 @@
     "./client/components/MonitorForm": "./client/components/MonitorForm.tsx",
     "./client/pages/MonitoringPage": "./client/pages/MonitoringPage.tsx",
     "./client/pages/RunDetailPage": "./client/pages/RunDetailPage.tsx",
-    "./client/pages/MonitorDetailPage": "./client/pages/MonitorDetailPage.tsx"
+    "./client/pages/MonitorDetailPage": "./client/pages/MonitorDetailPage.tsx",
+    "./client/execution-adapter": {
+      "types": "./client/execution-adapter.ts",
+      "import": "./client/execution-adapter.ts"
+    }
   }
 }
