@@ -62,6 +62,58 @@
   min-height: calc(100vh - 150px);
 }
 
+/*
+ * Monitoring is a document-style resource page.  The shared workbench shell
+ * is also used by conversational modules and normally keeps its layout and
+ * main content at a fixed viewport height with an inner scroll owner.  That
+ * arrangement clips the monitoring workspace after the first viewport in the
+ * standalone module (the page itself is the only surface that should scroll).
+ * Let the Dashboard main column own the vertical scroll for monitoring and
+ * reports while leaving the shared sidebar/topbar presentation untouched.
+ */
+.user-brand-dashboard.operator-mode
+  :is(
+    .agent-workbench-shell.module-monitoring,
+    .agent-workbench-shell.module-reports
+  ) {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+.user-brand-dashboard.operator-mode
+  :is(
+    .agent-workbench-shell.module-monitoring,
+    .agent-workbench-shell.module-reports
+  )
+  .agent-workbench-shell__layout.is-workspace {
+  min-height: 0;
+  overflow: visible;
+}
+.user-brand-dashboard.operator-mode
+  :is(
+    .agent-workbench-shell.module-monitoring,
+    .agent-workbench-shell.module-reports
+  )
+  .agent-workbench-shell__main,
+.user-brand-dashboard.operator-mode
+  :is(
+    .agent-workbench-shell.module-monitoring,
+    .agent-workbench-shell.module-reports
+  )
+  .agent-workbench-shell__main-content {
+  overflow: visible;
+}
+.user-brand-dashboard.operator-mode
+  :is(
+    .agent-workbench-shell.module-monitoring,
+    .agent-workbench-shell.module-reports
+  )
+  .agent-workbench-shell__main-content.is-scrollable {
+  height: auto;
+  min-height: 0;
+}
+
 .monitoring-module .account-consumption-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
