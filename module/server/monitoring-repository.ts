@@ -57,10 +57,293 @@ export type {RequestAudit} from './persistence-core.js';
 export function createProgressRepository(core: ProgressRepositoryCore) {
  const {tables, currentMonitoringEnterpriseProjectId, monitoringProjectOwnerPredicate, monitoringChildOwnerPredicate, assertMonitoringEnterpriseProjectActive, lockMoneyWallet, insertMoneyLedger, insertAudit, settleAttemptMoney, MONEY_CURRENCY, moneyToApiString} = core;
  const {attempts, attemptMoneySettlements, attemptPriceSnapshots, attemptResults, jobs, monitorPlatforms, monitorQuestions, monitors, monitorVersions, platformCatalog, platformAcceptanceBatches, platformAcceptanceChecks, projectBrandVersions, projectQuestions, projects, providerCosts, providerReconciliationState, providerRegions, providerTaskTombstones, resultDiscoveredSources, resultMedia, resultRevisions, resultSources, runMetrics, runs, scheduleOccurrences, workerHeartbeats} = tables;
+ const users = core.identityTable;
  const progressReadTables = tables;
  const monitoringFactConditions = (ownerId:string,scope:MonitoringScope & {questionIds?:string[];platformIds?:string[]}) => progressMonitoringFactConditions(ownerId,scope,{tables,monitoringChildOwnerPredicate,monitoringProjectOwnerPredicate});
  class ProgressRepository {
  constructor(public readonly db: Database) {}
+  async quoteBilling(input: BillingQuoteInput) {
+    const platformIds = [
+      ...new Set(input.items.map((item) => item.platformId)),
+    ];
+    const platforms = await this.db
+      .select({
+        id: platformCatalog.id,
+        pricingClass: platformCatalog.pricingClass,
+        enabled: platformCatalog.enabled,
+        verified: platformCatalog.verified,
+        acceptanceRequired: platformCatalog.acceptanceRequired,
+        acceptanceFingerprint: platformCatalog.acceptanceFingerprint,
+        providerCode: platformCatalog.providerCode,
+        displayName: platformCatalog.displayName,
+        clientType: platformCatalog.clientType,
+        supportsReasoning: platformCatalog.supportsReasoning,
+        supportsScreenshot: platformCatalog.supportsScreenshot,
+        supportsDomesticRegion: platformCatalog.supportsDomesticRegion,
+        supportsOverseasRegion: platformCatalog.supportsOverseasRegion,
+        providerMetadata: platformCatalog.providerMetadata,
+      })
+      .from(platformCatalog)
+      .where(inArray(platformCatalog.id, platformIds));
+    const platformById = new Map(platforms.map((item) => [item.id, item]));
+    const acceptanceEvidence =
+      platformIds.length > 0
+        ? await this.db
+            .select({
+              platformId: platformAcceptanceChecks.platformId,
+              platformFingerprint: platformAcceptanceChecks.platformFingerprint,
+              dimension: platformAcceptanceChecks.dimension,
+            })
+            .from(platformAcceptanceChecks)
+            .where(
+              and(
+                inArray(platformAcceptanceChecks.platformId, platformIds),
+                eq(platformAcceptanceChecks.status, "passed"),
+              ),
+            )
+        : [];
+    const quoteRegionCodes = uniqueTrimmed(
+      input.items.flatMap((item) => (item.regionCode ? [item.regionCode] : [])),
+    );
+    const quoteRegions =
+      quoteRegionCodes.length > 0
+        ? await this.db
+            .select({
+              code: providerRegions.code,
+              scope: providerRegions.scope,
+            })
+            .from(providerRegions)
+            .where(inArray(providerRegions.code, quoteRegionCodes))
+        : [];
+    const quoteRegionScopes = new Map<string, Set<"domestic" | "overseas">>();
+    for (const region of quoteRegions) {
+      const scopes =
+        quoteRegionScopes.get(region.code) ??
+        new Set<"domestic" | "overseas">();
+      scopes.add(region.scope);
+      quoteRegionScopes.set(region.code, scopes);
+    }
+    const {pricingVersion: version, activePrices: prices} = await core.activePricing(this.db);
+    const priceByDimensions = new Map(
+      prices.map((price) => [pricingDimensionsKey(price), price]),
+    );
+    let total = 0n;
+    const items = input.items.map((item) => {
+      const platform = platformById.get(item.platformId);
+      if (!platform) {
+        throw new RepositoryError(
+          "INVALID_STATE",
+          "Quote contains an unavailable platform",
+        );
+      }
+      const availabilityBlocker = currentPlatformSelectionBlocker({
+        platform,
+        selection: {
+          platformId: item.platformId,
+          providerCode: platform.providerCode,
+          clientType: platform.clientType,
+          mode: item.mode,
+          screenshot: item.screenshot,
+          regionCode: item.regionCode ?? null,
+        },
+        acceptanceEvidence,
+        regionScopes: item.regionCode
+          ? quoteRegionScopes.get(item.regionCode)
+          : undefined,
+      });
+      if (availabilityBlocker) {
+        throw new RepositoryError("INVALID_STATE", availabilityBlocker);
+      }
+      if (!platform.pricingClass) {
+        throw new RepositoryError(
+          "INVALID_STATE",
+          "Platform pricing class has not been confirmed",
+        );
+      }
+      const screenshotEnabled = item.screenshot !== 0;
+      const price = priceByDimensions.get(
+        pricingDimensionsKey({
+          pricingClass: platform.pricingClass,
+          mode: item.mode,
+          screenshotEnabled,
+        }),
+      );
+      if (!price)
+        throw new RepositoryError(
+          "INVALID_STATE",
+          "No active price matches the requested platform mode",
+        );
+      const itemTotal = price.amountTenThousandths * BigInt(item.quantity);
+      total += itemTotal;
+      return {
+        platformId: item.platformId,
+        pricingClass: platform.pricingClass,
+        mode: item.mode,
+        screenshotEnabled,
+        quantity: item.quantity,
+        unitAmountTenThousandths: moneyToApiString(price.amountTenThousandths),
+        totalAmountTenThousandths: moneyToApiString(itemTotal),
+      };
+    });
+    return {
+      pricingVersionId: version.id,
+      currency: MONEY_CURRENCY,
+      scale: 4 as const,
+      items,
+      totalAmountTenThousandths: moneyToApiString(total),
+    };
+  }
+
+  async listAllRuns(limit = 100) {
+    return this.db
+      .select({
+        run: runs,
+        username: users.username,
+        monitorName: monitors.name,
+      })
+      .from(runs)
+      .innerJoin(users, monitoringChildOwnerPredicate(runs, users.id))
+      .innerJoin(monitors, eq(runs.monitorId, monitors.id))
+      .where(isNull(runs.deletedAt))
+      .orderBy(desc(runs.createdAt))
+      .limit(limit);
+  }
+
+  async listAdminOperations(input: AdminOperationsListInput) {
+    const baseConditions = [isNull(runs.deletedAt)];
+    if (input.userId) baseConditions.push(monitoringChildOwnerPredicate(runs, input.userId));
+    if (input.status) baseConditions.push(eq(runs.status, input.status));
+    if (input.from) baseConditions.push(gte(runs.createdAt, input.from));
+    if (input.to) baseConditions.push(lte(runs.createdAt, input.to));
+
+    const pageConditions = [...baseConditions];
+    if (input.cursor) {
+      const [cursorRow] = await this.db
+        .select({ id: runs.id, createdAt: runs.createdAt })
+        .from(runs)
+        .where(and(eq(runs.id, input.cursor), ...baseConditions))
+        .limit(1);
+      if (!cursorRow) {
+        return {
+          items: [],
+          summary: await this.adminOperationsSummary(baseConditions),
+          nextCursor: null,
+        };
+      }
+      const beforeCursor = or(
+        lt(runs.createdAt, cursorRow.createdAt),
+        and(eq(runs.createdAt, cursorRow.createdAt), lt(runs.id, cursorRow.id)),
+      );
+      if (beforeCursor) pageConditions.push(beforeCursor);
+    }
+
+    const [rows, summary] = await Promise.all([
+      this.db
+        .select({
+          run: runs,
+          userId: users.id,
+          username: users.username,
+          monitorName: monitors.name,
+        })
+        .from(runs)
+        .innerJoin(users, monitoringChildOwnerPredicate(runs, users.id))
+        .innerJoin(monitors, eq(runs.monitorId, monitors.id))
+        .where(and(...pageConditions))
+        .orderBy(desc(runs.createdAt), desc(runs.id))
+        .limit(input.limit + 1),
+      this.adminOperationsSummary(baseConditions),
+    ]);
+    const hasMore = rows.length > input.limit;
+    const items = hasMore ? rows.slice(0, input.limit) : rows;
+    return {
+      items,
+      summary,
+      nextCursor: hasMore ? (items.at(-1)?.run.id ?? null) : null,
+    };
+  }
+
+  async getRunExecutionForAdmin(runId: string) {
+    const [record] = await this.db
+      .select({
+        run: runs,
+        userId: users.id,
+        username: users.username,
+        monitorName: monitors.name,
+      })
+      .from(runs)
+      .innerJoin(users, monitoringChildOwnerPredicate(runs, users.id))
+      .innerJoin(monitors, eq(runs.monitorId, monitors.id))
+      .where(and(eq(runs.id, runId), isNull(runs.deletedAt)))
+      .limit(1);
+    if (!record) throw new RepositoryError("NOT_FOUND", "Run not found");
+
+    const attemptRows = await this.db
+      .select({
+        id: attempts.id,
+        monitorQuestionOrdinal: attempts.monitorQuestionOrdinal,
+        monitorPlatformOrdinal: attempts.monitorPlatformOrdinal,
+        repetition: attempts.repetition,
+        question: attempts.question,
+        platformId: attempts.platformId,
+        providerCode: attempts.providerCode,
+        clientType: attempts.clientType,
+        mode: attempts.mode,
+        status: attempts.status,
+        providerTaskId: attempts.providerTaskId,
+        providerSubTaskId: attempts.providerSubTaskId,
+        errorCode: attempts.errorCode,
+        errorMessage: attempts.errorMessage,
+        submittedAt: attempts.submittedAt,
+        terminalAt: attempts.terminalAt,
+        createdAt: attempts.createdAt,
+        updatedAt: attempts.updatedAt,
+      })
+      .from(attempts)
+      .where(eq(attempts.runId, runId))
+      .orderBy(
+        asc(attempts.monitorQuestionOrdinal),
+        asc(attempts.monitorPlatformOrdinal),
+        asc(attempts.repetition),
+      );
+    return { ...record, attempts: attemptRows };
+  }
+
+  async adminOperationsSummary(
+    conditions: ReturnType<typeof isNull>[],
+  ) {
+    const [statusRows, totals] = await Promise.all([
+      this.db
+        .select({ status: runs.status, count: sql<number>`COUNT(*)` })
+        .from(runs)
+        .where(and(...conditions))
+        .groupBy(runs.status),
+      this.db
+        .select({
+          totalRuns: sql<number>`COUNT(*)`,
+          expectedAttempts: sql<number>`COALESCE(SUM(${runs.expectedAttempts}), 0)`,
+          submittedAttempts: sql<number>`COALESCE(SUM(${runs.submittedAttempts}), 0)`,
+          completedAttempts: sql<number>`COALESCE(SUM(${runs.completedAttempts}), 0)`,
+          failedAttempts: sql<number>`COALESCE(SUM(${runs.failedAttempts}), 0)`,
+          stoppedAttempts: sql<number>`COALESCE(SUM(${runs.stoppedAttempts}), 0)`,
+        })
+        .from(runs)
+        .where(and(...conditions)),
+    ]);
+    const total = totals[0];
+    return {
+      totalRuns: Number(total?.totalRuns ?? 0),
+      runsByStatus: Object.fromEntries(
+        statusRows.map((row) => [row.status, Number(row.count)]),
+      ),
+      expectedAttempts: Number(total?.expectedAttempts ?? 0),
+      submittedAttempts: Number(total?.submittedAttempts ?? 0),
+      completedAttempts: Number(total?.completedAttempts ?? 0),
+      failedAttempts: Number(total?.failedAttempts ?? 0),
+      stoppedAttempts: Number(total?.stoppedAttempts ?? 0),
+    };
+  }
+
+
  async writeAudit(...args: Parameters<ProgressRepositoryCore['insertAudit']> extends [unknown, ...infer R] ? R : never) { await insertAudit(this.db, ...args); }
 progressMonitoringReadRepository() {
     return new ProgressMonitoringReadRepository(this.db, {

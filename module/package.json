@@ -25,7 +25,8 @@
     "@radix-ui/react-dialog": "^1.1.15",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
-    "wouter": "^3.3.5"
+    "wouter": "^3.3.5",
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "typescript": "5.9.3",
@@ -35,7 +36,8 @@
     "vitest": "2.1.9",
     "@testing-library/react": "^16.3.0",
     "jsdom": "26.1.0",
-    "@testing-library/jest-dom": "^6.9.1"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/express": "^4.17.21"
   },
   "exports": {
     ".": {
