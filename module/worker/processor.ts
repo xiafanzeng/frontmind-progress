@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { MoliSubTaskStatus, MoliTaskStatus } from "@frontmind/monitoring-provider-moli";
+import type { MoliSubTaskStatus, MoliTaskStatus } from "../server/providers/moli/index.js";
 import type { ProgressInfrastructure } from "./infrastructure.js";
 import { DeferJobError, TerminalJobError, safeErrorSummary } from "./errors.js";
 import { requiredStringPayload, type WorkerJob } from "./job-types.js";

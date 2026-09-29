@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { MoliResultItem } from "@frontmind/monitoring-provider-moli";
+import type { MoliResultItem } from "../server/providers/moli/index.js";
 
 function stable(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stable);

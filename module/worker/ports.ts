@@ -10,7 +10,7 @@ import type {
   MoliTaskStatusResponse,
   SubmitSingleAttemptInput,
   SubmitTaskResponse,
-} from "@frontmind/monitoring-provider-moli";
+} from "../server/providers/moli/index.js";
 import type {
   FetchedMedia,
   ImageDerivatives,
