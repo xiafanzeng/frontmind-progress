@@ -1,6 +1,6 @@
 import {createHash,randomUUID} from 'node:crypto';
-import type {MoliBalance,MoliBillingRecordsPage,MoliBillingSummary,MoliModel,MoliReference,MoliRegion,MoliResultItem,MoliTaskStatusResponse} from '@frontmind/monitoring-provider-moli';
-import {moliEffectiveScreenshotSupport} from '@frontmind/monitoring-provider-moli';
+import type {MoliBalance,MoliBillingRecordsPage,MoliBillingSummary,MoliModel,MoliReference,MoliRegion,MoliResultItem,MoliTaskStatusResponse} from './providers/moli/index.js';
+import {moliEffectiveScreenshotSupport} from './providers/moli/index.js';
 import {and,asc,desc,eq,inArray,isNull,lte,or,sql} from 'drizzle-orm';
 import {RepositoryError} from '@frontmind/module-contracts/errors';
 import {platformAcceptanceFingerprint} from './platform-acceptance.js';

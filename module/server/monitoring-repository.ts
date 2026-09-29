@@ -20,7 +20,7 @@ import type {
   Sentiment,
 } from "@frontmind/monitoring-contracts";
 import { calculateAttemptCount } from "@frontmind/monitoring-contracts";
-import { moliEffectiveReasoningSupport, moliEffectiveScreenshotSupport, normalizeShareUrl } from "@frontmind/monitoring-provider-moli";
+import { moliEffectiveReasoningSupport, moliEffectiveScreenshotSupport, normalizeShareUrl } from "./providers/moli/index.js";
 import {
   and,
   asc,

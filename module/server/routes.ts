@@ -142,6 +142,7 @@ import type {ProgressRouteCore} from './route-core.js';
 import {translateRepositoryErrors} from './route-errors.js';
 import {z} from 'zod';
 import {TRPCError} from '@trpc/server';
+import { checkMoliConnection } from './providers/moli/connection.js';
 export function createProgressRoutes<Context extends object>(core:ProgressRouteCore<Context>) {
  const t=initTRPC.context<Context>().create();
  const customerProcedure=t.procedure.use(async({ctx,next})=>next({ctx:{...ctx,...await core.authorize(ctx as unknown as Context,'customer')}}));
@@ -376,6 +377,14 @@ monitors: t.router({
       ),
   }),
 monitoring: t.router({
+    provider: t.router({
+      checkConnection: customerProcedure
+        .output(z.object({ connected: z.literal(true), provider: z.literal('moli'), modelCount: z.number().int().nonnegative() }))
+        .query(async () => {
+          try { return await checkMoliConnection(); }
+          catch { throw new TRPCError({ code: 'BAD_GATEWAY', message: '监控供应商连接失败，请检查服务器配置或上游服务。' }); }
+        }),
+    }),
     summary: customerProcedure
       .input(monitoringScopeSchema)
       .output(monitoringSummaryOutputSchema)
