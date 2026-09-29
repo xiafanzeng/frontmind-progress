@@ -1,3 +1,4 @@
+import type {CoreSqlTable} from '../contracts/sql-table.js';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
 import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
@@ -12,6 +13,7 @@ export type ProgressMoneyEntry = {userId:string;type:'topup'|'admin_adjustment'|
 /** Core owns identities and unified funds; every call receives the same business transaction. */
 export interface ProgressRepositoryCore {
  tables: ProgressSchema;
+ identityTable: CoreSqlTable<{id:string;username:string}>;
  currentMonitoringEnterpriseProjectId():string|null;
  monitoringProjectOwnerPredicate(table:{ownerId:AnyMySqlColumn;enterpriseProjectId:AnyMySqlColumn},ownerId:string|SQLWrapper):SQL;
  monitoringChildOwnerPredicate(table:{ownerId:AnyMySqlColumn;projectId:AnyMySqlColumn},ownerId:string|SQLWrapper):SQL;

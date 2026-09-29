@@ -1,11 +1,26 @@
-# FrontMind 问题监控模块
+# FrontMind 问题监控
 
 公开仓库：https://github.com/xiafanzeng/frontmind-progress
+开发域名：https://progress.frontmind.cn/
 
-维护域名：https://progress.frontmind.cn
+`module/` 对应主仓 `modules/progress/`；公开仓 `standalone/` 是独立启动壳，不合回 Dashboard。
 
-`module/`（主仓为 `modules/progress/`）包含实际监控页面、API、持久化、worker、供应商调用实现和测试。完整 Moli 接口位于 [server/providers/moli](server/providers/moli/README.md)，可直接修改，子域名 worker 使用同一份实现。
+## 业务代码
 
-服务器已配置调用凭据。只在子域名测试的成员无需配置 Key；普通开发流程是导出准确线上基线 → Pro 修改 ZIP → delivery skill 提交部署 → 子域名验收 → sync skill 合回主仓。
+独立监控项目、问题、运行、回答、引用、截图、报告和报价。页面在 `client/`，业务服务在 `server/`，表定义在 `schema/`，后台处理在 `worker/`，有效工作流在 `workflows/`（各目录按实际业务存在）。
 
-身份、跨模块连接和通用账务由宿主提供，业务代码仍拥有何时创建任务、提交、重试和保存结果的逻辑。没有数据库结构或页面风格变更。
+重点入口：`server/providers/moli/`（完整供应商客户端）、`server/routes.ts`、`server/monitoring-repository.ts`（含报价、任务和运行查询）、`worker/`。
+
+新增后端 API 从 **`server/http-api.ts`** 开始，挂在 `/api/modules/progress/`。此注册函数由真实开发环境和主仓共同装载；在本模块命名空间新增路径不需要修改主仓的逐接口允许清单。现有 API 地址保留。
+
+## 开发方式
+
+公开仓根目录执行 `pnpm install --frozen-lockfile`、`pnpm dev`；检查使用 `pnpm typecheck`、`pnpm test`、`pnpm build`。本地预览使用合成数据；真实保存、任务、上传下载和供应商调用在开发子域名检查。
+
+先用 delivery skill 导出准确线上 SHA，交给 Pro 修改并返回 ZIP，再用 delivery skill 提交/部署子域名，验收后用 sync skill 合回主仓。见 [API 开发说明](API_DEVELOPMENT.md) 和 [Pro 交接规则](PRO_GUIDE.md)。
+
+## 运行基础设施
+
+主仓装配真实登录/租户或开发固定工作区、数据库连接、统一资金、文件存储和通用 AI 执行器。业务请求参数、状态机及结果解释由本模块维护。已有测试凭据在服务器配置，组员修改服务端调用代码后沿用它们，无需在本地拿 Key；新增供应商/新凭据仍需管理员配置服务器。服务端可读取注入环境，任何密钥都不得返回浏览器或写入公开 Git/ZIP。
+
+开发入口可用、配置存在或本地测试通过，均不等于所有付费业务链路已验收；HANDOFF 必须记录实际检查范围。

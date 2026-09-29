@@ -485,6 +485,39 @@ runs: t.router({
       }),
   })
 },admin:{
+    operations: t.router({
+      list: adminProcedure
+        .input(adminOperationsListInputSchema.optional())
+        .output(adminOperationsListOutputSchema)
+        .query(({ ctx, input }) =>
+          ctx.repository.listAdminOperations(input ?? { limit: 30 }),
+        ),
+      get: adminProcedure
+        .input(z.object({ runId: idSchema }))
+        .output(adminOperationDetailOutputSchema)
+        .query(({ ctx, input }) =>
+          translateRepositoryErrors(() =>
+            ctx.repository.getRunExecutionForAdmin(input.runId),
+          ),
+        ),
+    }),
+    runs: t.router({
+      list: adminProcedure
+        .input(listInputSchema.optional())
+        .output(z.array(adminRunListOutputSchema))
+        .query(({ ctx, input }) =>
+          ctx.repository.listAllRuns(input?.limit ?? 100),
+        ),
+      getAudit: adminProcedure
+        .input(z.object({ runId: idSchema }))
+        .output(runDetailOutputSchema)
+        .query(({ ctx, input }) =>
+          translateRepositoryErrors(() =>
+            ctx.repository.getRunForAdmin(input.runId, ctx.audit),
+          ),
+        ),
+    }),
+
 overview: adminProcedure
       .output(adminOverviewOutputSchema)
       .query(({ ctx }) => ctx.repository.getAdminOverview()),
