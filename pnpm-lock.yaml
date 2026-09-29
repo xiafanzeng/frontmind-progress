@@ -54,9 +54,6 @@ importers:
       '@frontmind/monitoring-contracts':
         specifier: workspace:*
         version: link:../vendor/monitoring-contracts
-      '@frontmind/monitoring-provider-moli':
-        specifier: workspace:*
-        version: link:../vendor/monitoring-provider-moli
       '@radix-ui/react-dialog':
         specifier: ^1.1.15
         version: 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.1))(@types/react@19.2.1)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -257,8 +254,6 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
-
-  vendor/monitoring-provider-moli: {}
 
 packages:
 
