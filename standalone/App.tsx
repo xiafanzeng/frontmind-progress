@@ -15,7 +15,7 @@ export default function App({ preview = false }: { preview?: boolean }) {
   const [view, setView] = useState<ProgressWorkspaceView>(routeView);
   const navigateView = (next: ProgressWorkspaceView) => {
     setView(next);
-    history.pushState(null, "", next === "reports" ? "/reports" : "/");
+    history.pushState(null, "", `${next === "reports" ? "/reports" : "/"}${location.search}`);
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
   useEffect(() => {

@@ -1,0 +1,311 @@
+/* The baseline retires generic .fm-tabs. Restore only this new navigation,
+   including the overview entry that leads into question detail. */
+.monitoring-module .fm-monitoring-workspace .fm-tabs.fm-qa-navigation { display: flex; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail { container: qa-detail / inline-size; min-width: 0; display: grid; gap: 18px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail :is(button, select, input) { font-family: inherit; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail :is(button, a, input, select):focus-visible { outline: 2px solid var(--fm-primary, #2867a5); outline-offset: 2px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail button:disabled { cursor: not-allowed; opacity: .5; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(100px, .85fr) minmax(140px, 1.3fr) minmax(110px, 1fr) minmax(100px, .8fr) auto; align-items: end; gap: 12px; padding: 16px; background: #fff; border: 1px solid var(--fm-border, #e7ebef); border-radius: 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-filter-bar,
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters { display: contents; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-filter-bar > label:first-child { order: 1; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters > label:first-child { order: 2; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters > label:nth-child(2) { order: 3; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-filter-bar > label:nth-child(2) { order: 4; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-filter-bar > .fm-date-filter { order: 5; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters > button { order: 6; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-filter-bar > .fm-custom-date-range { order: 7; grid-column: 1 / -1; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters label { display: grid; gap: 6px; color: var(--fm-muted, #667085); font-size: 12px; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-question-filters select { width: 100%; height: 36px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 6px; background: #fff; padding: 6px 10px; color: var(--fm-text, #20232b); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-navigation { margin: 0; padding: 0; background: transparent; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs { min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs > header > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs > header strong { font-size: 14px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs > header span { font-size: 12px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-runs svg { color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-list { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; align-items: stretch; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run { display: grid; gap: 8px; flex: 1 0 190px; min-width: 190px; padding: 12px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 8px; background: #fff; color: var(--fm-text, #20232b); text-align: left; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run > span { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run strong { font-size: 12px; font-weight: 500; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run small { font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run[aria-pressed="true"] { border-color: #a7c6e2; box-shadow: inset 0 2px var(--fm-primary, #2867a5); background: #edf4fa; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-run-status { font-size: 10px; padding: 2px 4px; border-radius: 4px; background: #f1f6fb; color: var(--fm-primary, #2867a5); white-space: nowrap; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-run-status.completed { background: #ecf8f3; color: #258777; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-run-status:is(.failed, .review_required) { background: #fef3f2; color: #b42318; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-more { align-self: center; white-space: nowrap; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-notice { margin: 10px 0; padding: 8px 12px; font-size: 12px; line-height: 1.7; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-snapshot { border: 1px solid var(--fm-border, #e7ebef); border-radius: 8px; background: #fff; padding: 16px; font-size: 13px; line-height: 1.8; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-snapshot :is(h4, p) { margin: 0 0 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { display: grid; grid-template-columns: minmax(190px, 22%) minmax(0, 1fr); gap: 16px; align-items: start; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list { min-width: 0; border: 1px solid var(--fm-border, #e7ebef); background: #fff; border-radius: 10px; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > header { display: flex; justify-content: space-between; align-items: center; padding: 16px 14px 10px; font-size: 14px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list small { color: var(--fm-muted, #667085); font-size: 11px; font-weight: 400; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-search { margin: 0 14px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 6px; padding: 8px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-search input { width: 100%; min-width: 0; border: 0; background: transparent; font-size: 12px; color: var(--fm-text, #20232b); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-mention-tabs { display: flex; gap: 4px; padding: 10px 14px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-mention-tabs button { background: transparent; border: 0; padding: 4px 6px; border-radius: 4px; color: var(--fm-muted, #667085); font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-mention-tabs button[aria-pressed="true"] { background: #edf4fa; color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question { display: flex; width: 100%; align-items: start; gap: 10px; border: 0; border-left: 3px solid transparent; border-top: 1px solid #f0f2f6; padding: 16px 12px 14px; color: var(--fm-muted, #667085); text-align: left; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question > span:first-child { padding-top: 2px; font-size: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question > span:last-child { display: grid; min-width: 0; gap: 8px; width: 100%; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question strong { font-size: 13px; line-height: 1.8; font-weight: 400; overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question em { justify-self: end; font-size: 10px; font-style: normal; border-radius: 4px; padding: 1px 5px; background: #f1f6fb; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question[aria-pressed="true"] { background: #edf4fa; border-left-color: var(--fm-primary, #2867a5); color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question[aria-pressed="true"] strong { font-weight: 600; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > footer { display: flex; justify-content: space-between; align-items: center; padding: 14px; border-top: 1px solid var(--fm-border, #e7ebef); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > footer > div { display: flex; gap: 4px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer { min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading.fm-reading-workspace { border-color: var(--fm-border, #e7ebef); border-radius: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading { padding: 18px 20px 12px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading > div { display: flex; justify-content: space-between; gap: 10px; color: var(--fm-muted, #667085); font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading h3 { margin: 10px 0; font-size: 17px; line-height: 1.7; color: var(--fm-text, #20232b); overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading p { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models { display: flex; gap: 16px; overflow-x: auto; padding: 0 20px; border-bottom: 1px solid var(--fm-border, #e7ebef); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models button { display: flex; align-items: center; gap: 6px; flex-shrink: 0; border: 0; border-bottom: 2px solid transparent; padding: 12px 0; background: transparent; font-size: 12px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models button > :first-child { width: 20px; height: 20px; flex-shrink: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models button[aria-pressed="true"] { color: var(--fm-primary, #2867a5); border-bottom-color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models small { font-size: 10px; background: #f6f8fc; padding: 2px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--fm-border, #e7ebef); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions button { border: 1px solid var(--fm-border, #e7ebef); background: #fff; color: var(--fm-muted, #667085); font-size: 11px; padding: 5px 9px; border-radius: 5px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions button[aria-pressed="true"] { color: var(--fm-primary, #2867a5); border-color: #a7c6e2; background: #edf4fa; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions > small { color: var(--fm-muted, #667085); font-size: 10px; overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-toolbar { position: static; padding: 10px 16px; border-radius: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-title { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-tool-button { min-height: 28px; padding: 4px 7px; font-size: 11px; border-radius: 5px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(240px, 1fr); gap: 0; height: auto; max-height: none; min-height: 440px; overflow: visible; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader { border: 0; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader > header { padding: 12px 16px; font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader > header > div { gap: 6px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-scroll { padding: 16px; font-size: 14px; line-height: 1.9; overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail.fm-answer-sources { margin: 0; padding: 16px 12px; border: 0; border-left: 1px solid var(--fm-border, #e7ebef); border-radius: 0; background: #fafcff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-section-heading h3 { font-size: 13px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-section-heading > span { font-size: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-source-filters { gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--fm-border, #e7ebef); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-source-filters button { font-size: 11px; padding: 3px 5px; min-height: 28px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards { display: grid; gap: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards article { min-width: 0; border: 1px solid var(--fm-border, #e7ebef); border-radius: 7px; padding: 12px; background: #fff; scroll-margin-top: 30px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards article.is-active { border-color: #a7c6e2; background: #f1f6fb; box-shadow: 0 0 0 1px #d3e2ef; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards article > header { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards strong { font-size: 12px; line-height: 1.6; color: #344054; overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards article > header > span { white-space: nowrap; font-size: 9px; padding: 2px 4px; background: #edf4fa; color: var(--fm-primary, #2867a5); border-radius: 3px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards p { margin: 8px 0; font-size: 10px; color: var(--fm-muted, #667085); overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards blockquote { margin: 8px 0; padding: 8px 0 0; border: 0; border-top: 1px solid #edf0f5; font-size: 11px; line-height: 1.8; color: var(--fm-muted, #667085); overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards footer :is(a, button) { display: inline-flex; align-items: center; gap: 4px; font-size: inherit; padding: 0; border: 0; background: transparent; color: var(--fm-primary, #2867a5); text-decoration: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment { margin: 0; padding: 16px; border-top: 1px solid #d3e2ef; background: #f1f6fb; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment > summary { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; cursor: pointer; color: var(--fm-primary, #2867a5); font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment > summary > span { color: var(--fm-muted, #667085); font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment > summary > span:last-child { margin-left: auto; color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-citation-feedback { margin: 0; padding: 10px 16px; font-size: 10px; line-height: 1.7; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-empty-answer { border: 1px solid var(--fm-border, #e7ebef); border-radius: 10px; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-empty-answer > p { padding: 20px; color: var(--fm-muted, #667085); font-size: 13px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-empty-answer > button { margin: 0 20px 20px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-footnote { margin: 0; color: var(--fm-muted, #667085); font-size: 11px; }
+
+/* Only the progress workspace opts into this frame. The host navigation and
+   other module layouts retain their original styles. */
+.user-brand-dashboard.operator-mode .dashboard-main.workbench-main:has(.fm-progress-frame) { overflow: hidden; }
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) { height: 100%; min-height: 0; overflow: hidden; }
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) > .agent-workbench-shell__layout { flex: 1; min-height: 0; overflow: hidden; }
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) :is(.agent-workbench-shell__main, .agent-workbench-shell__main-content, .agent-workspace-frame, .dashboard-module-content) { height: 100%; min-height: 0; overflow: hidden; }
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) .agent-workspace-frame { padding: 0; }
+.monitoring-module:has(.fm-progress-frame) { height: 100%; min-height: 0; overflow: hidden; }
+.monitoring-module:has(.fm-progress-frame) :is(.monitoring-reference-page, .monitoring-reader-frame) { height: 100%; min-height: 0; margin: 0; padding: 0; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame {
+  display: grid; grid-template-columns: 224px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 0;
+  height: 100%; min-height: 0; max-height: none; max-width: none; overflow: hidden; margin: 0; padding: 0;
+}
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .monitoring-results-panel {
+  grid-column: 1; grid-row: 1; order: -1; position: static; display: flex; flex-direction: column;
+  width: auto; min-width: 0; height: 100%; min-height: 0; max-height: none; overflow: hidden;
+  margin: 0; padding: 24px 16px 16px; border: 0; border-right: 1px solid var(--fm-border, #e7ebef); border-radius: 0; box-shadow: none; background: #fff;
+}
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .monitoring-results-panel > header { display: block; flex: none; border: 0; padding: 0 0 20px; margin: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .monitoring-results-panel h3 { margin: 8px 0 0; font-size: 17px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-outcomes-eyebrow { font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-outcomes-field { flex: none; display: block; margin: 0 0 14px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-outcomes-field input { width: 100%; min-width: 0; height: 36px; padding: 8px 10px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 6px; font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-result-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-result-list button { flex: none; width: 100%; min-height: 90px; padding: 14px 12px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 7px; text-align: left; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-result-list button[aria-pressed="true"] { background: #edf4fa; border-color: #a7c6e2; box-shadow: inset 3px 0 var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-result-list strong { display: block; font-size: 13px; line-height: 1.6; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .resource-result-list span { display: block; margin-top: 8px; font-size: 11px; line-height: 1.6; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .monitoring-results-panel > footer { flex: none; display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid var(--fm-border, #e7ebef); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-config-add { width: 100%; justify-content: center; color: var(--fm-primary, #2867a5); background: #edf4fa; }
+.monitoring-module .fm-config-tools { font-size: 11px; color: var(--fm-muted, #667085); overflow-wrap: anywhere; max-height: 180px; overflow-y: auto; }
+.monitoring-module .fm-config-tools summary { cursor: pointer; }
+.monitoring-module .fm-config-tools :is(p, button, label) { margin-top: 10px; font-size: 11px; }
+.monitoring-module .fm-config-tools select { width: 100%; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-detail {
+  grid-column: 2; grid-row: 1; display: block; position: static; min-width: 0; height: 100%; min-height: 0; max-height: none;
+  padding: 26px 28px; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable;
+  border: 0; border-radius: 0; box-shadow: none; background: #f6f8fc; scroll-padding: 20px;
+}
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-hero { position: static; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 0 0 20px; border: 0; background: transparent; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-title-row h2 { font-size: 24px; line-height: 1.4; margin: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-hero p { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions button { min-height: 34px; font-size: 12px; white-space: nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions > span:empty { display: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-body { display: grid; gap: 18px; padding: 0; height: auto; min-height: 0; overflow: visible; background: transparent; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters { grid-template-columns: minmax(110px,1fr) minmax(110px,1fr) minmax(140px,1.2fr) minmax(110px,1fr) minmax(100px,.8fr) auto; gap: 12px; border-radius: 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters :is(label, .fm-date-filter) { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; min-width: 0; width: auto; align-items: start; font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters :is(label, .fm-date-filter) > span { width: auto; font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters select { width: 100%; min-width: 0; max-width: 100%; height: 36px; padding: 6px 10px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 6px; font: inherit; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-scope-hint { margin: 8px 2px 0; font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation { display: flex; gap: 28px; padding: 0; margin: -4px 0 0; border: 0; border-bottom: 1px solid var(--fm-border, #e7ebef); border-radius: 0; background: transparent; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button { padding: 10px 2px 14px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--fm-muted, #667085); font-size: 14px; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button.active { border-bottom-color: var(--fm-primary, #2867a5); color: var(--fm-primary, #2867a5); }
+.monitoring-module .fm-qa-running { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 20px; padding: 16px 18px; border: 1px solid #cfe2f5; border-radius: 8px; background: #f0f7ff; color: var(--fm-primary, #2867a5); }
+.monitoring-module .fm-qa-running-copy { flex: 1; min-width: 200px; display: grid; gap: 6px; font-size: 13px; }
+.monitoring-module .fm-qa-running-copy small { font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .fm-qa-running-progress { width: 190px; font-size: 10px; }
+.monitoring-module .fm-qa-running-progress span { display: flex; justify-content: space-between; }
+.monitoring-module .fm-qa-running-progress progress { display: block; width: 100%; height: 6px; margin-top: 6px; accent-color: var(--fm-primary, #2867a5); }
+.monitoring-module .fm-qa-running button { font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-list { flex-wrap: wrap; overflow: visible; padding: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run { flex: 1 1 160px; min-width: 145px; padding: 12px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { grid-template-columns: 220px minmax(0,1fr); align-items: stretch; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-scroll { height: auto; max-height: none; overflow: visible; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader { height: auto; max-height: none; overflow: visible; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail.fm-answer-sources { position: static; height: auto; max-height: none; overflow: visible; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-search input { height: auto; padding: 0; box-shadow: none; outline-offset: 4px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { grid-template-columns: minmax(0,1.4fr) minmax(230px,1fr); }
+@container qa-detail (max-width: 1050px) {
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { grid-template-columns: 190px minmax(0,1fr); }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models { gap: 10px; flex-wrap: wrap; }
+}
+@container qa-detail (max-width: 760px) {
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { grid-template-columns: minmax(0,1fr); }
+}
+@container qa-detail (max-width: 520px) {
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { grid-template-columns: minmax(0,1fr); }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail.fm-answer-sources { border-left: 0; border-top: 1px solid var(--fm-border, #e7ebef); }
+}
+@media (max-width: 1200px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-detail { padding: 20px; }
+}
+@media (max-width: 760px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame { grid-template-columns: 160px minmax(0,1fr); }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .monitoring-results-panel { padding: 16px 10px; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-detail { padding: 16px; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters { grid-template-columns: minmax(0,1fr); }
+}
+
+.user-brand-dashboard.operator-mode .monitoring-module .monitoring-reference-page:has(.fm-progress-frame) { height: 100%; min-height: 0; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-qa-filters :is(select, input),
+.monitoring-module .monitoring-reference-page .fm-progress-frame .resource-outcomes-field input { box-shadow: none; }
+
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) { flex: 1 1 0%; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-qa-filters :is(label, .fm-date-filter) { padding: 0; margin: 0; border: 0; box-shadow: none; background: transparent; line-height: 1.5; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-list { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)) auto; align-items: stretch; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run { min-width: 0; min-height: 72px; line-height: 1.5; gap: 6px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run > span { flex-wrap: wrap; gap: 4px; }
+@container qa-detail (max-width: 800px) {
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-list { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+
+/* Opaque sticky tabs: text beneath the navigation must never show through. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation {
+  position: sticky; top: 0; z-index: 6; isolation: isolate; padding-top: 8px;
+  background: #f6f8fc; box-shadow: 0 -10px 0 2px #f6f8fc;
+}
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question em { white-space: nowrap; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading.fm-reading-workspace { background: transparent; border: 0; overflow: visible; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-card { background: #fff; border: 1px solid var(--fm-border, #e7ebef); border-radius: 8px; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment { margin-top: 16px; border: 1px solid #d3e2ef; border-radius: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-more { position: relative; order: 4; font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-more > summary { cursor: pointer; padding: 8px 10px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 6px; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-more > div { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; display: flex; align-items: center; gap: 8px; width: max-content; max-width: 260px; padding: 12px; border: 1px solid var(--fm-border, #e7ebef); border-radius: 8px; box-shadow: 0 6px 18px #1d293918; background: #fff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-report-button { order: 2; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-secondary-button { order: 1; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button:not(.fm-report-button) { order: 3; background: var(--fm-primary, #2867a5); color: #fff; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button:disabled { opacity: .8; }
+.monitoring-module .fm-qa-running-progress progress::-webkit-progress-bar { background: #dce9f6; border-radius: 4px; }
+.monitoring-module .fm-qa-running-progress progress::-webkit-progress-value { background: #4e86ba; border-radius: 4px; }
+
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation { top: -26px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-detail { scroll-padding-top: 80px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .monitoring-results-panel > footer { display: grid; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .monitoring-results-panel .fm-config-add { width: 100%; }
+@media (max-width: 1200px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation { top: -20px; } }
+@media (max-width: 760px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation { top: -16px; } }
+/* The shared filter and view tabs form one opaque sticky region. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-sticky-scope {
+  position: sticky; top: -26px; z-index: 6; isolation: isolate; display: grid; gap: 12px;
+  padding-top: 8px; background: #f6f8fc; box-shadow: 0 -10px 0 2px #f6f8fc;
+}
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-sticky-scope .fm-qa-navigation {
+  position: static; top: auto; padding-top: 0; margin: 0; box-shadow: none;
+}
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-strip { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 8px; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run-list { position: relative; display: flex; flex-wrap: nowrap; gap: 10px; min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 2px 1px 8px; scrollbar-width: thin; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-run { flex: 0 0 190px; min-width: 0; min-height: 72px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { height: clamp(620px, 76dvh, 860px); min-height: 0; align-items: stretch; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > :not(.fm-qa-question-items) { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-items { position: relative; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer { height: 100%; min-height: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-card { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-card > :not(.fm-answer-layout) { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { flex: 1; min-height: 180px; max-height: none; height: auto; overflow: hidden; align-items: stretch; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader { display: flex; flex-direction: column; min-height: 0; height: 100%; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-reader > :not(.fm-answer-scroll) { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-scroll { flex: 1; min-height: 0; max-height: none; height: auto; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail { display: flex; flex-direction: column; min-height: 0; height: 100%; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail > :not(.fm-qa-source-cards) { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards { display: block; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; padding: 2px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-cards article + article { margin-top: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-assessment { flex: none; max-height: 36%; overflow-y: auto; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-empty-answer { height: 100%; overflow-y: auto; }
+@media (max-width: 1200px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-sticky-scope { top: -20px; } }
+@media (max-width: 760px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-sticky-scope { top: -16px; } }
+@container qa-detail (max-width: 760px) {
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { height: auto; }
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list { height: 300px; }
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer { height: 760px; }
+}
+@container qa-detail (max-width: 520px) {
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { overflow-y: auto; grid-template-rows: 360px 360px; }
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-sticky-scope { position: static; }
+}
+/* Compact fixed controls leave the height for the independently scrolling content. */
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-qa-sticky-scope { gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-qa-scope-hint { line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button { min-height: 0; line-height: 20px; padding: 8px 2px 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { height: clamp(560px, calc(100dvh - 270px), 820px); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading { padding: 14px 18px 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading > div { line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading h3 { line-height: 24px; margin: 8px 0; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading p { line-height: 18px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-heading .fm-meta-pill { min-height: 0; line-height: 14px; font-size: 10px; padding: 3px 6px; border-radius: 4px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-models button { min-height: 0; padding: 10px 0; line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions { padding: 8px 18px; line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions button { min-height: 24px; padding: 3px 8px; line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-toolbar { padding: 8px 14px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-tool-button { min-height: 26px; line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > header { line-height: 20px; padding: 14px 14px 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-search { height: 36px; line-height: 18px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-mention-tabs { padding: 8px 14px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-mention-tabs button { min-height: 24px; line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question :is(small, em) { line-height: 16px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-question-list > footer { line-height: 18px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail.fm-answer-sources { min-height: 0; height: 100%; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-section-heading { line-height: 18px; margin-bottom: 10px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-source-filters { line-height: 16px; margin-bottom: 8px; padding-bottom: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-source-rail .fm-answer-source-filters button { min-height: 24px; line-height: 16px; }
+@container qa-detail (max-width: 760px) {
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-content { height: auto; }
+}
+@media (max-width: 760px) {
+  /* A tall filter stack must not cover the entire reading area on small screens. */
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-sticky-scope { position: static; box-shadow: none; }
+}
+/* Keep the secondary sidebar against the primary sidebar on wide displays. */
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) :is(.agent-workbench-shell__layout.is-workspace, .agent-workspace-frame) { width: 100%; max-width: none; margin-inline: 0; }
+.user-brand-dashboard.operator-mode :is(.agent-workbench-shell.module-monitoring, .agent-workbench-shell.module-reports):has(.fm-progress-frame) .agent-workbench-shell__main-content.is-scrollable { scrollbar-gutter: auto; }

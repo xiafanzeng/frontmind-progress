@@ -21,6 +21,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 
 import {
@@ -37,6 +38,9 @@ import MonitoringFilterBar from "./MonitoringFilterBar";
 import MonitoringReportDialog from "./MonitoringReportDialog";
 import TrendPanel from "./panels/TrendPanel";
 import AnswerDetailPanel from "./panels/AnswerDetailPanel";
+import MonitoringScopeFilters from "./MonitoringScopeFilters";
+import MonitoringRunStatus from "./MonitoringRunStatus";
+import QuestionDetailWorkspace from "./QuestionDetailWorkspace";
 import MonitoringMetricCards from "./panels/MonitoringMetricCards";
 import {
   monitoringDateWindow,
@@ -64,6 +68,8 @@ import "@frontmind/module-ui/dashboard/resource-reading-layout.css";
 
 type MonitoringWorkspaceProps = {
   analysisOnly?: boolean;
+  renderReport?: (runId?: string) => ReactNode;
+  configurationTools?: ReactNode;
   initialTab?: "overview" | "trends";
   project: ProjectSummary;
   monitors: MonitorSummary[];
@@ -88,6 +94,11 @@ type MonitoringWorkspaceProps = {
 };
 
 type MonitoringDataSourceHook = typeof useMonitoringDataSource;
+
+function readWorkspaceQuery(search: string, context: MonitoringQueryContext, analysisOnly: boolean) {
+  const detail = !analysisOnly && new URLSearchParams(search).get("tab") === "answers";
+  return readMonitoringQuery(search, detail ? { ...context, allowUnresolved: true } : context);
+}
 
 function usePreviewMonitoringDataSource(): ReturnType<MonitoringDataSourceHook> {
   return {
@@ -186,6 +197,8 @@ function MonitoringWorkspaceController({
   useDataSource,
   analysisOnly = false,
   initialTab,
+  renderReport,
+  configurationTools,
 }: MonitoringWorkspaceProps & { useDataSource: MonitoringDataSourceHook }) {
   const { isWorkbench, task } = useBusinessWorkspace();
   const outcomeControls = useContext(MonitoringOutcomeControlsContext);
@@ -221,13 +234,15 @@ function MonitoringWorkspaceController({
   );
   const hasHydratedDataRef = useRef(monitors.length > 0);
   const [query, setQuery] = useState<MonitoringQueryState>(() =>
-    readMonitoringQuery(initialSearchRef.current, baseContext),
+    readWorkspaceQuery(initialSearchRef.current, baseContext, analysisOnly),
   );
+  const detailActive = !analysisOnly && query.tab === "answers";
   const queryRef = useRef(query);
+  const detailMonitorRef = useRef<string | undefined>(undefined);
   const pendingRunSelectionRef = useRef<string | undefined>(undefined);
   const initializedCategoryMonitorRef = useRef<string | undefined>(undefined);
   const live = useDataSource({
-    enabled: serverData,
+    enabled: serverData && !detailActive,
     query,
     timezone: project.timezone,
   });
@@ -307,6 +322,10 @@ function MonitoringWorkspaceController({
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   useEffect(() => { setReportDialogOpen(false); }, [query.monitorId, project.id]);
   const detailRef = useRef<HTMLElement>(null);
+  const reportView = Boolean(renderReport);
+  useEffect(() => {
+    detailRef.current?.scrollTo({ top: 0 });
+  }, [reportView, query.monitorId]);
 
   // The monitoring list is restored asynchronously on the production route.
   // Keep the visibility set in sync when that first payload arrives; otherwise
@@ -323,8 +342,8 @@ function MonitoringWorkspaceController({
 
   const normalize = useCallback(
     (candidate: MonitoringQueryState) =>
-      readMonitoringQuery(monitoringQueryString(candidate), context),
-    [context],
+      readWorkspaceQuery(monitoringQueryString(candidate), context, analysisOnly),
+    [context, analysisOnly],
   );
 
   useEffect(() => {
@@ -357,7 +376,7 @@ function MonitoringWorkspaceController({
   useEffect(() => {
     if (!monitors.length || hasHydratedDataRef.current) return;
     hasHydratedDataRef.current = true;
-    const next = readMonitoringQuery(initialSearchRef.current, context);
+    const next = readWorkspaceQuery(initialSearchRef.current, context, analysisOnly);
     queryRef.current = next;
     setQuery(next);
     if (!isWorkbench) writeMonitoringQuery(next, "replace");
@@ -414,6 +433,7 @@ function MonitoringWorkspaceController({
   }, [selectionRequest?.nonce]);
 
   useEffect(() => {
+    if (detailActive) { pendingRunSelectionRef.current = undefined; return; }
     const requestedRunId = pendingRunSelectionRef.current;
     if (!requestedRunId || query.runId !== requestedRunId) return;
     const attempts = serverData
@@ -434,18 +454,18 @@ function MonitoringWorkspaceController({
       },
       "replace",
     );
-  }, [allRuns, live.attempts, query.runId, serverData, updateQuery]);
+  }, [detailActive, allRuns, live.attempts, query.runId, serverData, updateQuery]);
 
   useEffect(() => {
     if (isWorkbench) return;
     const onPopState = () => {
-      const next = readMonitoringQuery(window.location.search, context);
+      const next = readWorkspaceQuery(window.location.search, context, analysisOnly);
       queryRef.current = next;
       setQuery(next);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [context, isWorkbench]);
+  }, [context, isWorkbench, analysisOnly]);
 
   const selectedMonitor = monitors.find(
     (monitor) => monitor.id === query.monitorId,
@@ -554,6 +574,7 @@ function MonitoringWorkspaceController({
       ) ||
       visibleAnswerAttempts[0];
   useEffect(() => {
+    if (detailActive) return;
     if (
       serverData &&
       (!live.answersReady ||
@@ -570,6 +591,7 @@ function MonitoringWorkspaceController({
         "replace",
       );
   }, [
+    detailActive,
     serverData,
     live.answersReady,
     live.answerDetailSettled,
@@ -587,8 +609,12 @@ function MonitoringWorkspaceController({
       );
 
   useEffect(() => {
+    // The host may recreate this callback while polling. In question detail,
+    // re-notifying the same monitor would jump back to its latest run.
+    if (!analysisOnly && detailMonitorRef.current === selectedMonitor?.id) return;
+    detailMonitorRef.current = selectedMonitor?.id;
     onSelectedMonitorChange?.(selectedMonitor);
-  }, [onSelectedMonitorChange, selectedMonitor]);
+  }, [detailActive, onSelectedMonitorChange, selectedMonitor]);
 
   useEffect(() => {
     if (query.runId && query.runId !== selectedRunId) {
@@ -629,7 +655,7 @@ function MonitoringWorkspaceController({
       : allQuestionOptions;
   const showIndustryMetrics = query.questionCategory === "industry";
   useEffect(() => {
-    if (serverData && !live.questionCatalogReady) return;
+    if (!analysisOnly || detailActive || (serverData && !live.questionCatalogReady)) return;
     const first =
       questionOptions.find((question) => question.id === query.question) ||
       questionOptions[0];
@@ -677,6 +703,8 @@ function MonitoringWorkspaceController({
       "replace",
     );
   }, [
+    analysisOnly,
+    detailActive,
     serverData,
     live.questionCatalogReady,
     query.monitorId,
@@ -721,16 +749,23 @@ function MonitoringWorkspaceController({
     setRefreshMessage("");
     try {
       await onRefresh();
-      if (serverData) await live.refresh();
+      if (serverData && !detailActive) await live.refresh();
       setRefreshMessage("已刷新");
     } finally {
       setRefreshing(false);
     }
   };
 
+  const detailNavigation = !analysisOnly && (
+    <nav className="fm-tabs fm-qa-navigation" aria-label="问题监控视图">
+      <button id="monitor-tab-overview" type="button" aria-pressed={!detailActive} className={!detailActive ? "active" : ""} onClick={() => updateQuery({ tab: "overview", fullscreen: false })}>概览</button>
+      <button id="monitor-tab-answers" type="button" aria-pressed={detailActive} className={detailActive ? "active" : ""} onClick={() => updateQuery({ tab: "answers", fullscreen: false })}>问题明细</button>
+    </nav>
+  );
+
   return (
     <div
-      className={`fm-monitoring-workspace ${isWorkbench ? "is-conversation-flow" : ""} resource-reading-layout fm-resource-reading ${monitors.length ? "" : "is-empty"} ${refreshing || loading || live.loading ? "is-refreshing" : ""}`}
+      className={`fm-monitoring-workspace ${!analysisOnly ? "fm-progress-frame" : ""} ${renderReport ? "is-report-view" : ""} ${detailActive ? "is-question-detail" : ""} ${isWorkbench ? "is-conversation-flow" : ""} resource-reading-layout fm-resource-reading ${monitors.length ? "" : "is-empty"} ${refreshing || loading || live.loading ? "is-refreshing" : ""}`}
       aria-busy={Boolean(refreshing || loading || live.loading)}
       data-refreshing={
         refreshing || loading || live.loading ? "true" : undefined
@@ -746,7 +781,7 @@ function MonitoringWorkspaceController({
         aria-label="所选监控工作台"
         tabIndex={-1}
       >
-        {visibleSelectedMonitor ? (
+        {renderReport ? renderReport(query.runId || selectedMonitor?.lastRun?.id) : visibleSelectedMonitor ? (
           <>
             <header className="fm-monitor-hero">
               <div>
@@ -755,7 +790,7 @@ function MonitoringWorkspaceController({
                   <span
                     className={`fm-status-chip ${visibleSelectedMonitor.status}`}
                   >
-                    {monitorStatusLabel(visibleSelectedMonitor.status)}
+                    {visibleSelectedMonitor.lastRun?.status === "running" ? "运行中" : monitorStatusLabel(visibleSelectedMonitor.status)}
                   </span>
                 </div>
                 <p>
@@ -766,9 +801,9 @@ function MonitoringWorkspaceController({
                   <span>每平台 {visibleSelectedMonitor.repetitions} 次</span>
                   <i />
                   <span>
-                    更新于{" "}
+                    最近完成{" "}
                     {formatDateTime(
-                      visibleSelectedMonitor.lastRun?.completedAt,
+                      monitorRuns.find(item => item.completedAt && ["completed", "partial_completed"].includes(item.status))?.completedAt || visibleSelectedMonitor.lastRun?.completedAt,
                     )}
                   </span>
                 </p>
@@ -783,7 +818,7 @@ function MonitoringWorkspaceController({
                 >
                   <Download size={14} /> 下载报告
                 </button>
-                <span aria-live="polite">
+                <details className="fm-monitor-more"><summary>更多</summary><div>                <span aria-live="polite">
                   {refreshing ? "正在刷新" : refreshMessage}
                 </span>
                 <button
@@ -823,29 +858,43 @@ function MonitoringWorkspaceController({
                 >
                   <Trash2 size={15} />
                 </button>
+</div></details>
                 <button
                   type="button"
                   className="fm-secondary-button"
                   onClick={() => onOpenDetails(visibleSelectedMonitor)}
                 >
-                  <Edit3 size={14} /> 编辑监控
+                  <Edit3 size={14} /> 编辑配置
                 </button>
                 <button
                   type="button"
                   className="fm-primary-button"
+                  disabled={visibleSelectedMonitor.lastRun?.status === "running"}
                   onClick={() => onRun(visibleSelectedMonitor)}
                 >
-                  <Play size={15} /> 立即运行
+                  <Play size={15} /> {visibleSelectedMonitor.lastRun?.status === "running" ? "正在运行" : "立即运行"}
                 </button>
               </div>
             </header>
+            {!analysisOnly && <MonitoringRunStatus monitor={visibleSelectedMonitor} runs={monitorRuns} onView={(runId) => updateQuery({ tab: "answers", runId, answerQuestion: undefined, answerId: undefined, fullscreen: false })} />}
             <div className="fm-monitor-body">
-              {serverData && live.error && (
+              {serverData && !detailActive && live.error && (
                 <div className="fm-data-notice" role="alert">
                   实时监控数据读取失败：{live.error}
                 </div>
               )}
-              <MonitoringFilterBar
+              {detailActive ? (
+                <QuestionDetailWorkspace
+                  key={`${project.id}:${query.monitorId}`}
+                  project={project}
+                  query={query}
+                  runs={allRuns}
+                  serverData={serverData}
+                  onChange={updateQuery}
+                  navigation={detailNavigation}
+                />
+              ) : <>
+              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={allQuestionOptions} onChange={updateQuery} navigation={detailNavigation} /> : <MonitoringFilterBar
                 project={project}
                 run={run}
                 summary={serverData ? live.catalogSummary : undefined}
@@ -872,7 +921,7 @@ function MonitoringWorkspaceController({
                     updateQuery({ range: "custom", from, to });
                 }}
                 onSubjectChange={(subject) => updateQuery({ subject })}
-              />
+              />}
               {showIndustryMetrics && (
                 <MonitoringMetricCards
                   monitor={visibleSelectedMonitor}
@@ -946,6 +995,8 @@ function MonitoringWorkspaceController({
                     : buildSentimentInsights(visibleAnswerAttempts).counts
                 }
               />
+              </>}
+
             </div>
           </>
         ) : monitors.length ? (
@@ -975,22 +1026,17 @@ function MonitoringWorkspaceController({
         className="resource-outcomes monitoring-results-panel"
         data-resource-pane="outcomes"
         tabIndex={0}
-        aria-label="监控成果"
+        aria-label={analysisOnly ? "监控成果" : "监控配置"}
       >
         {outcomeControls}
         <header>
           <div>
-            <span className="resource-outcomes-eyebrow">监控成果</span>
-            <h3>选择查看范围</h3>
+            <span className="resource-outcomes-eyebrow">{analysisOnly ? "监控成果" : `${project.brandName} / 监控中心`}</span>
+            <h3>{analysisOnly ? "选择查看范围" : "监控配置"}</h3>
           </div>
-          {!analysisOnly && (
-            <button type="button" className="fm-text-button" onClick={onAdd}>
-              <Plus size={14} /> 新建配置
-            </button>
-          )}
         </header>
         <label className="resource-outcomes-field">
-          <span>监控配置</span>
+          {analysisOnly && <span>监控配置</span>}
           <input
             type="search"
             aria-label="搜索监控配置"
@@ -1040,6 +1086,7 @@ function MonitoringWorkspaceController({
             </button>
           </nav>
         )}
+        {analysisOnly && <>
         <label className="resource-outcomes-field">
           <span>问题分类</span>
           <select
@@ -1093,8 +1140,11 @@ function MonitoringWorkspaceController({
             ))}
           </select>
         </label>
+        </>}
         {!analysisOnly && (
           <footer>
+            <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 新建监控配置</button>
+            {configurationTools}
             <button
               type="button"
               className="fm-text-button"
