@@ -247,8 +247,17 @@ async function openReportDialog() {
 }
 
 
-it("uses the initially visible UUID v8 question for the answer list, denominator, sentiment and export", async () => {
+it("uses the selected UUID v8 question for the answer list, denominator, sentiment and export", async () => {
   const read = mountWorkspace();
+  // 普通概览默认“全部问题”，显式选择医生问题后进入问题范围。
+  await screen.findByRole("option", { name: "台心医美有哪些医生" });
+  await waitFor(() =>
+    expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(""),
+  );
+  fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
+    target: { value: doctorId },
+  });
+
   await waitFor(() =>
     expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId),
   );
@@ -301,6 +310,10 @@ it("starts an embedded report in trends and preserves the host report route whil
 
 it("keeps UUID v8 question, platform and date filters together when switching the visible question", async () => {
   const read = mountWorkspace();
+  await screen.findByRole("option", { name: "台心医美有哪些医生" });
+  fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
+    target: { value: doctorId },
+  });
   await screen.findByText("回答 1 / 13");
   fireEvent.change(screen.getByLabelText("按模型筛选回答"), {
     target: { value: platforms[0].id },
@@ -387,7 +400,7 @@ it.each([true, false])("clears retired answer references when the category has n
     expect(params.get("questionCategory")).toBe("industry");
   });
   expect(screen.getByLabelText("按问题筛选回答")).toHaveValue("");
-  expect(screen.getByRole("option", { name: "暂无问题" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "全部问题（0）" })).toBeInTheDocument();
   await waitFor(() => expect(read.mock.calls.some(([path]) => path === "monitoring.answers.list")).toBe(true));
   expect(read.mock.calls.some(([, input]) =>
     (input.scope || input).questionId === retiredQuestionId,
@@ -396,7 +409,7 @@ it.each([true, false])("clears retired answer references when the category has n
   expect(screen.queryByText(/实时监控数据读取失败/)).not.toBeInTheDocument();
 });
 
-it("repairs a retired category question from an independent catalog despite rejected filtered reads", async () => {
+it("clears a retired category question from an independent catalog despite rejected filtered reads", async () => {
   const retiredQuestionId = "30000000-0000-4000-8000-000000000099";
   const read = mountWorkspace({
     search: `/monitoring-system?range=custom&from=2026-09-01&to=2026-09-15&questionCategory=industry&question=${retiredQuestionId}`,
@@ -406,7 +419,7 @@ it("repairs a retired category question from an independent catalog despite reje
   });
 
   await waitFor(() =>
-    expect(new URLSearchParams(window.location.search).get("question")).toBe(doctorId),
+    expect(new URLSearchParams(window.location.search).get("question")).toBe(""),
   );
   await screen.findByText("回答 1 / 13");
   expect(read.mock.calls.some(([, input]) =>
@@ -436,7 +449,7 @@ it("clears a historical question after its date window no longer contains any ca
     expect(params.get("answerQuestion")).toBe("");
     expect(params.get("answer")).toBe("");
   });
-  expect(screen.getByRole("option", { name: "暂无问题" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "全部问题（0）" })).toBeInTheDocument();
   expect(read.mock.calls.slice(previousReadCount).some(([, input]) =>
     (input.scope || input).questionId === doctorId,
   )).toBe(false);

@@ -655,7 +655,37 @@ function MonitoringWorkspaceController({
       : allQuestionOptions;
   const showIndustryMetrics = query.questionCategory === "industry";
   useEffect(() => {
-    if (!analysisOnly || detailActive || (serverData && !live.questionCatalogReady)) return;
+    if (serverData && !live.questionCatalogReady) return;
+    if (!analysisOnly) {
+      if (detailActive) return;
+      // 普通监控默认“全部问题”，不强制选择首题；仍需清理目录中已不存在的过期引用。
+      // “全部问题”下的正常回答选择（answerQuestion 有效）必须保留，否则会与
+      // 概览回答自动选择互相覆写。
+      const questionValid =
+        !query.question ||
+        questionOptions.some((question) => question.id === query.question);
+      const answerQuestionValid =
+        !query.answerQuestion ||
+        questionOptions.some((question) => question.id === query.answerQuestion);
+      if (questionValid && answerQuestionValid) return;
+      if (
+        query.question ||
+        query.answerQuestion ||
+        query.answerId ||
+        query.fullscreen
+      ) {
+        updateQuery(
+          {
+            question: undefined,
+            answerQuestion: undefined,
+            answerId: undefined,
+            fullscreen: false,
+          },
+          "replace",
+        );
+      }
+      return;
+    }
     const first =
       questionOptions.find((question) => question.id === query.question) ||
       questionOptions[0];

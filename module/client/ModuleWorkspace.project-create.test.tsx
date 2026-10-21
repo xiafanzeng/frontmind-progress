@@ -4,10 +4,14 @@ import ModuleWorkspace from "./ModuleWorkspace";
 import type { MonitoringPageProps } from "./pages/MonitoringPage";
 
 // Exercise the real workspace, project form, and tRPC/React Query transport.
-// The monitoring page only reports which project the workspace selected.
+// The monitoring page hosts the project tools and report through its slots;
+// render them so the real ModuleWorkspace behavior stays under test.
 vi.mock("./pages/MonitoringPage", () => ({
-  default: ({ project }: MonitoringPageProps) => (
-    <p data-testid="selected-project">{project?.name}</p>
+  default: ({ project, configurationTools, renderReport }: MonitoringPageProps) => (
+    <div>
+      {configurationTools}
+      {renderReport ? renderReport(undefined) : <p data-testid="selected-project">{project?.name}</p>}
+    </div>
   ),
 }));
 
@@ -62,8 +66,9 @@ function installServer(create: (input: unknown) => Promise<Response>) {
 
 async function openCreateForm() {
   await waitFor(() => expect(screen.getByTestId("selected-project")).toHaveTextContent("已有项目"));
-  const header = document.querySelector("header.fm-demo-header")!;
-  fireEvent.click(within(header as HTMLElement).getByRole("button", { name: "创建项目" }));
+  // 创建项目入口位于监控配置栏的“项目设置”折叠区内。
+  const settings = document.querySelector("details.fm-config-tools")!;
+  fireEvent.click(within(settings as HTMLElement).getByRole("button", { name: "创建项目" }));
   const dialog = await screen.findByRole("dialog", { name: "创建项目" });
   expect(within(dialog).getByRole("textbox", { name: /项目名称/ })).toHaveValue("");
   expect(within(dialog).getByRole("textbox", { name: /主品牌名称/ })).toHaveValue("");

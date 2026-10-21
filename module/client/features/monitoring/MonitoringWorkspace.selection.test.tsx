@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { RunAttempt } from "../../domain";
+import type { MonitorRun, RunAttempt } from "../../domain";
 import {
   demoConfigurations,
   demoProject,
@@ -16,6 +16,12 @@ const liveState = vi.hoisted(() => ({
   detailSettled: true,
   detailError: false,
   retryDetail: vi.fn(),
+}));
+const liveDetail = vi.hoisted(() => ({
+  runs: [] as MonitorRun[],
+  run: undefined as MonitorRun | undefined,
+  runAttempts: [] as RunAttempt[],
+  questions: [] as Array<{ id: string; label: string; category?: string | null }>,
 }));
 vi.mock("./useMonitoringDataSource", () => ({
   useMonitoringDataSource: () => ({
@@ -37,6 +43,45 @@ vi.mock("./useMonitoringDataSource", () => ({
     refresh: vi.fn(),
   }),
 }));
+// 问题明细（tab=answers）经由 useQuestionDetailData 读取运行与回答；
+// 这里沿用与 useMonitoringDataSource 相同的 liveState 驱动方式。
+vi.mock("./useQuestionDetailData", () => ({
+  useQuestionDetailData: () => ({
+    runs: liveDetail.runs,
+    run: liveDetail.run
+      ? { ...liveDetail.run, attempts: liveDetail.runAttempts }
+      : undefined,
+    questions: liveDetail.questions,
+    linkedAnswer: liveState.detailAttempt,
+    loading: !liveState.detailSettled,
+    error: liveState.detailError ? "指定回答读取失败" : undefined,
+    retry: liveState.retryDetail,
+    historyLimited: false,
+  }),
+  previewQuestionDetailData: () => ({
+    runs: [],
+    run: undefined,
+    questions: [],
+    loading: false,
+  }),
+}));
+
+function detailQuestions(runs: Array<{ attempts: RunAttempt[] }>) {
+  return [
+    ...new Map(
+      runs
+        .flatMap((item) => item.attempts)
+        .map((attempt) => [
+          attempt.questionId,
+          {
+            id: attempt.questionId,
+            label: attempt.question,
+            category: attempt.questionCategory,
+          },
+        ]),
+    ).values(),
+  ];
+}
 
 beforeEach(() => {
   liveState.attempts = [];
@@ -44,6 +89,10 @@ beforeEach(() => {
   liveState.detailSettled = true;
   liveState.detailError = false;
   liveState.retryDetail.mockClear();
+  liveDetail.runs = [];
+  liveDetail.run = undefined;
+  liveDetail.runAttempts = [];
+  liveDetail.questions = [];
   window.history.replaceState(
     {},
     "",
@@ -65,6 +114,10 @@ describe("submitted monitoring run selection", () => {
       answer: "这次手动提交后返回的新回答",
     };
     liveState.attempts = [priorAttempt];
+    liveDetail.runs = [freshRun, priorRun];
+    liveDetail.run = freshRun;
+    liveDetail.runAttempts = [];
+    liveDetail.questions = detailQuestions([freshRun]);
     const props = {
       project: demoProject,
       monitors: [makeDemoMonitor(monitorId, config, freshRun)],
@@ -91,6 +144,7 @@ describe("submitted monitoring run selection", () => {
     expect(screen.getByLabelText("选择日期范围")).toHaveValue("7d");
 
     liveState.attempts = [freshAttempt, priorAttempt];
+    liveDetail.runAttempts = [freshAttempt];
     rerender(<MonitoringWorkspace {...props} selectionRequest={request} />);
     await waitFor(() =>
       expect(new URLSearchParams(window.location.search).get("answer")).toBe(
@@ -156,6 +210,10 @@ it("preserves a deep-linked answer while its detail is pending and after it arri
   };
   liveState.attempts = [first];
   liveState.detailSettled = false;
+  liveDetail.runs = [run];
+  liveDetail.run = run;
+  liveDetail.runAttempts = [historical];
+  liveDetail.questions = detailQuestions([run]);
   window.history.replaceState(
     {},
     "",
@@ -189,7 +247,7 @@ it("preserves a deep-linked answer while its detail is pending and after it arri
     historical.id,
   );
   expect(screen.queryByText("最新回答")).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "重新读取回答" }));
+  fireEvent.click(screen.getByRole("button", { name: "重新读取" }));
   expect(liveState.retryDetail).toHaveBeenCalledTimes(1);
   liveState.detailError = false;
   liveState.detailAttempt = historical;
