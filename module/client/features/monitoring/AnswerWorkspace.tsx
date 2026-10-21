@@ -7,8 +7,9 @@ import {
   Minimize2,
   Image as ImageIcon,
   ExternalLink,
+  Link2,
 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -198,6 +199,8 @@ export default function AnswerWorkspace({
   sentiments,
   totalAnswers,
   showSentiment = true,
+  detailLayout = false,
+  selectionHeader,
 }: {
   attempts: RunAttempt[];
   selected?: RunAttempt;
@@ -218,8 +221,12 @@ export default function AnswerWorkspace({
   sentiments?: SentimentCounts | null;
   totalAnswers?: number;
   showSentiment?: boolean;
+  detailLayout?: boolean;
+  selectionHeader?: ReactNode;
 }) {
   const demo = useMonitoringDemo();
+  const [activeCitation, setActiveCitation] = useState<number>();
+  const [citationMessage, setCitationMessage] = useState("");
   const [screenshotOpen, setScreenshotOpen] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
     "idle",
@@ -241,6 +248,8 @@ export default function AnswerWorkspace({
     setNavigationError("");
     setCopyState("idle");
     setScreenshotOpen(false);
+    setActiveCitation(undefined);
+    setCitationMessage("");
   }, [selectionFence]);
   useEffect(
     () => () => {
@@ -248,6 +257,11 @@ export default function AnswerWorkspace({
     },
     [],
   );
+
+  useEffect(() => {
+    if (!detailLayout) return;
+    readingRef.current?.querySelectorAll<HTMLElement>(".fm-answer-scroll, .fm-qa-source-cards").forEach(element => element.scrollTo({ top: 0 }));
+  }, [selected?.id, detailLayout]);
 
   if (!selected)
     return (
@@ -337,7 +351,7 @@ export default function AnswerWorkspace({
   };
   const toolbar = (insideFullscreen = false) => (
     <header className="fm-answer-toolbar">
-      <nav className="fm-answer-navigation" aria-label="回答内容切换">
+      {detailLayout && !insideFullscreen ? <strong className="fm-qa-reading-title"><Link2 size={14} /> 回答正文与引用信源</strong> : <nav className="fm-answer-navigation" aria-label="回答内容切换">
         <button
           type="button"
           className="fm-secondary-button"
@@ -372,7 +386,7 @@ export default function AnswerWorkspace({
         >
           下一条回答 <ChevronRight size={16} />
         </button>
-      </nav>
+      </nav>}
 
       <div className="fm-answer-tools">
         <span className="fm-copy-feedback" aria-live="polite">
@@ -473,29 +487,71 @@ export default function AnswerWorkspace({
       showSentiment={showSentiment}
     />
   );
+  const focusSource = (number: number) => {
+    setActiveCitation(number);
+    setCitationMessage("");
+    if (sourceScope === "discovered") onSourceScopeChange("cited");
+    window.requestAnimationFrame(() => {
+      const target = readingRef.current?.querySelector<HTMLElement>(`[data-citation-source="${number}"]`);
+      const rail = readingRef.current?.querySelector<HTMLElement>(".fm-qa-source-cards");
+      if (target && rail) rail.scrollTo({ top: rail.scrollTop + target.getBoundingClientRect().top - rail.getBoundingClientRect().top - 4, behavior: "smooth" });
+      target?.focus({ preventScroll: true });
+      if (!target) setCitationMessage("本条引用的信源详情尚未返回。");
+    });
+  };
+  const locateCitation = (number: number) => {
+    const target = readingRef.current?.querySelector<HTMLAnchorElement>(`.fm-answer-reader [data-citation-number="${number}"]`);
+    if (!target) { setCitationMessage("正文未包含该来源的可定位引用标记。"); return; }
+    setActiveCitation(number);
+    setCitationMessage("");
+    const body = readingRef.current?.querySelector<HTMLElement>(".fm-answer-scroll");
+    if (body) body.scrollTo({ top: body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 24, behavior: "smooth" });
+    target.focus({ preventScroll: true });
+  };
+  const citations = <CitationRail
+    key={detailLayout ? selected.id : undefined}
+    attempt={selected}
+    scope={sourceScope}
+    onScopeChange={onSourceScopeChange}
+    cards={detailLayout}
+    activeCitation={activeCitation}
+    onLocateCitation={locateCitation}
+  />;
+  const ReadingCard = detailLayout ? "div" : Fragment;
   return (
     <section
       ref={readingRef}
-      className="fm-answer-workspace fm-reading-workspace"
+      className={`fm-answer-workspace fm-reading-workspace${detailLayout ? " fm-qa-reading" : ""}`}
     >
+      <ReadingCard {...(detailLayout ? { className: "fm-qa-reading-card" } : {})}>
+      {detailLayout && selectionHeader}
       {toolbar()}
       {navigationError && (
         <p className="fm-navigation-error" role="alert">
           {navigationError}
         </p>
       )}
-      <section className="fm-current-question" aria-label="当前回答问题">
+      {!detailLayout && <section className="fm-current-question" aria-label="当前回答问题">
         <strong>{selected.question}</strong>
-      </section>
-      <div className="fm-answer-layout">
+      </section>}
+      <div className="fm-answer-layout" onClick={detailLayout ? (event) => {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[data-citation-number]") : null;
+        const number = Number(target?.dataset.citationNumber);
+        if (!target || !Number.isSafeInteger(number) || number <= 0) return;
+        event.preventDefault();
+        focusSource(number);
+      } : undefined}>
         <AnswerReader attempt={selected} loading={detailLoading} />
+        {detailLayout && citations}
       </div>
-      {insights}
-      <CitationRail
-        attempt={selected}
-        scope={sourceScope}
-        onScopeChange={onSourceScopeChange}
-      />
+      {detailLayout && <p className="fm-qa-citation-feedback" role="status">{citationMessage || "点击正文引用编号可定位信源；模型或回答次数切换后，正文、信源与评估同步更新。"}</p>}
+      </ReadingCard>
+      {detailLayout ? <details className="fm-qa-assessment">
+        <summary><strong>当前回答解读</strong><span>{selected.brandMentioned === true ? "已提及品牌" : selected.brandMentioned === false ? "未提及品牌" : "品牌提及待判定"} · {selected.mentionPosition ? `品牌排名第 ${selected.mentionPosition} 位` : "未返回明确排名"}</span><span>查看判断依据</span></summary>
+        {insights}
+      </details> : insights}
+      {!detailLayout && citations}
       <ScreenshotViewerDialog
         open={screenshotOpen}
         attempt={selected}

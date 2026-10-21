@@ -1,20 +1,27 @@
-import { Link2, Check, Plus } from "lucide-react";
+import { Link2, Check, Plus, ExternalLink, CornerUpLeft } from "lucide-react";
 import { useState } from "react";
 import SourceEvidenceList from "@frontmind/module-ui/components/SourceEvidenceList";
 import type { RunAttempt } from "../../domain";
 import type { SourceScope } from "./types";
 import { useMonitoringDemo } from "../../MonitoringDemoContext";
 import { sourceEvidenceRows } from "./sourceEvidenceRows";
+import { safeExternalUrl } from "./selectors";
 import "./answer-insights.css";
 
 export default function CitationRail({
   attempt,
   scope,
   onScopeChange,
+  cards = false,
+  activeCitation,
+  onLocateCitation,
 }: {
   attempt: RunAttempt;
   scope: SourceScope;
   onScopeChange: (scope: SourceScope) => void;
+  cards?: boolean;
+  activeCitation?: number;
+  onLocateCitation?: (number: number) => void;
 }) {
   const demo = useMonitoringDemo();
   const [trackingScope, setTrackingScope] = useState<
@@ -47,7 +54,7 @@ export default function CitationRail({
     },
   ] as const;
   return (
-    <section className="fm-answer-sources" aria-label="引用信源">
+    <section className={`fm-answer-sources${cards ? " fm-qa-source-rail" : ""}`} aria-label="引用信源">
       <header className="fm-answer-section-heading">
         <h3>
           <Link2 size={16} />
@@ -100,7 +107,22 @@ export default function CitationRail({
           ))}
         </div>
       )}
-      <SourceEvidenceList
+      {cards ? <div className="fm-qa-source-cards">
+        {rows.map((row) => {
+          const url = safeExternalUrl(row.url || undefined);
+          const number = typeof row.number === "number" ? row.number : undefined;
+          return <article key={row.id} tabIndex={-1} data-citation-source={number} className={number === activeCitation ? "is-active" : ""}>
+            <header><strong>{row.number}. {row.title}</strong><span>{row.type === "cited" ? "文内引用" : "答案参考"}</span></header>
+            <p>{row.site || "来源未提供"}{row.publishedAt ? ` · ${row.publishedAt}` : ""}</p>
+            {row.excerpt && <blockquote>{row.excerpt}</blockquote>}
+            <footer>{url ? <a href={url} target="_blank" rel="noopener noreferrer">查看来源 <ExternalLink size={12} /></a> : <span>未提供可访问链接</span>}
+              {row.type === "cited" && number !== undefined && <button type="button" onClick={() => onLocateCitation?.(number)}>定位原文 <CornerUpLeft size={12} /></button>}
+              {demo && <button type="button" aria-pressed={demo.trackedSources.has(row.id)} onClick={() => demo.toggleSource(row.id)}>{demo.trackedSources.has(row.id) ? "已追踪 · 演示" : "追踪引用 · 演示"}</button>}
+            </footer>
+          </article>;
+        })}
+        {!rows.length && <p className="fm-qa-notice">{scope === "cited" ? "本条回答暂无文内引用" : scope === "discovered" ? "本条回答暂无答案参考" : "本条回答暂无引用信源"}</p>}
+      </div> : <SourceEvidenceList
         rows={rows}
         resetKey={`${attempt.id}:${scope}:${trackingScope}`}
         emptyText={
@@ -130,7 +152,7 @@ export default function CitationRail({
               )
             : undefined
         }
-      />
+      />}
     </section>
   );
 }

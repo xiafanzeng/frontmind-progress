@@ -2,7 +2,7 @@ import type { MonitoringQuestionSeed } from "../domain";
 import { useBusinessWorkspace } from "../host-runtime";
 import { activeEnterpriseProjectId } from "../host-runtime";
 import { ArchiveRestore, X } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 
 import Modal from "../components/Modal";
@@ -38,6 +38,8 @@ export type MonitoringRunResult = void | { runId: string };
 export type MonitoringPageProps = {
   createMonitorRequest?: string;
   analysisOnly?: boolean;
+  renderReport?: (runId?: string) => ReactNode;
+  configurationTools?: ReactNode;
   initialTab?: "overview" | "trends";
   project?: ProjectSummary;
   seedQuestions?: Array<string | MonitoringQuestionSeed>;
@@ -121,6 +123,8 @@ export default function MonitoringPage({
   createMonitorRequest,
   analysisOnly = false,
   initialTab,
+  renderReport,
+  configurationTools,
   monitors,
   deletedMonitors = [],
   models,
@@ -605,6 +609,8 @@ export default function MonitoringPage({
           <MonitoringWorkspace
             analysisOnly={analysisOnly}
             initialTab={initialTab}
+            renderReport={renderReport}
+            configurationTools={configurationTools}
             project={project}
             monitors={monitors}
             deletedCount={deletedMonitors.length}

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { FlaskConical, RotateCcw, RadioTower } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import MonitoringPage from "../module/client/pages/MonitoringPage";
 import RunDetailPage from "../module/client/pages/RunDetailPage";
 import type { ProgressWorkspaceView } from "../module/client/ModuleWorkspace";
@@ -82,40 +82,6 @@ export default function MonitoringDemo({ view = "monitoring" }: { view?: Progres
   };
   return (
     <div className="monitoring-module monitoring-demo-shell">
-      <header className="fm-demo-header module-toolbar">
-        <div>
-          <RadioTower size={22} />
-          <span>
-            <strong>问题监控</strong>
-            <small>品牌在 AI 回答中的表现与引用来源</small>
-          </span>
-        </div>
-        <div>
-          <span className="fm-demo-badge">
-            <FlaskConical size={14} /> 本地演示
-          </span>
-          <button
-            className="fm-secondary-button"
-            onClick={() => {
-              setRuns(initialRuns());
-              setMonitors(
-                Object.entries(demoConfigurations).map(([id, config]) =>
-                  makeDemoMonitor(id, config, makeDemoRun(id, config)),
-                ),
-              );
-              setConfigs(demoConfigurations);
-              setDeleted([]);
-              setTrackedSources(new Set());
-              setNotice("演示数据已重置。");
-            }}
-          >
-            <RotateCcw size={14} /> 重置演示
-          </button>
-        </div>
-      </header>
-      <p className="fm-demo-notice" role="status">
-        {notice}
-      </p>
       <MonitoringDemoContext.Provider
         value={{
           trackedSources,
@@ -138,7 +104,29 @@ export default function MonitoringDemo({ view = "monitoring" }: { view?: Progres
           },
         }}
       >
-        {view === "reports" ? <RunDetailPage embedded run={runs.find(run => run.id === selectedRunId) ?? runs[0]} comparisonRuns={runs} allowCancel={false} onCancel={() => setNotice("本地预览不会停止真实监控。")} /> : <MonitoringPage
+        <MonitoringPage
+          renderReport={view === "reports" ? (runId) => {
+            const reportRun = runs.find(item => item.id === runId);
+            return reportRun ? <RunDetailPage embedded run={reportRun} comparisonRuns={runs} allowCancel={false} onCancel={() => setNotice("本地预览不会停止真实监控。")} /> : <p className="fm-qa-notice">该配置暂无运行报告。</p>;
+          } : undefined}
+          configurationTools={<details className="fm-config-tools"><summary>本地预览 · 示例数据</summary><p role="status">{notice}</p>
+          <button
+            className="fm-secondary-button"
+            onClick={() => {
+              setRuns(initialRuns());
+              setMonitors(
+                Object.entries(demoConfigurations).map(([id, config]) =>
+                  makeDemoMonitor(id, config, makeDemoRun(id, config)),
+                ),
+              );
+              setConfigs(demoConfigurations);
+              setDeleted([]);
+              setTrackedSources(new Set());
+              setNotice("演示数据已重置。");
+            }}
+          >
+            <RotateCcw size={14} /> 重置演示
+          </button></details>}
           demoMode
           project={demoProject}
           monitors={monitors}
@@ -195,7 +183,7 @@ export default function MonitoringDemo({ view = "monitoring" }: { view?: Progres
           latestRun={runs[0]}
           selectedRunId={selectedRunId}
           onSelectedRunChange={setSelectedRunId}
-        />}
+        />
         <div id="monitoring-module-portals" />
       </MonitoringDemoContext.Provider>
     </div>
