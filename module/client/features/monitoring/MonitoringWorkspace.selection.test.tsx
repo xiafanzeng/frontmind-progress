@@ -140,7 +140,8 @@ describe("submitted monitoring run selection", () => {
     };
     const { rerender } = render(<MonitoringWorkspace {...props} />);
     expect(screen.getByLabelText("选择日期范围")).toHaveValue("custom");
-    expect(screen.getByRole("button", { name: "复制" })).toBeInTheDocument();
+    // 概览标签由五个子模块承载；回答视图（含复制）位于「问答明细」标签。
+    expect(screen.getByRole("button", { name: "问答明细" })).toBeInTheDocument();
 
     const request = { monitorId, runId: freshRun.id, nonce: 1 };
     rerender(<MonitoringWorkspace {...props} selectionRequest={request} />);
