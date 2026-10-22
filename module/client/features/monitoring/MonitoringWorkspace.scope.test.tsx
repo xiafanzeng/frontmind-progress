@@ -93,6 +93,8 @@ function mountWorkspace(options: {
   ) => MonitoringSummaryData["filters"]["questions"];
 } = {}) {
   const read = vi.fn((path: string, input: any) => {
+    if (path === "monitors.get") return { version: { competitors: [] } };
+    if (path === "runs.list") return [];
     const scope: MonitoringScope = input.scope || input;
     const availableQuestions = options.questionsForScope?.(scope) || questions;
     if (
@@ -155,7 +157,11 @@ function mountWorkspace(options: {
     }
     if (path === "monitoring.answers.list")
       return { items: selected, nextCursor: null };
-    if (path === "monitoring.analysis") return { kind: "trends", points: [] };
+    if (path === "monitoring.analysis") {
+      if (input.kind === "citations") return { kind: "citations", total: 0, items: [], contents: [] };
+      if (input.kind === "sources") return { kind: "sources", total: 0, cited: 0, items: [], publicationTimeBuckets: [] };
+      return { kind: "trends", granularity: "day", points: [] };
+    }
     if (path === "monitoring.answers.get") {
       const item = items.find((item) => item.answerId === input.answerId)!;
       return {
@@ -246,6 +252,12 @@ async function openReportDialog() {
   await screen.findByRole("checkbox", { name: /台心医美有哪些医生/ });
 }
 
+async function expectOverviewEffective(value: number) {
+  await waitFor(() => expect(
+    within(screen.getByText("累计有效回答").closest("article")!).getByText(String(value), { selector: "strong" }),
+  ).toBeVisible());
+}
+
 
 it("uses the selected UUID v8 question for the answer list, denominator, sentiment and export", async () => {
   const read = mountWorkspace();
@@ -261,11 +273,15 @@ it("uses the selected UUID v8 question for the answer list, denominator, sentime
   await waitFor(() =>
     expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId),
   );
-  await waitFor(() => expect(screen.getByText("回答 1 / 13")).toBeVisible());
-  expect(screen.getByText("13 条已加载回答")).toBeVisible();
-  expect(screen.getByRole("img", { name: "13 条有效回答" })).toBeVisible();
-  expect(await screen.findByText("台心医美有哪些医生的回答1")).toBeVisible();
-  expect(screen.queryByText("回答 1 / 25")).not.toBeInTheDocument();
+  await expectOverviewEffective(13);
+  const navigation = screen.getByRole("tablist", { name: "概览分析子模块" });
+  expect(within(navigation).getAllByRole("tab")).toHaveLength(5);
+  for (const label of ["趋势分析", "情感分析", "信源分析", "AI 优化建议", "指标看板"]) {
+    fireEvent.click(within(navigation).getByRole("tab", { name: label }));
+    expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId);
+    expect(screen.getByLabelText("开始日期")).toHaveValue("2026-09-01");
+  }
+  await expectOverviewEffective(13);
   expect(
     read.mock.calls.some(
       ([path, input]) =>
@@ -314,29 +330,29 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
     target: { value: doctorId },
   });
-  await screen.findByText("回答 1 / 13");
+  await expectOverviewEffective(13);
   fireEvent.change(screen.getByLabelText("按模型筛选回答"), {
     target: { value: platforms[0].id },
   });
-  await screen.findByText("回答 1 / 7");
+  await expectOverviewEffective(7);
   fireEvent.change(screen.getByLabelText("开始日期"), {
     target: { value: "2026-09-13" },
   });
-  await screen.findByText("回答 1 / 4");
+  await expectOverviewEffective(4);
   fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
     target: { value: reputationId },
   });
-  await screen.findByText("回答 1 / 3");
-  expect(screen.getByRole("img", { name: "3 条有效回答" })).toBeVisible();
+  await expectOverviewEffective(3);
+  fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
   const scopeSentiment = screen.getByLabelText("当前筛选范围情感分布");
   expect(
-    within(scopeSentiment).getByText(/2026-09-13 至 2026-09-14/),
+    screen.getByText(/2026-09-13 — 2026-09-14/),
   ).toBeVisible();
   expect(
-    within(scopeSentiment).getByText("负面").closest("li"),
+    within(scopeSentiment).getByText("负面").closest("article"),
   ).toHaveTextContent(/负面\s*3\s*100.0%/);
   expect(
-    within(scopeSentiment).getByText("未判定").closest("li"),
+    within(scopeSentiment).getByText("未判定").closest("article"),
   ).toHaveTextContent(/未判定\s*0\s*0.0%/);
   expect(
     read.mock.calls
@@ -421,7 +437,7 @@ it("clears a retired category question from an independent catalog despite rejec
   await waitFor(() =>
     expect(new URLSearchParams(window.location.search).get("question")).toBe(""),
   );
-  await screen.findByText("回答 1 / 13");
+  await expectOverviewEffective(13);
   expect(read.mock.calls.some(([, input]) =>
     (input.scope || input).questionId === retiredQuestionId,
   )).toBe(false);
@@ -437,7 +453,7 @@ it("clears a historical question after its date window no longer contains any ca
         ? [{ ...questions[0]!, category: "industry" }]
         : [],
   });
-  await screen.findByText("回答 1 / 13");
+  await expectOverviewEffective(13);
   const previousReadCount = read.mock.calls.length;
   fireEvent.change(screen.getByLabelText("开始日期"), {
     target: { value: "2026-09-14" },

@@ -23,6 +23,9 @@ const liveDetail = vi.hoisted(() => ({
   runAttempts: [] as RunAttempt[],
   questions: [] as Array<{ id: string; label: string; category?: string | null }>,
 }));
+// Selection tests isolate the existing answer-navigation controller. Overview
+// now has its own real tRPC reads, covered by the provider-backed scope tests.
+vi.mock("./overview/OverviewWorkspace", () => ({ default: () => null }));
 vi.mock("./useMonitoringDataSource", () => ({
   useMonitoringDataSource: () => ({
     summary: undefined,

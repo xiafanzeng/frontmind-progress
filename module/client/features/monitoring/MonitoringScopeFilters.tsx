@@ -8,6 +8,7 @@ import type { MonitoringSummaryData } from "./useMonitoringDataSource";
 
 type Props = {
   navigation?: ReactNode;
+  navigationFirst?: boolean;
   project: ProjectSummary;
   query: MonitoringQueryState;
   run?: MonitorRun;
@@ -17,11 +18,11 @@ type Props = {
 };
 
 /** Shared scope for overview and question detail; the answer selection stays local. */
-export default function MonitoringScopeFilters({ project, query, run, summary, questions, onChange, navigation }: Props) {
+export default function MonitoringScopeFilters({ project, query, run, summary, questions, onChange, navigation, navigationFirst = false }: Props) {
   const changeFilter = (patch: Partial<MonitoringQueryState>) => onChange({ answerQuestion: undefined, answerId: undefined, fullscreen: false, ...patch });
   const changeDates = (patch: Partial<MonitoringQueryState>) => changeFilter({ runId: undefined, ...patch });
   const categoryLabel = (key: string) => KEYWORD_CATEGORY_OPTIONS.find(item => item.key === key)?.label.replace(/词$/, "问题");
-  return <div className="fm-qa-sticky-scope"><div className="fm-qa-scope">
+  return <div className={`fm-qa-sticky-scope${navigationFirst ? " fm-overview-scope" : ""}`}>{navigationFirst && navigation}<div className="fm-qa-scope">
     <div className="fm-qa-filters">
       <MonitoringFilterBar project={project} run={run} summary={summary} hideQuestion question={query.question} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
         onQuestionChange={(value) => changeFilter({ question: value })}
@@ -36,5 +37,5 @@ export default function MonitoringScopeFilters({ project, query, run, summary, q
       </div>
     </div>
     <p className="fm-qa-scope-hint">筛选同时作用于概览、问题明细与引用信源 · {query.from} — {shiftCalendarDate(query.to, -1)}</p>
-  </div>{navigation}</div>;
+  </div>{!navigationFirst && navigation}</div>;
 }

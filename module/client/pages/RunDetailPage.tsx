@@ -29,6 +29,7 @@ import "../features/monitoring/reference-ui.css";
 import "@frontmind/module-ui/dashboard/resource-reading-layout.css";
 import "./run-report.css";
 import RunTrendAnalysis from "../components/RunTrendAnalysis";
+import QuestionOptimizationReport from "../features/monitoring/overview/QuestionOptimizationReport";
 import {
   MonitoringMarkdown,
   MonitoringReasoning,
@@ -59,6 +60,7 @@ const RUN_DETAIL_ANCHORS = [
   ["citations", "引用来源"],
   ["signals", "模型与引用"],
   ["trend", "趋势分析"],
+  ["question-optimization", "单题优化"],
 ] as const;
 
 const ANCHOR_LOOKAHEAD_PX = 72;
@@ -985,6 +987,7 @@ export default function RunDetailPage({
             showIndustryMetrics={showIndustryMetrics}
           />
         </section>
+        <QuestionOptimizationReport key={run.id} run={run} />
       </div>
     </div>
   );
