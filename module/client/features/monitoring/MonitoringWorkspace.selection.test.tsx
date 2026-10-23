@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TRPCClientError } from "@trpc/client";
+import { observable } from "@trpc/server/observable";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MonitorRun, RunAttempt } from "../../domain";
 import {
@@ -8,6 +12,7 @@ import {
   makeDemoMonitor,
   makeDemoRun,
 } from "../../../tests/monitoring-fixtures";
+import { trpc } from "../../trpc";
 import MonitoringWorkspace from "./MonitoringWorkspace";
 
 const liveState = vi.hoisted(() => ({
@@ -68,6 +73,47 @@ vi.mock("./useQuestionDetailData", () => ({
     loading: false,
   }),
 }));
+
+// 监控配置侧栏在 serverData 模式经真实 tRPC 读取分组；选择行为测试提供空分组，
+// 与 scope 测试的 provider 包装保持同一模式。
+function renderWorkspace(ui: ReactElement) {
+  const client = trpc.createClient({
+    links: [
+      () => ({ op }) =>
+        observable((observer) => {
+          if (op.path === "projects.monitorOrganization.get") {
+            observer.next({
+              result: {
+                data: { version: 1, revision: 0, groups: [], membership: {} },
+              },
+            });
+            observer.complete();
+            return;
+          }
+          observer.error(
+            TRPCClientError.from(
+              new Error(`Unexpected tRPC read in selection tests: ${op.path}`),
+            ),
+          );
+        }),
+    ],
+  });
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+  const wrap = (element: ReactElement) => (
+    <QueryClientProvider client={queryClient}>
+      <trpc.Provider client={client} queryClient={queryClient}>
+        {element}
+      </trpc.Provider>
+    </QueryClientProvider>
+  );
+  const view = render(wrap(ui));
+  return {
+    ...view,
+    rerender: (element: ReactElement) => view.rerender(wrap(element)),
+  };
+}
 
 function detailQuestions(runs: Array<{ attempts: RunAttempt[] }>) {
   return [
@@ -138,7 +184,7 @@ describe("submitted monitoring run selection", () => {
       onDelete: vi.fn(),
       onRefresh: vi.fn(async () => {}),
     };
-    const { rerender } = render(<MonitoringWorkspace {...props} />);
+    const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
     expect(screen.getByLabelText("选择日期范围")).toHaveValue("custom");
     // 概览标签由五个子模块承载；回答视图（含复制）位于「问答明细」标签。
     expect(screen.getByRole("button", { name: "问答明细" })).toBeInTheDocument();
@@ -184,7 +230,7 @@ it("labels enabled configuration independently of a finished run and only toggle
     onDelete: vi.fn(),
     onRefresh: vi.fn(async () => {}),
   };
-  const { rerender } = render(<MonitoringWorkspace {...props} />);
+  const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
   expect(screen.getAllByText("已启用").length).toBeGreaterThan(0);
   expect(screen.queryByText("运行中")).not.toBeInTheDocument();
   expect(
@@ -240,7 +286,7 @@ it("preserves a deep-linked answer while its detail is pending and after it arri
     onDelete: vi.fn(),
     onRefresh: vi.fn(async () => {}),
   };
-  const { rerender } = render(<MonitoringWorkspace {...props} />);
+  const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
   expect(new URLSearchParams(window.location.search).get("answer")).toBe(
     historical.id,
   );
