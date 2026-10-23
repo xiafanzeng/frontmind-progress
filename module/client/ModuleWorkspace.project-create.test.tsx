@@ -133,6 +133,8 @@ it("switches the shared shell report tab without creating a run or losing the se
   const view = render(<ModuleWorkspace view="monitoring" />);
   await screen.findByText("已有项目", { selector: '[data-testid="selected-project"]' });
   view.rerender(<ModuleWorkspace view="reports" />);
+  expect(await screen.findByText("演示数据 · 非真实评估")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "返回原报告" }));
   expect(await screen.findByText("暂无运行报告。完成一次监控后，可在这里查看回答、引用和报告。")).toBeVisible();
   expect(screen.queryByTestId("selected-project")).not.toBeInTheDocument();
   view.rerender(<ModuleWorkspace view="monitoring" />);
