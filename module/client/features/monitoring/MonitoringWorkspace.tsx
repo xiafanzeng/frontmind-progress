@@ -245,6 +245,7 @@ function MonitoringWorkspaceController({
   const initializedCategoryMonitorRef = useRef<string | undefined>(undefined);
   const live = useDataSource({
     enabled: serverData && !detailActive,
+    summaryOnly: !analysisOnly,
     query,
     timezone: project.timezone,
   });
@@ -926,7 +927,7 @@ function MonitoringWorkspaceController({
                   navigation={detailNavigation}
                 />
               ) : <>
-              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={allQuestionOptions} onChange={updateQuery} navigation={detailNavigation} navigationFirst /> : <MonitoringFilterBar
+              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={questionOptions} questionsCategoryScoped={serverData} onChange={updateQuery} navigation={detailNavigation} overview /> : <MonitoringFilterBar
                 project={project}
                 run={run}
                 summary={serverData ? live.catalogSummary : undefined}

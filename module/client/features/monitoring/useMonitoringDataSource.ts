@@ -262,11 +262,16 @@ export function useMonitoringDataSource({
   enabled,
   query,
   timezone,
+  summaryOnly = false,
 }: {
   enabled: boolean;
   query: MonitoringQueryState;
   timezone: string;
+  summaryOnly?: boolean;
 }) {
+  // Overview owns its bounded evidence cursor; do not keep a second answer
+  // observer polling every page that it has read. Other views retain live reads.
+  const viewReadOptions = summaryOnly ? { ...liveReadOptions, refetchInterval: false as const, refetchOnWindowFocus: false } : liveReadOptions;
   const validMonitor = Boolean(enabled && isMonitoringUuid(query.monitorId));
   const bounds = calendarDateRangeToUtc(query.from, query.to, timezone);
   const catalogScope = {
@@ -276,7 +281,7 @@ export function useMonitoringDataSource({
     subject: { kind: "self" } as const,
   };
   const catalog = trpc.monitoring.summary.useQuery(catalogScope, {
-    ...liveReadOptions,
+    ...viewReadOptions,
     enabled: validMonitor,
     staleTime: 30_000,
   });
@@ -291,7 +296,7 @@ export function useMonitoringDataSource({
         : {}),
     },
     {
-      ...liveReadOptions,
+      ...viewReadOptions,
       enabled: validMonitor && Boolean(query.questionCategory),
       staleTime: 30_000,
     },
@@ -334,15 +339,15 @@ export function useMonitoringDataSource({
     ...(validModel ? { platformId: query.model! } : {}),
   };
   const summary = trpc.monitoring.summary.useQuery(scope, {
-    ...liveReadOptions,
+    ...viewReadOptions,
     enabled: scopeReady,
     staleTime: 30_000,
   });
   const answers = trpc.monitoring.answers.list.useInfiniteQuery(
     { scope, limit: 50 },
     {
-      ...liveReadOptions,
-      enabled: scopeReady,
+      ...viewReadOptions,
+      enabled: scopeReady && !summaryOnly,
       staleTime: 15_000,
       getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     },
@@ -365,8 +370,8 @@ export function useMonitoringDataSource({
       subject: scope.subject,
     },
     {
-      ...liveReadOptions,
-      enabled: scopeReady && detailDecision.shouldFetch,
+      ...viewReadOptions,
+      enabled: scopeReady && !summaryOnly && detailDecision.shouldFetch,
       staleTime: 30_000,
     },
   );
@@ -374,16 +379,16 @@ export function useMonitoringDataSource({
   const analysis = trpc.monitoring.analysis.useQuery(
     { scope, kind: kind || "metrics" },
     {
-      ...liveReadOptions,
-      enabled: scopeReady && Boolean(kind),
+      ...viewReadOptions,
+      enabled: scopeReady && !summaryOnly && Boolean(kind),
       staleTime: 30_000,
     },
   );
-  const listAttempts = scopeReady
+  const listAttempts = scopeReady && !summaryOnly
     ? attemptsFromAnswerPages(answers.data?.pages)
     : [];
   const detailMatchesScope = Boolean(
-    scopeReady &&
+      scopeReady && !summaryOnly &&
       answerDetail.data &&
       monitoringAnswerMatchesScope(answerDetail.data, bounds, scope),
   );
@@ -450,22 +455,24 @@ export function useMonitoringDataSource({
       questionCatalog.error?.message ||
       (scopeReady
         ? summary.error?.message ||
-          answers.error?.message ||
-          (detailDecision.shouldFetch
+          (!summaryOnly ? answers.error?.message : undefined) ||
+          (!summaryOnly && detailDecision.shouldFetch
             ? answerDetail.error?.message
             : undefined) ||
-          analysis.error?.message
+          (!summaryOnly ? analysis.error?.message : undefined)
         : undefined),
     refresh: async () => {
       if (!validMonitor) return;
       const requests: Array<Promise<unknown>> = [catalog.refetch()];
       if (query.questionCategory) requests.push(categoryCatalog.refetch());
       if (scopeReady) {
-        requests.push(summary.refetch(), answers.refetch());
-        if (detailDecision.shouldFetch) requests.push(answerDetail.refetch());
-        if (kind) requests.push(analysis.refetch());
+        requests.push(summary.refetch());
+        if (!summaryOnly) requests.push(answers.refetch());
+        if (!summaryOnly && detailDecision.shouldFetch) requests.push(answerDetail.refetch());
+        if (!summaryOnly && kind) requests.push(analysis.refetch());
       }
       await Promise.all(requests);
     },
   };
 }
+
