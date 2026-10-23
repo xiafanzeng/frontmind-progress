@@ -42,6 +42,7 @@ import MonitoringScopeFilters from "./MonitoringScopeFilters";
 import MonitoringRunStatus from "./MonitoringRunStatus";
 import QuestionDetailWorkspace from "./QuestionDetailWorkspace";
 import MonitoringMetricCards from "./panels/MonitoringMetricCards";
+import OverviewWorkspace from "./overview/OverviewWorkspace";
 import {
   monitoringDateWindow,
   monitoringExportHref,
@@ -243,6 +244,7 @@ function MonitoringWorkspaceController({
   const initializedCategoryMonitorRef = useRef<string | undefined>(undefined);
   const live = useDataSource({
     enabled: serverData && !detailActive,
+    summaryOnly: !analysisOnly,
     query,
     timezone: project.timezone,
   });
@@ -789,7 +791,7 @@ function MonitoringWorkspaceController({
   const detailNavigation = !analysisOnly && (
     <nav className="fm-tabs fm-qa-navigation" aria-label="问题监控视图">
       <button id="monitor-tab-overview" type="button" aria-pressed={!detailActive} className={!detailActive ? "active" : ""} onClick={() => updateQuery({ tab: "overview", fullscreen: false })}>概览</button>
-      <button id="monitor-tab-answers" type="button" aria-pressed={detailActive} className={detailActive ? "active" : ""} onClick={() => updateQuery({ tab: "answers", fullscreen: false })}>问题明细</button>
+      <button id="monitor-tab-answers" type="button" aria-pressed={detailActive} className={detailActive ? "active" : ""} onClick={() => updateQuery({ tab: "answers", fullscreen: false })}>问答明细</button>
     </nav>
   );
 
@@ -924,7 +926,7 @@ function MonitoringWorkspaceController({
                   navigation={detailNavigation}
                 />
               ) : <>
-              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={allQuestionOptions} onChange={updateQuery} navigation={detailNavigation} /> : <MonitoringFilterBar
+              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={questionOptions} questionsCategoryScoped={serverData} onChange={updateQuery} navigation={detailNavigation} overview /> : <MonitoringFilterBar
                 project={project}
                 run={run}
                 summary={serverData ? live.catalogSummary : undefined}
@@ -952,6 +954,19 @@ function MonitoringWorkspaceController({
                 }}
                 onSubjectChange={(subject) => updateQuery({ subject })}
               />}
+              {!analysisOnly && <OverviewWorkspace
+                project={project}
+                monitor={visibleSelectedMonitor}
+                query={query}
+                summary={serverData ? live.summary : undefined}
+                catalog={serverData ? live.catalogSummary : undefined}
+                runs={rangedRuns}
+                serverData={serverData}
+                onChange={updateQuery}
+                onConfigure={() => onOpenDetails(visibleSelectedMonitor)}
+                onReport={() => setReportDialogOpen(true)}
+              />}
+              {analysisOnly && <>
               {showIndustryMetrics && (
                 <MonitoringMetricCards
                   monitor={visibleSelectedMonitor}
@@ -1025,6 +1040,7 @@ function MonitoringWorkspaceController({
                     : buildSentimentInsights(visibleAnswerAttempts).counts
                 }
               />
+              </>}
               </>}
 
             </div>
