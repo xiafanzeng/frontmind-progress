@@ -1,5 +1,5 @@
 import { BarChart3, Lightbulb, Medal, RadioTower, Target } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { MonitorRun, MonitorSummary, ProjectSummary, RunAttempt } from "../../../domain";
 import type { MonitoringQueryState } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
@@ -24,6 +24,10 @@ type Props = {
 };
 
 function OverviewContent({ project, monitor, query, summary, serverData, onChange, onConfigure, onReport, data, tab, setTab }: Props & { data: OverviewData; tab: OverviewTab; setTab: (tab: OverviewTab) => void }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    scrollRef.current?.closest<HTMLElement>(".fm-monitor-detail")?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [tab, monitor.id]);
   const bounds = rangeBounds(query, project.timezone);
   const current = data.snapshots.filter((run) => Date.parse(run.createdAt) >= bounds.from && Date.parse(run.createdAt) < bounds.to);
   const previous = data.snapshots.filter((run) => Date.parse(run.createdAt) < bounds.from);
@@ -52,12 +56,12 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
     { key: "averagePosition" as const, label: "平均排名", icon: <BarChart3 size={18} />, hint: "仅统计有效且提及的已知排名" },
     { key: "top3Rate" as const, label: "Top3 推荐率", icon: <Medal size={18} />, hint: "前三提及回答 / 有效回答" },
   ];
-  return <div className="fm-overview-workspace">
+  return <div ref={scrollRef} className="fm-overview-workspace fm-ov-content" tabIndex={0} aria-label="概览分析内容">
     <nav className="fm-ov-nav fm-segmented" role="tablist" aria-label="概览分析子模块">{tabs.map((item, index) => <button type="button" role="tab" id={`overview-tab-${item.id}`} key={item.id} aria-selected={tab === item.id} aria-controls={`overview-panel-${item.id}`} tabIndex={tab === item.id ? 0 : -1} className={tab === item.id ? "active" : ""} onClick={() => setTab(item.id)} onKeyDown={(event) => {
       const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : undefined;
       if (next === undefined) return;
       event.preventDefault(); setTab(tabs[next]!.id);
-      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]")[next]?.focus();
+      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]")[next]?.focus({ preventScroll: true });
     }}>{item.id === "suggestions" && <Lightbulb size={16} />}{item.label}{item.id === "suggestions" && suggestions.some((suggestion) => suggestion.evidence.length > 0) && <span className="fm-ov-nav-count" title="有真实回答证据的核查方向">{suggestions.filter((suggestion) => suggestion.evidence.length > 0).length}</span>}</button>)}</nav>
     {data.error && <p className="fm-ov-notice pending" role="alert">部分监控数据读取失败：{data.error}。未读取的数据不视为零，请稍后刷新。</p>}
     <div className="fm-ov-coverage"><span role="status">{data.loading ? "正在读取监控数据…" : `已读取当前周期 ${current.length} 个批次`}</span>{data.canLoadMore && <button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.loadMore()}>继续读取历史证据</button>}<button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.refresh()}>刷新数据</button><details><summary>查看数据范围与口径</summary><p>指标卡使用当前筛选的完整汇总；词云和建议依据已读取的回答。每次扩展最多 3 个完整批次，使用现有游标读取历史，不受最近 100 批限制。{data.complete ? "当前所需周期的目录与证据已读取完整。" : "分析证据尚未完整，比较仅在样本齐全且可比时显示。"}{data.listLimited && "历史目录尚有下一页，可继续读取；未读部分不视为无数据。"}</p></details></div>

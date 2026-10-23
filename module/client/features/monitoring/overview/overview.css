@@ -249,10 +249,6 @@
 .monitoring-module .fm-overview-workspace .fm-ov-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; color: var(--ov-muted); font-size: 12px; }
 .monitoring-module .fm-overview-workspace .fm-ov-method { font-size: 13px; color: var(--ov-muted); }
 .monitoring-module .fm-overview-workspace .fm-ov-method p { margin-top: 10px; padding: 12px 16px; background: #f5f8fc; border-radius: 8px; }
-/* The existing detail filters retain their order; only overview opts in. */
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope { position: static; padding-top: 0; box-shadow: none; container: overview-scope / inline-size; }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-qa-navigation button.active { border-bottom-color: var(--fm-primary, #2867a5); color: var(--fm-primary, #2867a5); }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-custom-date-range { padding-bottom: 0; gap: 8px; }
 @container overview (max-width: 900px) {
   .monitoring-module .fm-overview-workspace .fm-ov-metrics,
   .monitoring-module .fm-overview-workspace .fm-ov-sentiments { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -268,18 +264,7 @@
   .monitoring-module .fm-overview-workspace .fm-ov-suggestion > footer { flex-direction: column; align-items: stretch; }
   .monitoring-module .fm-overview-workspace .fm-ov-timeline { padding-left: 5px; }
 }
-/* Use available content width, including when host sidebars are expanded. */
-@container overview-scope (max-width: 800px) {
-  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-qa-filters { grid-template-columns: repeat(3,minmax(0,1fr)); }
-}
-@container overview-scope (max-width: 560px) {
-  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-qa-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-custom-date-range { grid-template-columns: minmax(0,1fr); justify-items: stretch; }
-  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-custom-date-range > span { text-align: center; }
-}
-@container overview-scope (max-width: 360px) {
-  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-overview-scope .fm-qa-filters { grid-template-columns: minmax(0,1fr); }
-}
+
 
 
 

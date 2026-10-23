@@ -495,8 +495,6 @@ export default function AnswerWorkspace({
       const target = readingRef.current?.querySelector<HTMLElement>(`[data-citation-source="${number}"]`);
       const rail = readingRef.current?.querySelector<HTMLElement>(".fm-qa-source-cards");
       if (target && rail) {
-        // In a stacked narrow layout, also bring the destination pane into view.
-        rail.scrollIntoView({ block: "nearest", inline: "nearest" });
         rail.scrollTo({ top: rail.scrollTop + target.getBoundingClientRect().top - rail.getBoundingClientRect().top - 4, behavior: "smooth" });
       }
       target?.focus({ preventScroll: true });
@@ -510,7 +508,6 @@ export default function AnswerWorkspace({
     setCitationMessage("");
     const body = readingRef.current?.querySelector<HTMLElement>(".fm-answer-scroll");
     if (body) {
-      body.scrollIntoView({ block: "nearest", inline: "nearest" });
       body.scrollTo({ top: body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 24, behavior: "smooth" });
     }
     target.focus({ preventScroll: true });
