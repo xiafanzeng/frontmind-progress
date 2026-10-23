@@ -143,6 +143,7 @@ import {translateRepositoryErrors} from './route-errors.js';
 import {z} from 'zod';
 import {TRPCError} from '@trpc/server';
 import { checkMoliConnection } from './providers/moli/connection.js';
+import { monitorOrganizationInputSchema, monitorOrganizationSchema, saveMonitorOrganizationInputSchema } from '../contracts/monitor-organization.js';
 export function createProgressRoutes<Context extends object>(core:ProgressRouteCore<Context>) {
  const t=initTRPC.context<Context>().create();
  const customerProcedure=t.procedure.use(async({ctx,next})=>next({ctx:{...ctx,...await core.authorize(ctx as unknown as Context,'customer')}}));
@@ -157,6 +158,13 @@ export function createProgressRoutes<Context extends object>(core:ProgressRouteC
  return {monitorId:input.monitorId,pricingVersionId:quote.pricingVersionId,currency:quote.currency,scale:quote.scale,totalAmountTenThousandths:quote.totalAmountTenThousandths,availableTenThousandths:summary.availableTenThousandths,sufficient:BigInt(summary.availableTenThousandths)>=BigInt(quote.totalAmountTenThousandths)};
  })}),
 projects: t.router({
+ monitorOrganization:t.router({
+  get:customerProcedure.input(monitorOrganizationInputSchema).output(monitorOrganizationSchema)
+   .query(({ctx,input})=>translateRepositoryErrors(()=>ctx.repository.getMonitorOrganization(ctx.user.id,input.projectId))),
+  save:customerProcedure.input(saveMonitorOrganizationInputSchema).output(monitorOrganizationSchema)
+   .mutation(({ctx,input})=>translateRepositoryErrors(()=>ctx.repository.saveMonitorOrganization(ctx.user.id,input.projectId,input.organization,ctx.audit))),
+ }),
+
     list: customerProcedure
       .output(z.array(projectOutputSchema))
       .query(({ ctx }) => ctx.repository.listProjects(ctx.user.id)),

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { type AnyMySqlColumn, bigint, boolean, datetime, decimal, foreignKey, index, int, json, longtext, mysqlEnum, mysqlTable, primaryKey, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 import type { KeywordEvaluation } from "@frontmind/monitoring-contracts";
 import { monitoringQuestionCategories } from "@frontmind/monitoring-contracts";
+import type { MonitorGroup } from "../contracts/monitor-organization.js";
 export interface ProgressSchemaCore { users: { id: AnyMySqlColumn }; pricingVersions?: {id:AnyMySqlColumn}; pricingItems?: {id:AnyMySqlColumn}; moneyReservations?: {id:AnyMySqlColumn}; currentMonitoringEnterpriseProjectId(): string | null; }
 const id = (name: string) => varchar(name, { length: 36 });
 
@@ -162,6 +163,15 @@ const projects = mysqlTable(
     index("projects_purge_idx").on(table.purgeAfter),
   ],
 );
+
+const monitorOrganizations = mysqlTable("progress_monitor_organizations", {
+  projectId: id("project_id").primaryKey().references(() => projects.id, { onDelete: "cascade" }),
+  revision: int("revision", { unsigned: true }).notNull(),
+  groups: json("groups").$type<MonitorGroup[]>().notNull(),
+  membership: json("membership").$type<Record<string, string>>().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
 
 const projectBrandVersions = mysqlTable(
   "project_brand_versions",
@@ -1118,6 +1128,6 @@ const dailyRunAggregates = mysqlTable(
     ),
   ],
 );
-return { runMetrics, runMetricDomains, platformAcceptanceBatches, platformAcceptanceChecks, jobs, providerCosts, attemptPriceSnapshots, attemptMoneySettlements, providerTaskTombstones, workerHeartbeats, providerDispatchDays, providerDispatchSlots, providerSubmissionGate, providerObservations, providerRegions, providerReconciliationState, dailyRunAggregates, projects, projectBrandVersions, platformCatalog, monitors, monitorVersions, monitorQuestions, monitorPlatforms, runs, attempts, resultRevisions, attemptResults, resultSources, resultDiscoveredSources, resultMedia, projectQuestions, scheduleOccurrences };
+return { monitorOrganizations, runMetrics, runMetricDomains, platformAcceptanceBatches, platformAcceptanceChecks, jobs, providerCosts, attemptPriceSnapshots, attemptMoneySettlements, providerTaskTombstones, workerHeartbeats, providerDispatchDays, providerDispatchSlots, providerSubmissionGate, providerObservations, providerRegions, providerReconciliationState, dailyRunAggregates, projects, projectBrandVersions, platformCatalog, monitors, monitorVersions, monitorQuestions, monitorPlatforms, runs, attempts, resultRevisions, attemptResults, resultSources, resultDiscoveredSources, resultMedia, projectQuestions, scheduleOccurrences };
 }
 export type ProgressSchema = ReturnType<typeof createProgressSchema>;

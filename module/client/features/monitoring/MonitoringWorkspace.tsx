@@ -34,6 +34,7 @@ import {
 } from "../../domain";
 import { KEYWORD_CATEGORY_OPTIONS } from "@frontmind/module-ui/keyword-categories";
 import { buildSentimentInsights } from "../../components/AnswerInsights";
+import MonitorConfigurationSidebar from "./MonitorConfigurationSidebar";
 import MonitoringFilterBar from "./MonitoringFilterBar";
 import MonitoringReportDialog from "./MonitoringReportDialog";
 import TrendPanel from "./panels/TrendPanel";
@@ -91,6 +92,7 @@ type MonitoringWorkspaceProps = {
   onRun: (monitor: MonitorSummary) => void;
   onToggle: (monitor: MonitorSummary) => void;
   onDelete: (monitor: MonitorSummary) => void;
+  onDeleteMonitor?: (id: string) => void | Promise<void>;
   onRefresh: () => Promise<void>;
   selectionRequest?: { monitorId: string; runId?: string; nonce: number };
 };
@@ -194,6 +196,7 @@ function MonitoringWorkspaceController({
   onRun,
   onToggle,
   onDelete,
+  onDeleteMonitor,
   onRefresh,
   selectionRequest,
   useDataSource,
@@ -1069,6 +1072,7 @@ function MonitoringWorkspaceController({
           </div>
         )}
       </section>
+      {analysisOnly ? (
       <aside
         className="resource-outcomes monitoring-results-panel"
         data-resource-pane="outcomes"
@@ -1202,6 +1206,22 @@ function MonitoringWorkspaceController({
           </footer>
         )}
       </aside>
+      ) : <MonitorConfigurationSidebar
+        key={project.id}
+        projectId={project.id}
+        serverData={serverData}
+        brandName={project.brandName}
+        monitors={monitors}
+        selectedId={query.monitorId}
+        deletedCount={deletedCount}
+        outcomeControls={outcomeControls}
+        configurationTools={configurationTools}
+        onSelect={selectMonitor}
+        onAdd={onAdd}
+        onOpenRecycle={onOpenRecycle}
+        onDeleteMonitor={onDeleteMonitor}
+      />}
+
     </div>
   );
 }

@@ -36,3 +36,13 @@
 6. 验收后 sync 合回 `modules/progress/`；生产 Dashboard 单独发布。
 
 同一测试域名共用工作区，不能删除其他组员记录。GitHub public 只代表可阅读，推送和发布仍需 GitHub/私有构建权限。
+
+## 监控配置分组（2026-10-23）
+
+- 复用现有 tRPC `projects` 路由，新增 `projects.monitorOrganization.get`（`{projectId}`）和 `projects.monitorOrganization.save`（`{projectId, organization}`）。不需要供应商凭据，不触发监控执行或费用。
+- `organization` 契约见 `module/contracts/monitor-organization.ts`：`version: 1`、`revision`、`groups: [{id, name}]`、`membership: {monitorId: groupId}`。没有归属即“未分组”。名称去首尾空白、合并连续空白，最多 40 字符；项目最多 200 组、10000 条归属。
+- `get` 先检查服务器 owner／企业项目权限及项目未删除状态；不存在保存记录时返回 revision 0 和空分组。`save` 复用企业项目与账号有效性检查，锁项目及组织记录，比较 revision，验证配置属于同一授权项目，写入并记录审计后返回新 revision。
+- 客户端收到冲突或不确定的网络结果后重新读取，不自动覆盖；保存成功后更新缓存。读取失败明确提示并禁用分组写入，不降级为浏览器本地保存。
+- 回收站中的配置保留归属，恢复后仍在原组；删除组会解除其全部归属。永久清除的配置 ID 在读取时过滤；项目物理删除通过外键级联移除组织记录。
+- **集成前置步骤**：通过现有迁移流程审核并应用 `module/schema/20261023_monitor_organizations.sql`。核对新表 `project_id` 与既有 `projects.id` 的字符集／排序规则一致；确认宿主使用更新后的 `createProgressSchema` 返回值及 `createProgressRoutes(...).customer.projects`。本次交付没有执行 SQL，也没有修改部署流程或自动建表逻辑。
+- 非 `serverData` 预览仅使用页面内临时分组；本地演示分组不会导入真实项目。真实入口由既有 `ModuleWorkspace` 传入 `serverData`，同一侧栏组件调用上述已授权接口。
