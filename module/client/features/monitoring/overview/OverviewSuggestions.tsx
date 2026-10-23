@@ -5,6 +5,7 @@ import { safeExternalUrl } from "../selectors";
 import type { MonitoringQueryState } from "../types";
 import { downloadHandoff, optimizationReportHref, type Suggestion } from "./overviewModel";
 import OverviewEvidence from "./OverviewEvidence";
+import { scrollOverviewTarget } from "./scrollOverviewTarget";
 import { useOverviewDraft } from "./useOverviewDraft";
 import { overviewDraftBasis, useBoundOverviewDraft, DraftVersionNotice } from "./useBoundOverviewDraft";
 
@@ -21,8 +22,7 @@ function SuggestionDetail({ suggestion, monitorId, query, onAnswer, draftNamespa
   useEffect(() => {
     if (!request) return;
     const target = request.target === "evidence" ? evidenceRef.current : basisRef.current;
-    target?.scrollIntoView({ block: "start" });
-    target?.focus({ preventScroll: true });
+    scrollOverviewTarget(target);
   }, [request]);
   const materials = attempt?.allSources || [];
   const questions = new Set(suggestion.evidence.map((item) => item.question));
@@ -50,7 +50,7 @@ function SuggestionDetail({ suggestion, monitorId, query, onAnswer, draftNamespa
       <fieldset disabled={versioned.stale} className="fm-ov-versioned-fields">{draft === null ? <button type="button" className="fm-primary-button" disabled={!attempt} onClick={() => {
         if (!attempt) return;
         setDraft({ answerId: attempt.id, runId: attempt.runId, content: `${suggestion.title}\n关联问题：${attempt.question}\n待核查回答：${attempt.id}\n观测条件：${suggestion.check}\n建议动作：${suggestion.action}\n待补充资料与版本：\n审核意见：\n承接模块：${suggestion.destination}\n待验证指标：${suggestion.metric}` });
-        requestAnimationFrame(() => draftRef.current?.focus());
+        requestAnimationFrame(() => scrollOverviewTarget(draftRef.current));
       }}>已阅读依据，生成可编辑草稿</button> : <><label>可编辑草稿<textarea ref={draftRef} className="fm-ov-draft" value={draft.content} onChange={(event) => setDraft({ ...draft, content: event.target.value })} /></label><p className="fm-ov-note">草稿关联回答：{draft.answerId} · 依据版本：{versioned.basis?.answerRevision ? `V${versioned.basis.answerRevision}` : "版本未返回，按证据快照核对"}。切换回答后可分别编辑。</p><p className="fm-ov-note">{persisted ? "已暂存于当前浏览器标签页，刷新后可继续；关闭标签页前请下载。" : "当前页面会话内保留，请下载后再关闭或刷新。"}</p><button type="button" className="fm-primary-button" onClick={() => downloadHandoff("frontmind-optimization-draft.json", { kind: "optimization-draft", status: "integration_pending", submitted: false, suggestion: suggestion.id, answerId: draft.answerId, runId: draft.runId, content: draft.content, evidenceBasis: versioned.basis, previousDraftVersions: versioned.history, destination: suggestion.destination, preparedAt: new Date().toISOString() })}>下载草稿与待确认清单</button></>}</fieldset>
     </section>
   </div>;
@@ -67,7 +67,7 @@ export default function OverviewSuggestions({ suggestions, monitorId, query, onA
   const open = (id: string, target: ActionRequest["target"]) => { setExpanded(id); setRequest(value => ({ id, target, sequence: (value?.sequence || 0) + 1 })); };
   return <section className="fm-ov-section" aria-labelledby="overview-suggestions-title"><header className="fm-ov-heading"><h2 id="overview-suggestions-title" ref={headingRef} tabIndex={-1}>AI 优化建议</h2><span>先看依据，再决定行动</span></header>
     {selected ? <>
-      <button type="button" className="fm-text-button fm-ov-back" onClick={() => { setExpanded(null); setRequest(undefined); requestAnimationFrame(() => { headingRef.current?.focus(); headingRef.current?.scrollIntoView({ block: "start" }); }); }}>← 返回建议列表</button>
+      <button type="button" className="fm-text-button fm-ov-back" onClick={() => { setExpanded(null); setRequest(undefined); requestAnimationFrame(() => scrollOverviewTarget(headingRef.current)); }}>← 返回建议列表</button>
       <header className="fm-ov-detail-heading"><span className={`fm-ov-priority ${selected.priority}`}>{selected.priority}</span><h3>{selected.title}</h3><span className="fm-ov-tag">待核查</span><p>{selected.evidence.length} 条回答证据 · {selected.destination} · 草稿按回答分别保留</p></header>
       <SuggestionDetail key={selected.id} draftNamespace={draftNamespace} request={request?.id === selected.id ? request : undefined} suggestion={selected} monitorId={monitorId} query={query} onAnswer={onAnswer} />
     </> : <>

@@ -3,6 +3,7 @@ import { buildSentimentInsights } from "../../../components/AnswerInsights";
 import type { RunAttempt } from "../../../domain";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
 import OverviewEvidence from "./OverviewEvidence";
+import { scrollOverviewTarget } from "./scrollOverviewTarget";
 import { useOverviewDraft } from "./useOverviewDraft";
 
 const tones = [
@@ -34,7 +35,7 @@ export default function OverviewSentiment({ attempts, summary, self, onAnswer, d
   const currentPage = Math.min(page, Math.max(0, pageCount - 1));
   const openEvidence = (key: string, id: string) => {
     setWordKey(key); setAnswerId(id); setDetail(true);
-    requestAnimationFrame(() => { evidenceRef.current?.scrollIntoView({ block: "start" }); evidenceRef.current?.focus({ preventScroll: true }); });
+    requestAnimationFrame(() => scrollOverviewTarget(evidenceRef.current));
   };
   const counts = summary ? summary.metrics.sentiments : insights.counts;
   const total = counts ? Object.values(counts).reduce((sum, value) => sum + value, 0) : 0;

@@ -271,7 +271,7 @@
  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer { height: auto; }
 }
 @container qa-detail (max-width: 520px) {
- .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { height: auto; overflow: visible; grid-template-rows: repeat(2, max(360px, 55dvh)); }
+ .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { height: auto; overflow-x: hidden; overflow-y: auto; grid-template-rows: repeat(2, max(360px, 55dvh)); }
  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-sticky-scope { position: static; }
 }
 /* Compact fixed controls leave more space for the reading panes. */
@@ -339,9 +339,16 @@
   .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer { height: max(760px, calc(100dvh - 160px)); }
 }
 @container qa-detail (max-width: 520px) {
-  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-answer,
+  /* Keep the answer card bounded so the stacked panes actually overflow and scroll. */
   .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading,
-  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-card { height: auto; }
-  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { flex: none; height: auto; overflow: visible; grid-template-columns: minmax(0, 1fr); grid-template-rows: max(420px, 60dvh) max(520px, 70dvh); }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading-card { height: 100%; }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-reading .fm-answer-layout { flex: 1; min-height: 320px; height: auto; overflow-x: hidden; overflow-y: auto; grid-template-columns: minmax(0, 1fr); grid-template-rows: max(420px, 60dvh) max(520px, 70dvh); }
   .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-evidence-column { border-left: 0; border-top: 1px solid var(--fm-border, #e7ebef); }
 }
+
+/* Overview reuses the existing question-detail filter layout and viewport breakpoints. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-scope { min-width: 0; }
+
+/* Overview flows naturally in the same scrolling detail pane as question detail.
+   The shared sticky filter remains outside this content; there is no nested scrollbar. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-body > .fm-ov-content { grid-template-columns: minmax(0,1fr); grid-auto-rows: max-content; height: auto; overflow: visible; }

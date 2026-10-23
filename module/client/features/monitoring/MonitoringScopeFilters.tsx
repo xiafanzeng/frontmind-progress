@@ -8,7 +8,6 @@ import type { MonitoringSummaryData } from "./useMonitoringDataSource";
 
 type Props = {
   navigation?: ReactNode;
-  overview?: boolean;
   questionsCategoryScoped?: boolean;
   project: ProjectSummary;
   query: MonitoringQueryState;
@@ -19,14 +18,15 @@ type Props = {
 };
 
 /** Shared scope for overview and question detail; the answer selection stays local. */
-export default function MonitoringScopeFilters({ project, query, run, summary, questions, questionsCategoryScoped = false, onChange, navigation, overview = false }: Props) {
+export default function MonitoringScopeFilters({ project, query, run, summary, questions, questionsCategoryScoped = false, onChange, navigation }: Props) {
   const changeFilter = (patch: Partial<MonitoringQueryState>) => onChange({ answerQuestion: undefined, answerId: undefined, fullscreen: false, ...patch });
   const changeDates = (patch: Partial<MonitoringQueryState>) => changeFilter({ runId: undefined, ...patch });
   const categoryLabel = (key: string) => KEYWORD_CATEGORY_OPTIONS.find(item => item.key === key)?.label.replace(/词$/, "问题");
   // The server's category-scoped catalog also includes historical questions
   // whose category differs between versions. Do not filter those a second time.
   const visibleQuestions = questionsCategoryScoped ? questions : questions.filter(item => !query.questionCategory || item.category === query.questionCategory);
-  return <div className={`fm-qa-sticky-scope${overview ? " fm-overview-scope" : ""}`}><div className="fm-qa-scope">
+  // Only the overview/detail view tabs opt in; report filters keep their existing layout.
+  return <div className={`fm-qa-sticky-scope${navigation ? " fm-monitor-scope" : ""}`}><div className="fm-qa-scope">
     <div className="fm-qa-filters">
       <MonitoringFilterBar project={project} run={run} summary={summary} hideQuestion question={query.question} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
         onQuestionChange={(value) => changeFilter({ question: value })}

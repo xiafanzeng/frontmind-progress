@@ -18,6 +18,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -332,6 +333,13 @@ function MonitoringWorkspaceController({
   useEffect(() => {
     detailRef.current?.scrollTo({ top: 0 });
   }, [reportView, query.monitorId]);
+  useLayoutEffect(() => {
+    if (!analysisOnly && !reportView) {
+      // Reset only the module pane before paint when the two views exchange layouts.
+      // Never scroll the fixed-height Dashboard ancestors.
+      detailRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [detailActive, analysisOnly, reportView]);
 
   // The monitoring list is restored asynchronously on the production route.
   // Keep the visibility set in sync when that first payload arrives; otherwise
@@ -930,7 +938,7 @@ function MonitoringWorkspaceController({
                   navigation={detailNavigation}
                 />
               ) : <>
-              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={questionOptions} questionsCategoryScoped={serverData} onChange={updateQuery} navigation={detailNavigation} overview /> : <MonitoringFilterBar
+              {!analysisOnly ? <MonitoringScopeFilters project={project} query={query} run={run} summary={serverData ? live.catalogSummary : undefined} questions={questionOptions} questionsCategoryScoped={serverData} onChange={updateQuery} navigation={detailNavigation} /> : <MonitoringFilterBar
                 project={project}
                 run={run}
                 summary={serverData ? live.catalogSummary : undefined}
