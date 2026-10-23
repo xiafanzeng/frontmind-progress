@@ -344,26 +344,37 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   });
   await expectOverviewEffective(3);
   fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
-  const scopeSentiment = screen.getByLabelText("当前筛选范围情感分布");
+  // v2 概览情感分析为自绘四类环形图与图例（fm-ov-tone-legend），
+  // 不再经由 CompactAnswerInsights 的「当前筛选范围情感分布」标签。
+  const scopeSentiment = document.querySelector(
+    ".fm-ov-tone-legend",
+  ) as HTMLElement;
+  expect(scopeSentiment).not.toBeNull();
   expect(
     screen.getByText(/2026-09-13 — 2026-09-14/),
   ).toBeVisible();
   expect(
-    within(scopeSentiment).getByText("负面").closest("article"),
-  ).toHaveTextContent(/负面\s*3\s*100.0%/);
+    within(scopeSentiment).getByText("负面").closest("li"),
+  ).toHaveTextContent(/负面\s*3\s*100\.0%/);
   expect(
-    within(scopeSentiment).getByText("未判定").closest("article"),
-  ).toHaveTextContent(/未判定\s*0\s*0.0%/);
+    within(scopeSentiment).getByText("未判定").closest("li"),
+  ).toHaveTextContent(/未判定\s*0\s*0\.0%/);
+  // v2 会额外读取紧邻的等长前周期做环比（comparablePeriods），
+  // 最后一条 answers.list 记录可能是前周期读取；断言当前筛选的读取确实发生。
   expect(
     read.mock.calls
       .filter(([path]) => path === "monitoring.answers.list")
-      .at(-1)?.[1].scope,
-  ).toMatchObject({
-    questionId: reputationId,
-    platformId: platforms[0].id,
-    from: new Date("2026-09-12T16:00:00Z"),
-    to: new Date("2026-09-14T16:00:00Z"),
-  });
+      .map((call) => call[1].scope),
+  ).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        questionId: reputationId,
+        platformId: platforms[0].id,
+        from: new Date("2026-09-12T16:00:00Z"),
+        to: new Date("2026-09-14T16:00:00Z"),
+      }),
+    ]),
+  );
   await openReportDialog();
   expect(screen.getByRole("checkbox", { name: /台心医美口碑怎么样/ })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: /豆包/ })).toBeChecked();
