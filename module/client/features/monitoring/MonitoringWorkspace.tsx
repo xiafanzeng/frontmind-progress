@@ -63,6 +63,7 @@ import type {
 } from "./types";
 import { attemptModelKey } from "./types";
 import { useMonitoringDataSource } from "./useMonitoringDataSource";
+import ProgressReportWorkspace from "./reports/ProgressReportWorkspace";
 import "./monitoring.css";
 import "./reference-ui.css";
 import "@frontmind/module-ui/dashboard/resource-reading-layout.css";
@@ -812,7 +813,7 @@ function MonitoringWorkspaceController({
         aria-label="所选监控工作台"
         tabIndex={-1}
       >
-        {renderReport ? renderReport(query.runId || selectedMonitor?.lastRun?.id) : visibleSelectedMonitor ? (
+        {renderReport ? <ProgressReportWorkspace key={`${project.id}:${query.monitorId}`} project={project} query={query} catalog={serverData ? live.catalogSummary : undefined} questions={allQuestionOptions} runs={rangedRuns} serverData={serverData} onChange={updateQuery} renderRun={renderReport} /> : visibleSelectedMonitor ? (
           <>
             <header className="fm-monitor-hero">
               <div>
