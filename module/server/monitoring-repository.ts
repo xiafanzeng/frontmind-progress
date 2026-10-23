@@ -50,6 +50,7 @@ import type {
   PlatformAcceptanceStatus,
 } from "./platform-acceptance-types.js";
 import { ProgressMonitoringReadRepository } from "./monitoring-read-repository.js";
+import { monitorOrganizationSchema, type MonitorOrganization } from "../contracts/monitor-organization.js";
 
 
 import type {ProgressRepositoryCore, ProgressDatabase as Database, ProgressTransaction as Transaction, RequestAudit} from './persistence-core.js';
@@ -403,6 +404,68 @@ async createProject(
       );
     });
     return this.getProject(ownerId, projectId);
+  }
+
+async getMonitorOrganization(ownerId: string, projectId: string): Promise<MonitorOrganization> {
+    return this.db.transaction(async (tx) => {
+      const [project] = await tx.select({ id: projects.id }).from(projects).where(and(
+        eq(projects.id, projectId), monitoringProjectOwnerPredicate(projects, ownerId), isNull(projects.deletedAt),
+      )).limit(1);
+      if (!project) throw new RepositoryError("NOT_FOUND", "项目不存在或不可访问");
+      const [stored] = await tx.select().from(tables.monitorOrganizations)
+        .where(eq(tables.monitorOrganizations.projectId, projectId)).limit(1);
+      if (!stored) return { version: 1, revision: 0, groups: [], membership: {} };
+      // Recycled configurations retain their group. Permanently purged IDs are omitted.
+      const rows = await tx.select({ id: monitors.id }).from(monitors).where(and(
+        eq(monitors.projectId, projectId), monitoringChildOwnerPredicate(monitors, ownerId),
+      ));
+      const ids = new Set(rows.map((row) => row.id));
+      return monitorOrganizationSchema.parse({ version: 1, revision: stored.revision, groups: stored.groups,
+        membership: Object.fromEntries(Object.entries(stored.membership).filter(([id]) => ids.has(id))),
+      });
+    });
+  }
+
+async saveMonitorOrganization(ownerId: string, projectId: string, input: MonitorOrganization, audit: RequestAudit): Promise<MonitorOrganization> {
+    const next = monitorOrganizationSchema.parse(input);
+    return this.db.transaction(async (tx) => {
+      await this.lockProjectAdmission(tx, ownerId, projectId);
+      // Lock the parent even when the organization row does not exist yet.
+      // This serializes first creation, group updates and project deletion.
+      const [project] = await tx.select({ id: projects.id }).from(projects).where(and(
+        eq(projects.id, projectId), monitoringProjectOwnerPredicate(projects, ownerId), isNull(projects.deletedAt),
+      )).for("update").limit(1);
+      if (!project) throw new RepositoryError("NOT_FOUND", "项目不存在或不可访问");
+      await core.assertOwnerActive(tx, ownerId);
+      const table = tables.monitorOrganizations;
+      const [stored] = await tx.select().from(table).where(eq(table.projectId, projectId)).for("update").limit(1);
+      if ((stored?.revision ?? 0) !== next.revision) {
+        throw new RepositoryError("CONFLICT", "分组已被其他操作更新，请刷新分组后重新操作。");
+      }
+      if (next.revision === 2147483647) throw new RepositoryError("INVALID_STATE", "分组版本已达上限，请联系管理员。");
+      // Never accept foreign-project IDs supplied by the client. Lock membership targets
+      // so a simultaneous soft delete cannot be mistaken for a successful move.
+      const requestedIds = Object.keys(next.membership);
+      const rows = requestedIds.length ? await tx.select({ id: monitors.id, deletedAt: monitors.deletedAt })
+        .from(monitors).where(and(eq(monitors.projectId, projectId),
+          monitoringChildOwnerPredicate(monitors, ownerId), inArray(monitors.id, requestedIds)))
+        .orderBy(asc(monitors.id)).for("update") : [];
+      const rowById = new Map(rows.map((row) => [row.id, row]));
+      for (const id of requestedIds) {
+        const row = rowById.get(id);
+        if (!row) throw new RepositoryError("CONFLICT", "配置列表已变化或包含不可访问的配置，请刷新后重试。");
+        if (row.deletedAt && stored?.membership[id] !== next.membership[id]) {
+          throw new RepositoryError("CONFLICT", "所选配置已移入回收站，请刷新后重新选择。");
+        }
+      }
+      const revision = next.revision + 1;
+      const values = { groups: next.groups, membership: next.membership, revision };
+      if (stored) await tx.update(table).set(values).where(eq(table.projectId, projectId));
+      else await tx.insert(table).values({ projectId, ...values });
+      await insertAudit(tx, audit, "monitor.organization.updated", "project", projectId, ownerId,
+        { previousRevision: next.revision, revision, groupCount: next.groups.length, membershipCount: requestedIds.length });
+      return { ...next, revision };
+    });
   }
 
 async listProjects(ownerId: string) {

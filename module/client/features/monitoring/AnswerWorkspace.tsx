@@ -494,7 +494,11 @@ export default function AnswerWorkspace({
     window.requestAnimationFrame(() => {
       const target = readingRef.current?.querySelector<HTMLElement>(`[data-citation-source="${number}"]`);
       const rail = readingRef.current?.querySelector<HTMLElement>(".fm-qa-source-cards");
-      if (target && rail) rail.scrollTo({ top: rail.scrollTop + target.getBoundingClientRect().top - rail.getBoundingClientRect().top - 4, behavior: "smooth" });
+      if (target && rail) {
+        // In a stacked narrow layout, also bring the destination pane into view.
+        rail.scrollIntoView({ block: "nearest", inline: "nearest" });
+        rail.scrollTo({ top: rail.scrollTop + target.getBoundingClientRect().top - rail.getBoundingClientRect().top - 4, behavior: "smooth" });
+      }
       target?.focus({ preventScroll: true });
       if (!target) setCitationMessage("本条引用的信源详情尚未返回。");
     });
@@ -505,7 +509,10 @@ export default function AnswerWorkspace({
     setActiveCitation(number);
     setCitationMessage("");
     const body = readingRef.current?.querySelector<HTMLElement>(".fm-answer-scroll");
-    if (body) body.scrollTo({ top: body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 24, behavior: "smooth" });
+    if (body) {
+      body.scrollIntoView({ block: "nearest", inline: "nearest" });
+      body.scrollTo({ top: body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top - 24, behavior: "smooth" });
+    }
     target.focus({ preventScroll: true });
   };
   const citations = <CitationRail
@@ -542,15 +549,20 @@ export default function AnswerWorkspace({
         event.preventDefault();
         focusSource(number);
       } : undefined}>
-        <AnswerReader attempt={selected} loading={detailLoading} />
-        {detailLayout && citations}
+        {detailLayout ? <div className="fm-qa-body-column">
+          <AnswerReader attempt={selected} loading={detailLoading} />
+          <p className="fm-qa-citation-feedback" role="status">{citationMessage || "点击正文引用编号可定位信源；点击信源卡片可定位原文。"}</p>
+        </div> : <AnswerReader attempt={selected} loading={detailLoading} />}
+        {detailLayout && <div className="fm-qa-evidence-column">
+          {citations}
+          <section className="fm-qa-sentiment-card" aria-label="当前回答情感分析">
+            {insights}
+          </section>
+        </div>}
       </div>
-      {detailLayout && <p className="fm-qa-citation-feedback" role="status">{citationMessage || "点击正文引用编号可定位信源；模型或回答次数切换后，正文、信源与评估同步更新。"}</p>}
+
       </ReadingCard>
-      {detailLayout ? <details className="fm-qa-assessment">
-        <summary><strong>当前回答解读</strong><span>{selected.brandMentioned === true ? "已提及品牌" : selected.brandMentioned === false ? "未提及品牌" : "品牌提及待判定"} · {selected.mentionPosition ? `品牌排名第 ${selected.mentionPosition} 位` : "未返回明确排名"}</span><span>查看判断依据</span></summary>
-        {insights}
-      </details> : insights}
+      {!detailLayout && insights}
       {!detailLayout && citations}
       <ScreenshotViewerDialog
         open={screenshotOpen}

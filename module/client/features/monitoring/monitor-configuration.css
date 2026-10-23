@@ -1,0 +1,85 @@
+/* Configuration toolbar, filter popover and batch operations. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-config-panel { overflow-y: auto; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-tools { flex: none; display: grid; gap: 10px; margin-bottom: 14px; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons > button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 34px; padding: 6px 3px; border: 1px solid #dbe3ed; border-radius: 7px; background: #fff; color: #526a82; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons > button:is(.is-active, [data-state="open"], [aria-pressed="true"]) { border-color: #b8d0e6; background: #edf4fa; color: var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons small { font-size: 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-summary button { padding: 0; font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-conditions { margin: 0; font-size: 11px; line-height: 1.6; color: var(--fm-primary, #2867a5); overflow-wrap: anywhere; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .resource-result-list { min-height: 100px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-group { display: grid; flex: none; gap: 8px; min-width: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-group h4 { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 0; padding: 6px 2px; font-size: 12px; color: var(--fm-muted, #667085); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-group h4 > button { width: auto; min-height: 0; padding: 2px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: #8394a8; font: inherit; font-size: 11px; cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item { display: flex; flex: none; align-items: start; gap: 8px; min-width: 0; padding: 12px 10px; border: 1px solid transparent; border-radius: 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item.is-current { border-color: #a7c6e2; background: #edf4fa; box-shadow: inset 3px 0 var(--fm-primary, #2867a5); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item > button { display: block; flex: 1; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--fm-text, #20232b); font: inherit; cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item > button[aria-pressed="true"] { border: 0; background: transparent; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item strong { display: flex; align-items: start; gap: 8px; font-size: 13px; line-height: 1.6; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item span { margin-top: 5px; font-size: 11px; line-height: 1.6; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item > input { flex: none; width: 15px; height: 15px; margin: 4px 0 0; accent-color: var(--fm-primary, #2867a5); cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-status-dot { flex: none; width: 7px; height: 7px; margin: 7px 0 0 auto; border-radius: 50%; background: #8c9baa; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-status-dot.active { background: #48a57d; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-status-dot.paused { background: #d1a14f; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0 -4px; padding: 10px 8px; border-block: 1px solid #dce7f2; background: #eff6fc; color: var(--fm-primary, #2867a5); font-size: 11px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar strong { font-size: inherit; font-weight: 500; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar button { padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar button:disabled { opacity: .45; cursor: default; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar small { flex-basis: 100%; color: #667085; font-size: 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel :is(input, button):focus-visible { outline: 2px solid var(--fm-primary, #2867a5); outline-offset: 2px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .business-flow-pagination { flex: none; }
+/* Popovers use the shared portal to avoid clipping in the scrolling sidebar. */
+.fm-monitor-config-popover { z-index: 80; width: min(310px, calc(100vw - 24px)); max-height: var(--radix-popover-content-available-height); overflow-y: auto; padding: 18px; border: 1px solid #dbe3ed; border-radius: 12px; background: #fff; color: #25384c; box-shadow: 0 10px 30px #263b571c; font-family: inherit; }
+.fm-monitor-config-popover fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.fm-monitor-config-popover fieldset + fieldset { margin-top: 18px; padding-top: 18px; border-top: 1px solid #e7ebef; }
+.fm-monitor-config-popover legend { float: left; width: 100%; padding: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; }
+.fm-config-radio-options { clear: both; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+.fm-config-radio-options.is-vertical { grid-template-columns: minmax(0, 1fr); }
+.fm-config-radio-options label { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #526a82; cursor: pointer; }
+.fm-config-radio-options input { width: 16px; height: 16px; margin: 0; accent-color: #2867a5; }
+.fm-monitor-config-popover footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.fm-monitor-config-popover footer button { padding: 0; border: 0; background: transparent; color: #2867a5; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.fm-monitor-config-popover :is(button, input):focus-visible { outline: 2px solid #2867a5; outline-offset: 3px; }
+@media (max-height: 740px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .resource-result-list { flex: none; overflow: visible; }
+}
+
+/* User-defined groups and concrete actions share the module's existing dialogs. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-monitor-config-group h4 > span { margin: 0; min-width: 0; overflow-wrap: anywhere; font: inherit; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item.is-selected:not(.is-current) { background: #f5f9fd; border-color: #dce7f2; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-empty-group { margin: 0; padding: 6px 4px 12px; font-size: 11px; line-height: 1.6; color: #8394a8; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-no-results button { min-height: 30px; padding: 4px 8px; border-color: #dbe3ed; text-align: center; color: #2867a5; font-size: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-batch-bar .fm-config-danger { color: #c34c4c; }
+.fm-monitor-config-popover .fm-config-radio-options label { min-width: 0; overflow-wrap: anywhere; }
+.fm-monitor-config-popover .fm-config-radio-options input { flex: none; }
+.fm-config-group-manager, .fm-config-batch-dialog { flex: 1; min-width: 0; min-height: 0; margin: 0; border: 0; overflow-y: auto; padding: 24px; color: #25384c; }
+.fm-config-group-manager .fm-config-storage-note { margin: 0 0 16px; color: #8394a8; font-size: 12px; }
+.fm-config-group-manager .fm-config-manager-row { margin-bottom: 12px; padding: 14px; border: 1px solid #dfe6ee; border-radius: 9px; }
+.fm-config-group-manager .fm-config-manager-main { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.fm-config-group-manager .fm-config-manager-main > strong { flex: 1; min-width: 100px; font-size: 15px; overflow-wrap: anywhere; }
+.fm-config-group-manager .fm-config-manager-main > span { margin-left: auto; font-size: 12px; color: #8394a8; white-space: nowrap; }
+.fm-config-group-manager .fm-config-manager-main > input { flex: 1; width: 160px; min-width: 100px; }
+.fm-config-group-manager .fm-config-manager-main > button,
+.fm-config-group-manager .fm-config-group-removal > button { padding: 3px 0; border: 0; background: transparent; color: #2867a5; font: inherit; font-size: 13px; cursor: pointer; }
+.fm-config-group-manager .fm-config-manager-main > .fm-config-danger,
+.fm-config-group-manager .fm-config-group-removal > .fm-config-danger { color: #c34c4c; }
+.fm-config-group-manager .fm-config-group-removal { margin-top: 12px; padding-top: 10px; border-top: 1px solid #e7ebef; font-size: 13px; line-height: 1.7; }
+.fm-config-group-manager .fm-config-group-removal p { margin: 0 0 8px; }
+.fm-config-group-manager .fm-config-group-removal button + button { margin-left: 16px; }
+.fm-config-group-manager .fm-config-new-group { display: grid; gap: 8px; margin-top: 20px; color: #526a82; font-size: 13px; font-weight: 600; }
+.fm-config-group-manager input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 38px; padding: 8px 10px; border: 1px solid #dbe3ed; border-radius: 7px; background: #fff; color: #25384c; font: inherit; }
+.fm-config-group-manager > footer, .fm-config-batch-dialog > footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e7ebef; }
+.fm-config-warning { color: #b54708; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.fm-config-batch-dialog > ul { max-height: 210px; overflow-y: auto; margin: 0 0 16px; padding: 0 0 0 20px; }
+.fm-config-batch-dialog li { padding: 5px 0; font-size: 13px; overflow-wrap: anywhere; }
+.fm-config-batch-dialog li strong { font-weight: 500; }
+.fm-config-batch-dialog fieldset { display: grid; gap: 8px; min-width: 0; max-height: 260px; overflow-y: auto; margin: 0; padding: 0; border: 0; }
+.fm-config-batch-dialog legend { margin-bottom: 10px; font-size: 14px; font-weight: 600; }
+.fm-config-batch-dialog label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e1e8f0; border-radius: 7px; font-size: 13px; overflow-wrap: anywhere; cursor: pointer; }
+.fm-config-batch-dialog label input { flex: none; margin: 0; accent-color: #2867a5; }
+.fm-config-batch-dialog label small { margin-left: auto; white-space: nowrap; color: #8394a8; }
+.fm-config-group-manager :is(input, button):focus-visible,
+.fm-config-batch-dialog :is(input, button):focus-visible { outline: 2px solid #2867a5; outline-offset: 3px; }
+
+.fm-config-group-manager button:disabled, .fm-config-batch-dialog button:disabled { opacity: .5; cursor: default; }

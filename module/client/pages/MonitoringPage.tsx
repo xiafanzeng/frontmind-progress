@@ -639,6 +639,7 @@ export default function MonitoringPage({
               )
             }
             onDelete={setPendingDelete}
+            onDeleteMonitor={onDeleteMonitor}
             onRefresh={async () => {
               await runAction(() => onRefresh?.());
             }}
