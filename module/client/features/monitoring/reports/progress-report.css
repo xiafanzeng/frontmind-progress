@@ -1,0 +1,71 @@
+.monitoring-module .fm-progress-report {
+  padding: 24px; background: #f5f7ff; color: #20344f; min-width: 0;
+  display: flex; flex-direction: column; gap: 18px; font: inherit;
+}
+.monitoring-module .fm-progress-report :is(h2,h3,h4,p) { margin: 0; }
+.monitoring-module .fm-progress-report h2 { font-size: 26px; font-weight: 700; }
+.monitoring-module .fm-progress-report h3 { font-size: 18px; font-weight: 650; }
+.monitoring-module .fm-progress-report p { line-height: 1.7; }
+.monitoring-module .fm-progress-report small { display: block; color: #72839a; font-size: 12px; font-weight: 400; }
+.monitoring-module .fm-progress-report :is(button, select) { font: inherit; }
+.monitoring-module .fm-progress-report button {
+  cursor: pointer; color: #3268db; background: white; border: 1px solid #dce4f4;
+  border-radius: 6px; padding: 8px 12px; line-height: 1.5;
+}
+.monitoring-module .fm-progress-report button:disabled { cursor: default; opacity: .55; }
+.monitoring-module .fm-progress-report :is(button,select,a):focus-visible { outline: 2px solid #3268db; outline-offset: 3px; }
+.monitoring-module .fm-progress-report select { max-width: 100%; min-width: 0; padding: 8px; background: white; border: 1px solid #dce4f4; border-radius: 6px; color: inherit; }
+.monitoring-module .fm-progress-report a { color: #3268db; }
+.monitoring-module .fm-pr-header { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; }
+.monitoring-module .fm-pr-header > div { display: grid; gap: 6px; }
+.monitoring-module .fm-pr-tabs { display: flex; gap: 24px; border-bottom: 1px solid #dce4f4; overflow-x: auto; }
+.monitoring-module .fm-pr-tabs button { background: transparent; border: 0; border-radius: 0; white-space: nowrap; padding: 12px 0; color: #72839a; border-bottom: 3px solid transparent; }
+.monitoring-module .fm-pr-tabs button[aria-current=page] { border-bottom-color: #3268db; color: #3268db; font-weight: 650; }
+.monitoring-module .fm-pr-compare { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.monitoring-module .fm-pr-compare label { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.monitoring-module .fm-pr-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.monitoring-module .fm-pr-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.monitoring-module .fm-pr-card { background: white; border: 1px solid #dfe6f4; border-radius: 8px; padding: 20px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.monitoring-module .fm-pr-category { border-top: 3px solid var(--report-accent); }
+.monitoring-module .fm-pr-category header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.monitoring-module .fm-pr-category header small { margin-left: auto; }
+.monitoring-module .fm-pr-category .fm-pr-value { color: var(--report-accent); }
+.monitoring-module .fm-pr-category footer { border-top: 1px solid #edf1f8; padding-top: 12px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.monitoring-module .fm-pr-badge { background: #eef3fc; padding: 4px 8px; border-radius: 4px; font-size: 13px; }
+.monitoring-module .fm-pr-value { display: block; color: #3268db; font-size: 27px; line-height: 1.4; }
+.monitoring-module .fm-pr-empty { padding: 22px 12px; background: #f8faff; border-radius: 6px; color: #72839a; text-align: center; }
+.monitoring-module .fm-pr-note { color: #72839a; font-size: 13px; }
+.monitoring-module .fm-pr-notice { background: #edf3ff; border: 1px solid #dce7ff; color: #60758f; padding: 12px 16px; border-radius: 6px; }
+.monitoring-module .fm-pr-warning { background: #fff8ed; color: #906419; border: 1px solid #f2dcb8; padding: 12px 16px; border-radius: 6px; }
+.monitoring-module .fm-pr-table { overflow: auto; }
+.monitoring-module .fm-pr-table table { border-collapse: collapse; width: 100%; min-width: 700px; font-size: 14px; }
+.monitoring-module .fm-pr-table :is(th,td) { padding: 14px; border-bottom: 1px solid #e6ecf7; text-align: left; vertical-align: top; }
+.monitoring-module .fm-pr-table thead { background: #f5f8ff; color: #72839a; }
+.monitoring-module .fm-pr-table tbody th { min-width: 220px; max-width: 380px; }
+.monitoring-module .fm-pr-question-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.monitoring-module .fm-pr-question-picker select { flex: 1; }
+.monitoring-module .fm-pr-chart { overflow-x: auto; }
+.monitoring-module .fm-pr-chart svg { display: block; min-width: 550px; width: 100%; max-height: 300px; }
+.monitoring-module .fm-pr-chart line { stroke: #e7edf8; }
+.monitoring-module .fm-pr-chart line.fm-pr-plot { stroke: #158e86; stroke-width: 2.5; }
+.monitoring-module .fm-pr-chart circle { stroke: #158e86; fill: white; stroke-width: 2; }
+.monitoring-module .fm-pr-chart text { fill: #72839a; font-size: 11px; }
+.monitoring-module .fm-pr-answer { background: #f6f9ff; border-left: 3px solid #3268db; padding: 18px; max-height: 420px; overflow: auto; overflow-wrap: anywhere; }
+.monitoring-module .fm-pr-answer :is(p,ul,ol,pre,blockquote) { margin-bottom: 12px; }
+.monitoring-module .fm-pr-evidence-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; }
+.monitoring-module .fm-pr-evidence-layout aside { max-height: 700px; overflow: auto; align-self: start; }
+.monitoring-module .fm-pr-evidence-layout aside button { text-align: left; overflow-wrap: anywhere; }
+.monitoring-module .fm-pr-evidence-layout button[aria-pressed=true] { background: #edf3ff; border-color: #3268db; }
+.monitoring-module .fm-pr-raw > summary { cursor: pointer; color: #3268db; padding: 12px; }
+@media (max-width: 1000px) {
+  .monitoring-module .fm-pr-three { grid-template-columns: 1fr; }
+  .monitoring-module .fm-pr-evidence-layout { grid-template-columns: 1fr; }
+  .monitoring-module .fm-pr-evidence-layout aside { max-height: 250px; }
+}
+@media (max-width: 720px) {
+  .monitoring-module .fm-progress-report { padding: 14px; }
+  .monitoring-module .fm-pr-grid { grid-template-columns: 1fr; }
+  .monitoring-module .fm-pr-compare label { width: 100%; }
+  .monitoring-module .fm-pr-compare select { flex: 1; }
+  .monitoring-module .fm-pr-card { padding: 14px; }
+}

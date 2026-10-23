@@ -10,6 +10,7 @@ import {mapProject,mapProviderModel,mapRegion,mapMonitor,mapRunSummary,mapRunDet
 import type {MonitorInput,ProjectSummary} from './domain';
 import './styles.css';
 import './integration.css';
+import ReportExampleWorkspace from './features/monitoring/reports/ReportExampleWorkspace';
 export interface ModuleContext {module:'progress';workspace:{id:string;ownerUserId:number};capabilities:string[];marketEdition?:string}
 export function ProgressClientProvider({children}:{children:ReactNode}){
  const [queryClient]=useState(()=>new QueryClient({defaultOptions:{queries:{retry:1,refetchOnWindowFocus:false}}}));
@@ -17,7 +18,15 @@ export function ProgressClientProvider({children}:{children:ReactNode}){
  return <QueryClientProvider client={queryClient}><trpc.Provider client={client} queryClient={queryClient}>{children}</trpc.Provider></QueryClientProvider>;
 }
 export type ProgressWorkspaceView = 'monitoring'|'reports';
-export default function ModuleWorkspace({context,view,onViewChange}:{context?:ModuleContext;view?:ProgressWorkspaceView;onViewChange?:(view:ProgressWorkspaceView)=>void}){return <ProgressClientProvider><LiveProgressWorkspace key={context?.workspace.id} view={view} onViewChange={onViewChange}/></ProgressClientProvider>;}
+export default function ModuleWorkspace({context,view,onViewChange}:{context?:ModuleContext;view?:ProgressWorkspaceView;onViewChange?:(view:ProgressWorkspaceView)=>void}){return <ProgressClientProvider><ProgressWorkspaceEntry key={context?.workspace.id} view={view} onViewChange={onViewChange}/></ProgressClientProvider>;}
+function ProgressWorkspaceEntry(props:{view?:ProgressWorkspaceView;onViewChange?:(view:ProgressWorkspaceView)=>void}){
+ const [path]=useLocation();
+ const [showExample,setShowExample]=useState(true);
+ const linkedRun=/\/runs\/[0-9a-f-]{36}$/.test(path)||Boolean(new URLSearchParams(location.search).get('optimizationAnswer'));
+ useEffect(()=>{if(props.view!=='reports')setShowExample(true);},[props.view]);
+ const exampleVisible=props.view==='reports'&&!linkedRun&&showExample;
+ return <>{exampleVisible&&<div className="monitoring-module"><ReportExampleWorkspace onExit={()=>setShowExample(false)}/></div>}<div hidden={exampleVisible} style={exampleVisible?{display:'none'}:undefined}><LiveProgressWorkspace {...props}/></div></>;
+}
 function LiveProgressWorkspace({view,onViewChange}:{view?:ProgressWorkspaceView;onViewChange?:(view:ProgressWorkspaceView)=>void}){
  const [path,navigate]=useLocation();
  const routeRunId=/\/runs\/([0-9a-f-]{36})$/.exec(path)?.[1];
