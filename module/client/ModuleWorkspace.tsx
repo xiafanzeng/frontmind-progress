@@ -25,7 +25,7 @@ function ProgressWorkspaceEntry(props:{view?:ProgressWorkspaceView;onViewChange?
  const linkedRun=/\/runs\/[0-9a-f-]{36}$/.test(path)||Boolean(new URLSearchParams(location.search).get('optimizationAnswer'));
  useEffect(()=>{if(props.view!=='reports')setShowExample(true);},[props.view]);
  const exampleVisible=props.view==='reports'&&!linkedRun&&showExample;
- return <>{exampleVisible&&<div className="monitoring-module"><ReportExampleWorkspace onExit={()=>setShowExample(false)}/></div>}<div hidden={exampleVisible} style={exampleVisible?{display:'none'}:undefined}><LiveProgressWorkspace {...props}/></div></>;
+ return <>{exampleVisible&&<div className="monitoring-module"><ReportExampleWorkspace onExit={()=>setShowExample(false)}/></div>}<div className="monitoring-workspace-root" hidden={exampleVisible} style={exampleVisible?{display:'none'}:undefined}><LiveProgressWorkspace {...props}/></div></>;
 }
 function LiveProgressWorkspace({view,onViewChange}:{view?:ProgressWorkspaceView;onViewChange?:(view:ProgressWorkspaceView)=>void}){
  const [path,navigate]=useLocation();
