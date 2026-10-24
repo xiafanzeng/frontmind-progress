@@ -224,6 +224,11 @@ export type RunAttempt = {
   keywordEvaluations?: KeywordEvaluation[];
   categoryRanking?: Record<string, unknown> | null;
   revision?: number;
+  sentimentEvidence?: {
+    provider: "moli"; revisionId: string; targetBrand: string; brandVersionId: string;
+    brandAliases: string[]; rawSentiment: string | null;
+    keywordState: "available" | "empty" | "not_returned" | "unavailable";
+  };
   resultUpdatedAt?: string;
   error?: string;
 };

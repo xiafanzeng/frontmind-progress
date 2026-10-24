@@ -2980,6 +2980,16 @@ async getMonitoringAnalysis(ownerId: string, input: MonitoringAnalysisInput) {
     return this.progressMonitoringReadRepository().getMonitoringAnalysis(ownerId, input);
   }
 
+async getOverviewSentiment(ownerId: string, input: import("../contracts/overview.js").OverviewSentimentInput) {
+    return this.progressMonitoringReadRepository().getOverviewSentiment(ownerId, input);
+  }
+async getOverviewSources(ownerId: string, input: import("../contracts/overview.js").OverviewSourcesInput) {
+    return this.progressMonitoringReadRepository().getOverviewSources(ownerId, input);
+  }
+async getOverviewEvidence(ownerId: string, input: import("../contracts/overview.js").OverviewEvidenceInput) {
+    return this.progressMonitoringReadRepository().getOverviewEvidence(ownerId, input);
+  }
+
 async getMonitoringReportCatalog(ownerId: string, scope: MonitoringScope) {
     const base = { ...scope, questionId: undefined, platformId: undefined, questionIds: undefined, platformIds: undefined, questionCategory: undefined };
     const resolved = await this.resolveMonitoringReadScope(ownerId, base);

@@ -8,6 +8,7 @@ export function overviewDraftBasis(attempt: RunAttempt | undefined, check: strin
   return {
     answerId: attempt.id, runId: attempt.runId || null, questionId: attempt.questionId,
     answerRevision: attempt.revision ?? null, resultUpdatedAt: attempt.resultUpdatedAt || null,
+    ...(attempt.sentimentEvidence ? { sentimentEvidence: attempt.sentimentEvidence } : {}),
     question: attempt.question, originalAnswer: attempt.answer || null, check, context: context || null,
     originalJudgment: { mentioned: attempt.brandMentioned ?? null, position: attempt.mentionPosition ?? null,
       sentiment: attempt.sentiment || "unknown", keywordEvaluations: attempt.keywordEvaluations || [], citationProvenance: attempt.citationProvenance || null },

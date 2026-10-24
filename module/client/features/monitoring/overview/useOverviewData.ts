@@ -114,7 +114,6 @@ export function useOverviewData(query: MonitoringQueryState, timezone: string, c
   const currentComplete = ready && !staleCached.length && !refreshingEvidence && currentIndex.isSuccess && !currentIndex.hasNextPage && allLoaded(currentIds);
   const previousComplete = prior.isSuccess && (prior.data.metrics.attempts === 0 || priorIndex.isSuccess && !priorIndex.hasNextPage && allLoaded(previousIds));
   const yearComplete = compare && yearWindowValid && currentComplete && yearPrior.isSuccess && (yearPrior.data.metrics.attempts === 0 || yearIndex.isSuccess && !yearIndex.hasNextPage && allLoaded(yearIds));
-  const citations = trpc.monitoring.analysis.useQuery({ scope, kind: "citations" }, { ...readOptions, enabled: ready && tab === "sources" });
   const sources = trpc.monitoring.analysis.useQuery({ scope, kind: "sources" }, { ...readOptions, enabled: ready && tab === "sources" });
   const indexes = [currentIndex, ...(priorEnabled ? [priorIndex] : []), ...(yearEnabled ? [yearIndex] : [])];
   const loading = !ready || refreshingEvidence || monitor.isLoading || indexes.some(index => index.isFetching) || details.some(detail => detail.isFetching);
@@ -129,24 +128,25 @@ export function useOverviewData(query: MonitoringQueryState, timezone: string, c
   const refresh = async () => {
     await Promise.all([
       utils.monitoring.summary.invalidate(),
+      utils.monitoring.overview.invalidate(),
       monitor.refetch(),
       ...indexes.map(index => index.refetch()),
       // Refresh only three full runs at a time, preserving the same load bound.
       (async () => { for (let i = 0; i < details.length; i += 3) await Promise.all(details.slice(i, i + 3).map(detail => detail.refetch())); })(),
-      ...(tab === "sources" ? [citations.refetch(), sources.refetch()] : []),
+      ...(tab === "sources" ? [sources.refetch()] : []),
       ...(compare ? [prior.refetch(), ...(yearWindowValid ? [yearPrior.refetch()] : [])] : []),
     ]);
   };
   return {
+    scope: ready ? scope : undefined,
     snapshots: loaded.filter(run => currentIds.has(run.id) || previousIds.has(run.id)),
     yearSnapshots: loaded.filter(run => yearIds.has(run.id)), yearPrior: compare ? yearPrior.data : undefined, yearComplete,
     competitors: monitor.data?.version.competitors || [], prior: compare ? prior.data : undefined,
-    citations: citations.data?.kind === "citations" ? citations.data : undefined,
     sources: sources.data?.kind === "sources" ? sources.data : undefined,
     complete: currentComplete && (!compare || previousComplete), currentComplete,
     loading, refresh,
     error: (!refreshingEvidence && staleCached.length ? "部分回答版本已更新，完整证据尚未同步，请刷新重试" : undefined) || monitor.error?.message || indexes.find(index => index.error)?.error?.message || details.find(detail => detail.error)?.error?.message ||
-      (compare ? prior.error?.message || yearPrior.error?.message : undefined) || (tab === "sources" ? citations.error?.message || sources.error?.message : undefined),
+      (compare ? prior.error?.message || yearPrior.error?.message : undefined) || (tab === "sources" ? sources.error?.message : undefined),
     canLoadMore: selected.length < candidates.length || indexes.some(index => index.hasNextPage), loadMore,
     listLimited: indexes.some(index => index.hasNextPage),
   };

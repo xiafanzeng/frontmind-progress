@@ -4,6 +4,7 @@ import { activeEnterpriseProjectId } from "../host-runtime";
 import { ArchiveRestore, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
+import { monitoringRunHref } from "../features/monitoring/reportNavigation";
 
 import Modal from "../components/Modal";
 import MonitorForm from "../components/MonitorForm";
@@ -583,7 +584,7 @@ export default function MonitoringPage({
           <span>{demoMode ? `演示：${success.message}` : success.message}</span>
           {success.runId && !demoMode && !isWorkbench && (
             <Link
-              href={`/monitoring-system/${success.monitorId}/runs/${success.runId}`}
+              href={monitoringRunHref(project?.id, success.monitorId, success.runId)}
             >
               查看运行
             </Link>
@@ -630,7 +631,7 @@ export default function MonitoringPage({
                 ? (setExpandedRunId(runId), onSelectedRunChange?.(runId))
                 : demoMode
                   ? onSelectedRunChange?.(runId)
-                  : navigate(`/monitoring-system/${monitor.id}/runs/${runId}`)
+                  : navigate(monitoringRunHref(project.id, monitor.id, runId))
             }
             onRun={prepareExistingRun}
             onToggle={(monitor) =>

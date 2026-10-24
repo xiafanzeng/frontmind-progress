@@ -73,7 +73,7 @@ export default function ReportExampleWorkspace({ onExit }: { onExit: () => void 
   const answerButton = (id: string) => { setAnswerId(id); navigate("scoring"); };
   const summaryCard = (label: string, value: string, hint: string, action?: () => void) => <article className="fm-ex-card"><span>{label}</span><strong className="fm-ex-number">{value}</strong><p>{hint}</p>{action && <button type="button" className="fm-ex-link" onClick={action}>查看详情 →</button>}</article>;
   return <section className="fm-report-example" aria-label="进度报告示例">
-    <div className="fm-ex-mode"><span>演示数据 · 非真实评估</span><span>品牌 A 工作区</span><button type="button" onClick={onExit}>返回原报告</button></div>
+    <div className="fm-ex-mode"><span>演示数据 · 非真实评估</span><span>品牌 A 工作区</span><button type="button" onClick={onExit}>返回真实报告</button></div>
     <p className="fm-ex-breadcrumb">AI 智能品牌优化　 ›　进度监控　 ›　进度报告{detail ? "　 ›　单题优化" : ""}</p>
     <header className="fm-ex-heading"><div><h2>{titles[page]}</h2><p>{detail ? `${question.id} · ${question.prompt}` : page === "overview" ? "先看四类效果，再定位需要处理的问题。" : "平均值背后，哪些题变好了，哪些仍需处理。"}</p></div><button type="button" onClick={() => setRules(!rules)} aria-expanded={rules}>查看评分口径　↗</button></header>
     {rules && <section className="fm-ex-card fm-ex-rules"><h3>评分口径 · 问题集 V2 / 评分规则 V1（示例）</h3>{reportCategories.map(item => <p key={item.key}><strong>{item.label} / {item.metric}：</strong>{item.rule}。</p>)}<p>先按题计算比例，再对固定题集等权平均。无有效分母显示待评估，缺题显示数据未齐。待核实保留在分母，不计通过。配置或规则变更不可直接比较；引用不等于事实正确，变化不代表因果效果。</p></section>}

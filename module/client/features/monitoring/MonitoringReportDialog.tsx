@@ -31,10 +31,10 @@ type Option = {
 };
 type Catalog = { questions: Option[]; platforms: Option[] };
 const categories: Record<string, string> = {
-  industry: "行业排名词",
-  competitor_comparison: "竞品对比词",
-  reputation: "美誉舆情词",
-  product_scenario: "产品场景词",
+  industry: "行业排名问题",
+  competitor_comparison: "竞品对比问题",
+  reputation: "美誉舆情问题",
+  product_scenario: "产品场景问题",
 };
 
 function Selection({

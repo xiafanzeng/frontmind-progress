@@ -1,10 +1,13 @@
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
+import type { MonitoringScope } from "@frontmind/monitoring-contracts";
+import { trpc } from "../../../trpc";
+import OverviewPagination from "./OverviewPagination";
 import type { RunAttempt } from "../../../domain";
 import { aggregateSources, safeExternalUrl, visibleSourcesForAttempt } from "../selectors";
 import type { MonitoringAnalysisData } from "../useMonitoringDataSource";
 
 const publicationLabels = { last_7_days: "近 7 天", last_30_days: "8–30 天", last_90_days: "31–90 天", older: "90 天以前", unknown: "发布时间未知" };
-const colors = ["#7950d5", "#b79ce9", "#4e9bc5", "#91bdb0", "#d4d8e0"];
+const colors = ["#6e4293", "#a78abe", "#587a92", "#739c90", "#d4d8e0"];
 
 // Match the read repository's content aggregation (fragment identifiers do not
 // identify a different source). Keep this client-side; do not import server code.
@@ -28,21 +31,36 @@ function Distribution({ title, rows, note, pending = false }: { title: string; r
   </div></section>;
 }
 
-export default function OverviewSources({ attempts, citations, sources, to, canReport, onReport, onAnswer }: {
-  attempts: RunAttempt[]; citations?: Extract<MonitoringAnalysisData, { kind: "citations" }>;
+export default function OverviewSources({ attempts, citations, sources, to, canReport, onReport, onAnswer, scope }: {
+  scope?: MonitoringScope; attempts: RunAttempt[]; citations?: Extract<MonitoringAnalysisData, { kind: "citations" }>;
   sources?: Extract<MonitoringAnalysisData, { kind: "sources" }>;
   to: string; canReport: boolean; onReport: () => void; onAnswer: (attempt: RunAttempt) => void;
 }) {
+  const rankingRef = useRef<HTMLElement>(null);
+  const [loadingHeight, setLoadingHeight] = useState(360);
+  const rememberHeight = () => { if (rankingRef.current) setLoadingHeight(rankingRef.current.getBoundingClientRect().height); };
   const [view, setView] = useState("ranking");
   const [domain, setDomain] = useState<string | null>(null);
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [domainPage, setDomainPage] = useState(1);
+  const [contentPage, setContentPage] = useState(1);
+  const live = trpc.monitoring.overview.sources.useQuery({ scope: scope!, domain, domainPage, contentPage }, {
+    enabled: Boolean(scope) && view === "ranking", staleTime: 60_000, refetchOnWindowFocus: false, retry: false, trpc: { abortOnUnmount: true },
+  });
+  const chooseDomain = (value: string | null) => { rememberHeight(); setDomain(value); setContentPage(1); setSelectedUrl(null); };
   const local = aggregateSources(attempts, "cited");
-  const ranking = (citations?.contents || local).slice().sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
-  const total = citations ? citations.total : local.reduce((sum, source) => sum + source.count, 0);
+  const ranking = (scope ? live.data?.contents || [] : citations?.contents || local).slice().sort((a, b) => b.count - a.count || (a.url || "").localeCompare(b.url || ""));
+  const total = scope ? live.data?.total ?? sources?.cited ?? 0 : citations ? citations.total : local.reduce((sum, source) => sum + source.count, 0);
   const localDomains = new Map<string, number>();
   local.forEach(item => localDomains.set(item.domain, (localDomains.get(item.domain) || 0) + item.count));
-  const domains = (citations?.items || [...localDomains].map(([domain, count]) => ({ domain, count }))).slice().sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
+  const domains = (scope ? live.data?.domains || [] : citations?.items || [...localDomains].map(([domain, count]) => ({ domain, count }))).slice().sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
   const filtered = ranking.filter(item => domain === null || item.domain === domain);
+  const domainCount = scope ? live.data?.domainCount || 0 : domains.length;
+  const contentCount = scope ? live.data?.contentCount || 0 : filtered.length;
+  const currentDomainPage = scope ? live.data?.domainPage || 1 : Math.min(domainPage, Math.max(1, Math.ceil(domainCount / 10)));
+  const currentContentPage = scope ? live.data?.contentPage || 1 : Math.min(contentPage, Math.max(1, Math.ceil(contentCount / 10)));
+  const domainRows = scope ? domains : domains.slice((currentDomainPage - 1) * 10, currentDomainPage * 10);
+  const contentRows = scope ? filtered : filtered.slice((currentContentPage - 1) * 10, currentContentPage * 10);
   const selected = filtered.find(item => item.url === selectedUrl);
   const related = selected?.url ? attempts.filter(attempt => attempt.status === "completed" && Boolean(attempt.answer?.trim()) && visibleSourcesForAttempt(attempt, "cited").some(source => source.url && contentUrl(source.url) === contentUrl(selected.url!))) : [];
   const all = attempts.flatMap((attempt) => visibleSourcesForAttempt(attempt, "all"));
@@ -58,11 +76,18 @@ export default function OverviewSources({ attempts, citations, sources, to, canR
   return <section className="fm-ov-section" aria-labelledby="overview-source-title">
     <header className="fm-ov-heading fm-ov-source-heading"><div><h2 id="overview-source-title">信源分析</h2><p className="fm-ov-note">从引用域名追溯到内容，再查看关联回答。</p></div><div className="fm-ov-view-switch" role="group" aria-label="切换信源排行或信源分布">{[{ id: "ranking", label: "信源排行" }, { id: "distribution", label: "信源分布" }].map(item => <button type="button" key={item.id} className={view === item.id ? "active" : ""} aria-pressed={view === item.id} onClick={() => setView(item.id)}>{item.label}</button>)}</div></header>
     <div className="fm-ov-heading"><span>{total} 次明确引用 · {sourceTotal} 条来源记录{view === "distribution" ? " · 类型与发布时间" : ""}</span><button type="button" className="fm-text-button" disabled={!canReport} onClick={onReport}>下载监控报告 →</button></div>
-    {view === "ranking" ? <section className="fm-ov-card">{ranking.length ? <div className="fm-ov-source-grid"><aside className="fm-ov-domain-list" aria-label="按引用域名筛选"><h3>引用域名</h3>{domains.reduce((sum, item) => sum + item.count, 0) < total && <p className="fm-ov-note">仅展示接口返回的前 100 个域名</p>}<button type="button" aria-pressed={domain === null} onClick={() => { setDomain(null); setSelectedUrl(null); }}><span>全部信源</span><strong>{total}</strong></button>{domains.map(item => <button type="button" key={item.domain} aria-pressed={domain === item.domain} onClick={() => { setDomain(item.domain); setSelectedUrl(null); }}><span>{item.domain || "域名未知"}</span><strong>{item.count}</strong><progress value={item.count} max={total || 1} aria-label={`${item.domain}占全部引用的比例`} /></button>)}</aside><div className="fm-ov-source-content"><h3>{domain || "全部信源"} · 引用内容</h3><div className="fm-table-scroll"><table className="fm-data-table fm-ov-source-ranking"><caption>占比始终以全部 {total} 次引用为分母{citations && ranking.reduce((sum, item) => sum + item.count, 0) < total ? " · 仅展示接口已返回的前 100 项内容" : ""}</caption><thead><tr><th>序号</th><th>内容 / 信源</th><th>引用次数</th><th>占比</th></tr></thead><tbody>{filtered.map((item, index) => {
+    {view === "ranking" ? scope && live.error ? <p role="alert" className="fm-ov-notice pending">信源读取失败：{live.error.message}<button type="button" className="fm-text-button" onClick={() => void live.refetch()}>重试</button></p> : scope && !live.data ? <section className="fm-ov-card fm-ov-ranking-loading" style={{ minHeight: loadingHeight }} aria-busy="true"><p role="status">正在读取引用域名和内容分页…</p></section> : <section className="fm-ov-card" ref={rankingRef}>{total > 0 ? <div className="fm-ov-source-grid"><aside className="fm-ov-domain-list" aria-label="按引用域名筛选">
+      <header className="fm-ov-domain-heading"><h3>引用域名</h3><p className="fm-ov-note">共 {domainCount} 个域名 · 每页最多 10 个</p></header>
+      <div className="fm-ov-domain-filter"><button type="button" aria-pressed={domain === null} className="fm-ov-all-sources" onClick={() => chooseDomain(null)}><span>全部信源</span><strong>{total} 次引用</strong></button></div>
+      <ol className="fm-ov-domain-rows" start={(currentDomainPage - 1) * 10 + 1} aria-label="当前页引用域名">
+        {domainRows.map((item, index) => <li key={item.domain}><button type="button" className="fm-ov-domain-choice" aria-pressed={domain === item.domain} onClick={() => chooseDomain(item.domain)}><span className="fm-ov-domain-name"><small className="fm-ov-domain-index" aria-hidden="true">{(currentDomainPage - 1) * 10 + index + 1}</small><span>{item.domain || "域名未知"}</span></span><strong>{item.count} 次</strong><progress value={item.count} max={total || 1} aria-label={`${item.domain}占全部引用的比例`} /></button></li>)}
+      </ol>
+      <OverviewPagination label="引用域名分页" unit="个域名" compact page={currentDomainPage} total={domainCount} onChange={value => { rememberHeight(); setDomainPage(value); }} />
+    </aside><div className="fm-ov-source-content"><h3>{domain === null ? "全部信源" : domain || "域名未知"} · 引用内容</h3><div className="fm-table-scroll"><table className="fm-data-table fm-ov-source-ranking"><caption>占比始终以全部 {total} 次引用为分母 · 当前域名共 {contentCount} 项内容</caption><thead><tr><th>序号</th><th>内容 / 信源</th><th>引用次数</th><th>占比</th></tr></thead><tbody>{contentRows.map((item, index) => {
       const url = safeExternalUrl(item.url);
       const ratio = total ? item.count / total * 100 : 0;
-      return <tr key={`${item.url}:${index}`} className={Boolean(selected && item.url && selected.url === item.url) ? "selected" : ""}><td>{index + 1}</td><td><button type="button" className="fm-ov-source-title" aria-pressed={Boolean(selected && item.url && selected.url === item.url)} disabled={!item.url} onClick={() => setSelectedUrl(item.url || null)}>{item.title || item.domain}</button><small>{item.domain} {url && <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开来源：${item.title || item.domain}`}>打开来源 ↗</a>}</small></td><td><strong>{item.count}</strong></td><td><div className="fm-ov-share"><progress value={ratio} max={100} aria-label={`${item.title}引用占比`} /><span>{ratio.toFixed(1)}%</span></div></td></tr>;
-    })}</tbody></table></div>{!filtered.length && <p className="fm-ov-note">该域名的内容未包含在本次接口返回的排行中。</p>}{selected ? <section className="fm-ov-source-related"><h4>已读取的关联回答 · {related.length} 条</h4><p className="fm-ov-note">{selected.title} · 仅列已读取快照，回答数与引用次数口径不同。</p>{related.length ? related.map(attempt => <button type="button" className="fm-ov-related-answer" key={attempt.id} onClick={() => onAnswer(attempt)}><strong>{attempt.question}</strong><span>{attempt.platformName} · {attempt.runId?.slice(0, 8)} · 查看回答 →</span></button>) : <p className="fm-ov-note">已读取快照中暂无该 URL 的明确引用，继续加载批次后可补全。</p>}</section> : <p className="fm-ov-note">选择一条内容，查看其关联回答。</p>}</div></div> : <div className="fm-empty"><strong>当前筛选暂无明确文内引用</strong><span>未明确引用的答案参考不计入排行。</span></div>}</section> :
+      return <tr key={`${item.url}:${index}`} className={Boolean(selected && item.url && selected.url === item.url) ? "selected" : ""}><td>{(currentContentPage - 1) * 10 + index + 1}</td><td><button type="button" className="fm-ov-source-title" aria-pressed={Boolean(selected && item.url && selected.url === item.url)} disabled={!item.url} onClick={() => setSelectedUrl(item.url || null)}>{item.title || item.domain}</button><small>{item.domain} {url && <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开来源：${item.title || item.domain}`}>打开来源 ↗</a>}</small></td><td><strong>{item.count}</strong></td><td><div className="fm-ov-share"><progress value={ratio} max={100} aria-label={`${item.title}引用占比`} /><span>{ratio.toFixed(1)}%</span></div></td></tr>;
+    })}</tbody></table></div><OverviewPagination label="引用内容分页" page={currentContentPage} total={contentCount} onChange={value => { rememberHeight(); setContentPage(value); setSelectedUrl(null); }} />{scope && <p className="fm-ov-note">{live.data?.coverage}</p>}{!filtered.length && <p className="fm-ov-note">当前域名没有引用内容。</p>}{selected ? <section className="fm-ov-source-related"><h4>已读取的关联回答 · {related.length} 条</h4><p className="fm-ov-note">{selected.title} · 仅列已读取快照，回答数与引用次数口径不同。</p>{related.length ? related.map(attempt => <button type="button" className="fm-ov-related-answer" key={attempt.id} onClick={() => onAnswer(attempt)}><strong>{attempt.question}</strong><span>{attempt.platformName} · {attempt.runId?.slice(0, 8)} · 查看回答 →</span></button>) : <p className="fm-ov-note">已读取快照中暂无该 URL 的明确引用，继续加载批次后可补全。</p>}</section> : <p className="fm-ov-note">选择一条内容，查看其关联回答。</p>}</div></div> : <div className="fm-empty"><strong>当前筛选暂无明确文内引用</strong><span>未明确引用的答案参考不计入排行。</span></div>}</section> :
     <div className="fm-ov-two-columns"><Distribution title="信源类型分布" pending rows={[{ label: "类型待核实", count: sourceTotal }]} note="尚无业务类型数据，不根据域名推断。" /><Distribution title="信源发布时间分布" rows={times.map((item) => ({ label: publicationLabels[item.bucket], count: item.discoveredCount, unknown: item.bucket === "unknown" }))} note="按全部来源记录的已返回发布日期统计，日期缺失单列。" /></div>}
   </section>;
 }
