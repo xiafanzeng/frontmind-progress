@@ -1,4 +1,5 @@
 import type * as TRPCCore from "@trpc/server/unstable-core-do-not-import";
+import { overviewSentimentInputSchema, overviewSentimentOutputSchema, overviewSourcesInputSchema, overviewSourcesOutputSchema, overviewEvidenceInputSchema, overviewEvidenceOutputSchema } from "../contracts/overview.js";
 import type { BuiltRouter, CreateRootTypes, DecorateCreateRouterOptions, DefaultErrorShape, QueryProcedure, MutationProcedure, Router, ProcedureBuilder } from "@trpc/server/unstable-core-do-not-import";
 import { accountActivityInputSchema, accountActivityOutputSchema, accountActivityPageInputSchema, accountActivityPageOutputSchema } from "@frontmind/monitoring-contracts";
 import {
@@ -385,6 +386,14 @@ monitors: t.router({
       ),
   }),
 monitoring: t.router({
+    overview: t.router({
+      sentiment: customerProcedure.input(overviewSentimentInputSchema).output(overviewSentimentOutputSchema)
+        .query(({ ctx, input }) => translateRepositoryErrors(() => ctx.repository.getOverviewSentiment(ctx.user.id, input))),
+      sources: customerProcedure.input(overviewSourcesInputSchema).output(overviewSourcesOutputSchema)
+        .query(({ ctx, input }) => translateRepositoryErrors(() => ctx.repository.getOverviewSources(ctx.user.id, input))),
+      evidence: customerProcedure.input(overviewEvidenceInputSchema).output(overviewEvidenceOutputSchema)
+        .query(({ ctx, input }) => translateRepositoryErrors(() => ctx.repository.getOverviewEvidence(ctx.user.id, input))),
+    }),
     provider: t.router({
       checkConnection: customerProcedure
         .output(z.object({ connected: z.literal(true), provider: z.literal('moli'), modelCount: z.number().int().nonnegative() }))

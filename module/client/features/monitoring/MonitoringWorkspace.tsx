@@ -477,8 +477,9 @@ function MonitoringWorkspaceController({
       queryRef.current = next;
       setQuery(next);
     };
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    const events = ["popstate", "pushState", "replaceState"];
+    for (const event of events) window.addEventListener(event, onPopState);
+    return () => { for (const event of events) window.removeEventListener(event, onPopState); };
   }, [context, isWorkbench, analysisOnly]);
 
   const selectedMonitor = monitors.find(

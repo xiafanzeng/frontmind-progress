@@ -5,6 +5,7 @@ import type { MonitoringQueryState } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
 import OverviewTrend from "./OverviewTrend";
 import OverviewSentiment from "./OverviewSentiment";
+import OverviewSentimentLive from "./OverviewSentimentLive";
 import OverviewSources from "./OverviewSources";
 import OverviewSuggestions from "./OverviewSuggestions";
 import { useOverviewData, type OverviewData, type OverviewTab } from "./useOverviewData";
@@ -64,7 +65,7 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
       event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>("[role=tab]")[next]?.focus({ preventScroll: true });
     }}>{item.id === "suggestions" && <Lightbulb size={16} />}{item.label}{item.id === "suggestions" && suggestions.some((suggestion) => suggestion.evidence.length > 0) && <span className="fm-ov-nav-count" title="有真实回答证据的核查方向">{suggestions.filter((suggestion) => suggestion.evidence.length > 0).length}</span>}</button>)}</nav>
     {data.error && <p className="fm-ov-notice pending" role="alert">部分监控数据读取失败：{data.error}。未读取的数据不视为零，请稍后刷新。</p>}
-    <div className="fm-ov-coverage"><span role="status">{data.loading ? "正在读取监控数据…" : `已读取当前周期 ${current.length} 个批次`}</span>{data.canLoadMore && <button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.loadMore()}>继续读取历史证据</button>}<button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.refresh()}>刷新数据</button><details><summary>查看数据范围与口径</summary><p>指标卡使用当前筛选的完整汇总；词云和建议依据已读取的回答。每次扩展最多 3 个完整批次，使用现有游标读取历史，不受最近 100 批限制。{data.complete ? "当前所需周期的目录与证据已读取完整。" : "分析证据尚未完整，比较仅在样本齐全且可比时显示。"}{data.listLimited && "历史目录尚有下一页，可继续读取；未读部分不视为无数据。"}</p></details></div>
+    <div className="fm-ov-coverage"><span role="status">{data.loading ? "正在读取监控数据…" : `已读取当前周期 ${current.length} 个批次`}</span>{data.canLoadMore && <button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.loadMore()}>继续读取历史证据</button>}<button type="button" className="fm-text-button" disabled={data.loading} onClick={() => void data.refresh()}>刷新数据</button><details><summary>查看数据范围与口径</summary><p>指标卡使用当前筛选的完整汇总；情感分布和词云使用同一范围的服务端回答，信源排行独立分页。趋势和建议依据已读取的批次。每次扩展最多 3 个完整批次，使用现有游标读取历史，不受最近 100 批限制。{data.complete ? "当前所需周期的目录与证据已读取完整。" : "分析证据尚未完整，比较仅在样本齐全且可比时显示。"}{data.listLimited && "历史目录尚有下一页，可继续读取；未读部分不视为无数据。"}</p></details></div>
     <div role="tabpanel" id={`overview-panel-${tab}`} aria-labelledby={`overview-tab-${tab}`} tabIndex={0}>
       {tab === "metrics" && <section className="fm-ov-section" aria-labelledby="overview-metric-title"><header className="fm-ov-heading"><h2 id="overview-metric-title">指标看板</h2><span>{query.from} 至 {query.to}（不含结束日）</span></header>
         <div className="fm-ov-metrics">{cards.map((card) => {
@@ -76,9 +77,9 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
         <div className="fm-ov-two-columns"><section className="fm-ov-card"><h3>监控范围与采集质量</h3><dl className="fm-ov-quality"><div><dt>有效回答</dt><dd>{metrics?.effective ?? "—"}</dd></div><div><dt>采集次数</dt><dd>{summary?.metrics.attempts ?? "—"}</dd></div><div><dt>已读取批次</dt><dd>{current.length}</dd></div></dl><p className="fm-ov-note">有效回答排除失败或空回答。具体判定可进入原回答核查。</p></section><section className="fm-ov-card"><h3>从指标进入分析</h3><div className="fm-ov-analysis-links">{tabs.filter(item => ["trends", "sentiment", "sources"].includes(item.id)).map(item => <button type="button" key={item.id} onClick={() => setTab(item.id)}><span>{item.label}</span><span aria-hidden="true">→</span></button>)}</div></section></div>
         <section className="fm-ov-card"><header className="fm-ov-heading"><h3>从竞品进入分析</h3><span>沿用监控配置</span></header>{data.competitors.length ? <div className="fm-ov-competitors">{data.competitors.map((competitor) => <button type="button" key={competitor.name} className="fm-secondary-button" onClick={() => { onChange({ subject: `competitor:${competitor.name}` }); setTab("trends"); }}>{competitor.name} <span>查看趋势 →</span></button>)}</div> : <p className="fm-ov-note">当前监控尚未配置竞品。<button type="button" className="fm-text-button" onClick={onConfigure}>编辑监控配置</button></p>}</section>
       </section>}
-      {tab === "trends" && <OverviewTrend runs={current} query={query} competitors={data.competitors} loading={data.loading} complete={data.complete} onConfigure={onConfigure} />}
-      {tab === "sentiment" && (serverData && !summary ? <p role="status">等待当前筛选的情感汇总，暂不以局部回答代替完整分布。</p> : <OverviewSentiment key={scopeKey} draftNamespace={draftNamespace} attempts={attempts} summary={summary} self={query.subject === "self"} onAnswer={openAnswer} />)}
-      {tab === "sources" && (serverData && (!data.citations || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的完整信源排行与分布…"}</p> : <OverviewSources key={scopeKey} attempts={attempts} citations={data.citations} sources={data.sources} to={query.to} canReport={serverData && Boolean(summary?.metrics.answers)} onReport={onReport} onAnswer={openAnswer} />)}
+      {tab === "trends" && <OverviewTrend key={scopeKey} runs={current} query={query} competitors={data.competitors} loading={data.loading} complete={data.complete} onConfigure={onConfigure} />}
+      {tab === "sentiment" && (serverData ? data.scope ? <OverviewSentimentLive key={scopeKey} scope={data.scope} draftNamespace={draftNamespace} onAnswer={openAnswer} /> : <p role="status">等待当前筛选范围…</p> : <OverviewSentiment key={scopeKey} draftNamespace={draftNamespace} attempts={attempts} summary={summary} self={query.subject === "self"} onAnswer={openAnswer} />)}
+      {tab === "sources" && (serverData && (!data.scope || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的信源分布…"}</p> : <OverviewSources key={scopeKey} scope={data.scope} attempts={attempts} sources={data.sources} to={query.to} canReport={serverData && Boolean(summary?.metrics.answers)} onReport={onReport} onAnswer={openAnswer} />)}
       {tab === "suggestions" && <>{query.subject !== "self" && <p className="fm-ov-notice pending">竞品的资料缺口与情感证据未单独提供。以下保留核查入口，切回当前品牌可查看关联证据。</p>}<OverviewSuggestions key={scopeKey} draftNamespace={draftNamespace} suggestions={suggestions} monitorId={monitor.id} query={query} onAnswer={openAnswer} /></>}
     </div>
   </div>;
@@ -94,7 +95,7 @@ export default function OverviewWorkspace(props: Props) {
   if (props.serverData) return <LiveOverview {...props} tab={tab} setTab={setTab} />;
   const data: OverviewData = { snapshots: props.runs, competitors: props.runs[0]?.config.competitors || [], prior: undefined,
     yearSnapshots: [], yearPrior: undefined, yearComplete: false,
-    citations: undefined, sources: undefined, complete: true, currentComplete: true, loading: false, error: undefined,
+    scope: undefined, sources: undefined, complete: true, currentComplete: true, loading: false, error: undefined,
     canLoadMore: false, loadMore: async () => undefined, refresh: async () => undefined, listLimited: false };
   return <OverviewContent {...props} data={data} tab={tab} setTab={setTab} />;
 }

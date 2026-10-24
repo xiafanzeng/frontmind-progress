@@ -1,29 +1,31 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import { progressRunRoute, progressViewForPath } from "../module/client/features/monitoring/reportNavigation";
 import { ModuleShell } from "@frontmind/module-ui/dashboard/ModuleShell";
 import MonitoringDemo from "./MonitoringDemo";
 import ModuleWorkspace, { ProgressClientProvider, type ModuleContext, type ProgressWorkspaceView } from "../module/client/ModuleWorkspace";
 import { PROGRESS_MODULE_LABEL } from "../module/client/module-label";
 import "./standalone.css";
 
-const moduleDefinition = { id: "progress", label: PROGRESS_MODULE_LABEL, color: "#2867a5" };
+const moduleDefinition = { id: "progress", label: PROGRESS_MODULE_LABEL, color: "#3d1560" };
 const views = [{ id: "monitoring", label: "问题监控" }, { id: "reports", label: "进度报告" }];
 
 export default function App({ preview = false }: { preview?: boolean }) {
   const [context, setContext] = useState<ModuleContext>();
   const [error, setError] = useState("");
-  const routeView = (): ProgressWorkspaceView => location.pathname === "/reports" || /\/runs\//.test(location.pathname) ? "reports" : "monitoring";
-  const [view, setView] = useState<ProgressWorkspaceView>(routeView);
+  const [path, navigate] = useLocation();
+  const view = progressViewForPath(path);
   const navigateView = (next: ProgressWorkspaceView) => {
-    setView(next);
-    history.pushState(null, "", `${next === "reports" ? "/reports" : "/"}${location.search}`);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    const params = new URLSearchParams(location.search);
+    params.set("view", next);
+    params.delete("optimizationAnswer");
+    navigate(`${next === "reports" ? "/reports" : "/"}?${params}`);
   };
   useEffect(() => {
-    const restore = () => setView(routeView());
-    window.addEventListener("popstate", restore);
-    if (!["/", "/reports", "/monitoring-system"].includes(location.pathname) && !/\/runs\/[0-9a-f-]{36}$/.test(location.pathname)) history.replaceState(null, "", "/");
-    return () => window.removeEventListener("popstate", restore);
-  }, []);
+    if (!["/", "/reports", "/reports/", "/monitoring-system"].includes(path) && !progressRunRoute(path)) {
+      navigate(`/${location.search}`, { replace: true });
+    }
+  }, [path, navigate]);
   useEffect(() => {
     if (preview) return;
     const abort = new AbortController();

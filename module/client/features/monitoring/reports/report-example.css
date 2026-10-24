@@ -1,6 +1,4 @@
-/* Report-only presentation. The shared navigation and top bar remain unchanged. */
-.monitoring-module .fm-monitoring-workspace.is-report-view:has(.fm-report-example) { grid-template-columns: minmax(0, 1fr); }
-.monitoring-module .fm-monitoring-workspace.is-report-view:has(.fm-report-example) > .resource-outcomes { display: none; }
+/* Example content stays within the existing report pane; project navigation is retained. */
 .monitoring-module .fm-report-example { --ex-blue: #2868e8; --ex-muted: #72839c; --ex-border: #dfe7f6; background: #f5f7ff; color: #1d324e; padding: 26px 32px; display: flex; flex-direction: column; gap: 20px; min-width: 0; font: inherit; }
 .monitoring-module .fm-report-example :is(h2,h3,h4,p) { margin: 0; }
 .monitoring-module .fm-report-example h2 { font-size: 28px; font-weight: 700; line-height: 1.4; }

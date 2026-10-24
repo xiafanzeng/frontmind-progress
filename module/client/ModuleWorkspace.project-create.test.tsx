@@ -66,8 +66,8 @@ function installServer(create: (input: unknown) => Promise<Response>) {
 
 async function openCreateForm() {
   await waitFor(() => expect(screen.getByTestId("selected-project")).toHaveTextContent("已有项目"));
-  // 创建项目入口位于监控配置栏的“项目设置”折叠区内。
-  const settings = document.querySelector("details.fm-config-tools")!;
+  // 创建项目入口与上移后的当前项目选择器位于同一区域。
+  const settings = document.querySelector(".fm-config-project-picker")!;
   fireEvent.click(within(settings as HTMLElement).getByRole("button", { name: "创建项目" }));
   const dialog = await screen.findByRole("dialog", { name: "创建项目" });
   expect(within(dialog).getByRole("textbox", { name: /项目名称/ })).toHaveValue("");
@@ -95,14 +95,14 @@ it("creates and selects another project from the header without creating monitor
   server.projects.push(createdProject as typeof existingProject);
   finishCreate(response([createdProject]));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(screen.getByRole("combobox", { name: "监控项目" })).toHaveValue(createdProject.id);
+  expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create"]);
 
   view.unmount();
   window.history.replaceState({}, "", `/?project=${createdProject.id}`);
   render(<ModuleWorkspace />);
-  await waitFor(() => expect(screen.getByRole("combobox", { name: "监控项目" })).toHaveValue(createdProject.id));
+  await waitFor(() => expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id));
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations).toHaveLength(1);
 });
@@ -124,7 +124,7 @@ it("keeps a failed creation open with the entered values and allows retry", asyn
   expect(within(dialog).getByRole("button", { name: "保存项目" })).toBeEnabled();
   fireEvent.click(within(dialog).getByRole("button", { name: "保存项目" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(screen.getByRole("combobox", { name: "监控项目" })).toHaveValue(createdProject.id);
+  expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create", "projects.create"]);
 });
 

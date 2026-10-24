@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { MoliResultItem } from "../server/providers/moli/index.js";
+import { keywordReturnState } from "../shared/overviewAnalysis.js";
 
 function stable(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stable);
@@ -37,6 +38,9 @@ export function hashAuthoritativeResult(item: MoliResultItem): string {
     allRankings: item.allRankings,
     categoryRanking: item.categoryRanking,
     keywordEvaluations: item.keywordEvaluations,
+    // null -> [] is a real evidence-state change even when both normalize to [].
+    // Keep it versioned so a later empty result cannot retain an older null state.
+    keywordEvaluationState: keywordReturnState(item.raw?.keywordEvaluations, item.keywordEvaluations || []),
     errorMessage: item.errorMessage,
   };
   return createHash("sha256")

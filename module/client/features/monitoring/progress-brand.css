@@ -1,0 +1,40 @@
+/* Progress-only brand accents; shared vendor styles and edit controls stay intact. */
+.monitoring-module,
+.agent-workbench-shell:has(.monitoring-module),
+.fm-monitor-config-popover,
+.fm-config-tooltip {
+  --fm-brand: #3d1560;
+  --fm-brand-hover: #2d1049;
+  --fm-brand-soft: #f1eaf7;
+  --fm-brand-tint: #faf7fc;
+  --fm-brand-line: #d9c7e7;
+}
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-topbar__group { color: var(--fm-brand); }
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button { font-size: 15px; }
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button:is(.is-active, :hover:not(:disabled)) { color: var(--fm-brand); background: var(--fm-brand-soft); }
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button:focus-visible { outline-color: var(--fm-brand); }
+
+.monitoring-module .fm-overview-workspace .fm-ov-nav { background: #f4f0f7; border: 1px solid #e8dfef; }
+.monitoring-module .fm-overview-workspace .fm-ov-nav button { min-height: 44px; font-size: 15px; }
+.monitoring-module .fm-overview-workspace .fm-ov-nav button:hover { color: var(--fm-brand); background: var(--fm-brand-soft); }
+.monitoring-module .fm-overview-workspace .fm-ov-nav button.active { color: var(--fm-brand); background: #fff; box-shadow: 0 1px 4px #3d156018, inset 0 -2px var(--fm-brand); }
+.monitoring-module .fm-overview-workspace .fm-ov-nav-count { background: var(--fm-brand-soft); color: var(--fm-brand); }
+.monitoring-module .fm-overview-workspace .fm-segmented button.active { background: var(--fm-brand-soft); color: var(--fm-brand); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button { font-size: 15px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button.active { color: var(--fm-brand); border-bottom-color: var(--fm-brand); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-tabs.fm-qa-navigation button:hover:not(.active) { color: var(--fm-brand); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button:not(.fm-report-button) { background: var(--fm-brand); color: #fff; box-shadow: 0 3px 8px #3d15601a; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button:not(.fm-report-button):hover:not(:disabled) { background: var(--fm-brand-hover); }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button.fm-report-button { background: var(--fm-brand-soft); color: var(--fm-brand); border: 1px solid var(--fm-brand-line); box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button.fm-report-button:hover:not(:disabled) { background: #e8dcf1; border-color: #b89acd; }
+.monitoring-module .fm-progress-report { background: var(--fm-brand-tint); color: #292333; }
+.monitoring-module .fm-progress-report :is(button, a) { color: var(--fm-brand); }
+.monitoring-module .fm-progress-report :is(button, select, a):focus-visible { outline-color: var(--fm-brand); }
+.monitoring-module .fm-progress-report .fm-pr-tabs button { color: #716a80; font-size: 15px; }
+.monitoring-module .fm-progress-report .fm-pr-tabs button[aria-current=page] { color: var(--fm-brand); border-bottom-color: var(--fm-brand); }
+.monitoring-module .fm-progress-report .fm-pr-notice { background: var(--fm-brand-soft); border-color: var(--fm-brand-line); color: #5f4c71; }
+.monitoring-module .fm-progress-report .fm-pr-value { color: var(--fm-brand); }
+.monitoring-module .fm-progress-report .fm-pr-category .fm-pr-value { color: var(--report-accent); }
+.monitoring-module .fm-progress-report .fm-pr-answer { border-left-color: var(--fm-brand); background: var(--fm-brand-tint); }
+.monitoring-module .fm-report-example { --ex-blue: var(--fm-brand); background: var(--fm-brand-tint); }
+.monitoring-module .fm-report-mode-entry > .fm-secondary-button { border-color: var(--fm-brand-line); color: var(--fm-brand); }

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useLocation, useSearch } from "wouter";
+import { progressRunRoute } from "../reportNavigation";
 import type { MonitorRun, ProjectSummary, RunAttempt } from "../../../domain";
 import { mapRunDetail } from "../../../apiMappers";
 import { trpc } from "../../../trpc";
@@ -174,7 +176,19 @@ function ReportContent({ project, query, catalog, questions, onChange, renderRun
 }
 
 export default function ProgressReportWorkspace(props: Props) {
-  const [exampleOpen, setExampleOpen] = useState(!props.serverData);
-  if (exampleOpen) return <ReportExampleWorkspace onExit={() => setExampleOpen(false)} />;
-  return <><div className="fm-report-mode-entry"><button type="button" onClick={() => setExampleOpen(true)}>查看示例数据 · 五个报告视图</button></div>{props.serverData ? <LiveReport {...props} /> : <ReportContent {...props} data={{ runs: props.runs, loading: false, limited: false, more: false, loadMore: () => undefined }} />}</>;
+  const [path] = useLocation();
+  const search = useSearch();
+  const linkedRun = progressRunRoute(path);
+  const showRun = props.serverData && linkedRun && !new URLSearchParams(search).get("optimizationAnswer");
+  const [exampleOpen, setExampleOpen] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  useEffect(() => { setExampleOpen(false); }, [path, props.query.monitorId, props.query.runId]);
+  useEffect(() => { frame.current?.closest<HTMLElement>(".fm-monitor-detail")?.scrollTo({ top: 0 }); }, [exampleOpen]);
+  return <div ref={frame}>
+    {exampleOpen && <ReportExampleWorkspace onExit={() => setExampleOpen(false)} />}
+    <div hidden={exampleOpen} style={exampleOpen ? { display: "none" } : undefined}>
+      <div className="fm-report-mode-entry"><button type="button" className="fm-secondary-button" onClick={() => setExampleOpen(true)}>查看示例报告</button><span>当前报告来自所选项目的监控记录；示例单独展示。</span></div>
+      {showRun && linkedRun ? props.renderRun(linkedRun.runId) : props.serverData ? <LiveReport {...props} /> : <ReportContent {...props} data={{ runs: props.runs, loading: false, limited: false, more: false, loadMore: () => undefined }} />}
+    </div>
+  </div>;
 }

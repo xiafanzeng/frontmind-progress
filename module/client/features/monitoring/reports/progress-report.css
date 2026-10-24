@@ -69,3 +69,6 @@
   .monitoring-module .fm-pr-compare select { flex: 1; }
   .monitoring-module .fm-pr-card { padding: 14px; }
 }
+
+.monitoring-module .fm-report-mode-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+.monitoring-module .fm-report-mode-entry > span { color: #596579; font-size: 13px; }

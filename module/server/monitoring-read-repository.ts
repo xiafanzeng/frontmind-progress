@@ -6,6 +6,9 @@ import {
   MONITORING_EVIDENCE_REVISION_BATCH_SIZE, MONITORING_EVIDENCE_ROW_LIMIT, MONITORING_FACT_LIMIT, MONITORING_LEGACY_DISCOVERY_FALLBACK_LIMIT, buildMonitoringAnalysis, buildMonitoringEvidence, decodeMonitoringAnswerCursor, encodeMonitoringAnswerCursor, monitoringDetailRowAsFact, monitoringFactConditions, monitoringListRowAsFact, monitoringMetrics, monitoringSubjectContribution, normalizedMonitoringRankings, safeKeywordEvaluations, monitoringAnswerShareUrl, chunks, emptyMonitoringEvidence, parseCitationProvenanceHint, type MonitoringEvidence, type MonitoringFact, type ResolvedMonitoringScope, type ResolvedMonitoringSubject, type MonitoringSourceRow, type MonitoringDiscoveredRow, RepositoryError } from "./read-helpers.js";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { MonitoringAnalysisInput, MonitoringAnswersListInput, MonitoringScope } from "@frontmind/monitoring-contracts";
+import type { OverviewSentimentInput, OverviewSourcesInput, OverviewEvidenceInput } from "../contracts/overview.js";
+import { analyzeSentiment, citationPage, keywordReturnState, type KeywordState } from "../shared/overviewAnalysis.js";
+import { isEffectiveMonitoringAnswer } from "./read-helpers.js";
 type Database = MySql2Database<any>;
 
 export interface ProgressMonitorReader extends ProgressScopePorts {
@@ -279,6 +282,7 @@ export class ProgressMonitoringReadRepository {
         repetition: attempts.repetition,
         status: attempts.status,
         currentRevisionId: attemptResults.currentRevisionId,
+        revision: attemptResults.revision,
         answerMarkdown: attemptResults.answerMarkdown,
         reasoningMarkdown: attemptResults.reasoningMarkdown,
         searchKeywords: attemptResults.searchKeywords,
@@ -369,6 +373,15 @@ export class ProgressMonitoringReadRepository {
       .orderBy(asc(resultMedia.ordinal));
     return {
       answerId: row.answerId,
+      revisionId: row.currentRevisionId,
+      revision: row.revision,
+      resultUpdatedAt: row.resultUpdatedAt.toISOString(),
+      targetBrand: brand.mainBrand,
+      brandVersionId: row.projectBrandVersionId,
+      brandAliases: version.brandAliases,
+      provider: "moli" as const,
+      rawSentiment: rawSentimentLabel(row.normalizedPayload),
+      keywordState: archivedKeywordState(row.normalizedPayload, safeKeywordEvaluations(row.keywordEvaluations)),
       runId: row.runId,
       runCreatedAt: row.runCreatedAt,
       questionId: row.questionId,
@@ -456,6 +469,51 @@ export class ProgressMonitoringReadRepository {
     const facts = await this.readMonitoringFacts(ownerId, resolved);
     const evidence = await this.readMonitoringEvidence(facts);
     return buildMonitoringAnalysis(input.kind, facts, evidence, resolved);
+  }
+
+  async getOverviewSentiment(ownerId: string, input: OverviewSentimentInput) {
+    const resolved = await this.resolveMonitoringReadScope(ownerId, input.scope);
+    if (resolved.subject.kind !== "self") throw new RepositoryError("INVALID_STATE", "情感分析仅支持当前品牌");
+    const { attempts, attemptResults, runs, monitorQuestions, projectBrandVersions, resultRevisions, platformCatalog } = this.tables;
+    // Do not read every answer body or citation to aggregate labels. Historical brand
+    // snapshots belong to each run, not the monitor's latest configuration.
+    const rows = await this.db.select({
+      answerId: attempts.id, runId: runs.id, questionId: monitorQuestions.questionId, question: attempts.question,
+      platformName: platformCatalog.displayName, capturedAt: runs.createdAt,
+      revisionId: attemptResults.currentRevisionId, revision: attemptResults.revision,
+      targetBrand: projectBrandVersions.mainBrand, sentiment: attemptResults.sentiment,
+      evaluations: attemptResults.keywordEvaluations,
+      keywordType: sql<string | null>`JSON_TYPE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations'))`,
+      keywordLength: sql<number | null>`JSON_LENGTH(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations'))`,
+    }).from(attempts)
+      .innerJoin(runs, eq(attempts.runId, runs.id))
+      .innerJoin(monitorQuestions, and(eq(monitorQuestions.monitorVersionId, runs.monitorVersionId), eq(monitorQuestions.ordinal, attempts.monitorQuestionOrdinal)))
+      .innerJoin(projectBrandVersions, eq(projectBrandVersions.id, runs.projectBrandVersionId))
+      .innerJoin(platformCatalog, eq(platformCatalog.id, attempts.platformId))
+      .innerJoin(attemptResults, eq(attemptResults.attemptId, attempts.id))
+      .innerJoin(resultRevisions, eq(resultRevisions.id, attemptResults.currentRevisionId))
+      .where(and(...monitoringFactConditions(ownerId, resolved.scope, this.core), eq(attempts.status, "completed"), sql`CHAR_LENGTH(TRIM(${attemptResults.answerMarkdown})) > 0`))
+      .limit(MONITORING_FACT_LIMIT + 1);
+    if (rows.length > MONITORING_FACT_LIMIT) throw new RepositoryError("INVALID_STATE", "情感分析超过 50,000 条有效回答，请缩小日期或筛选范围");
+    return analyzeSentiment(rows.map(row => {
+      const evaluations = safeKeywordEvaluations(row.evaluations);
+      const keywordState: KeywordState = row.keywordType === "NULL" ? "not_returned" : row.keywordType === "ARRAY" && Number(row.keywordLength) === 0 ? "empty" : evaluations.length ? "available" : "unavailable";
+      return { ...row, capturedAt: row.capturedAt.toISOString(), evaluations, keywordState };
+    }), resolved.brand.mainBrand, input, "当前筛选的全部有效回答；上限 50,000 条，超限需缩小范围，不截断统计。");
+  }
+
+  async getOverviewSources(ownerId: string, input: OverviewSourcesInput) {
+    const resolved = await this.resolveMonitoringReadScope(ownerId, input.scope);
+    const facts = await this.readMonitoringFacts(ownerId, resolved);
+    const evidence = await this.readMonitoringEvidence(facts);
+    const citations = facts.filter(isEffectiveMonitoringAnswer).flatMap(fact => evidence.citationsByRevision.get(fact.revisionId || "") || []);
+    return citationPage(citations, input, "当前筛选的全部明确引用；最多 50,000 次采集、100,000 条证据，超限需缩小范围，不截断排行。");
+  }
+
+  async getOverviewEvidence(ownerId: string, input: OverviewEvidenceInput) {
+    const answer = await this.getMonitoringAnswer(ownerId, input.monitorId, input.answerId);
+    if (answer.revisionId !== input.revisionId) throw new RepositoryError("INVALID_STATE", "回答版本已更新，请刷新情感分析后重新选择证据");
+    return answer;
   }
 
   async readHistoricalMonitoringQuestions(
@@ -826,4 +884,14 @@ export class ProgressMonitoringReadRepository {
       MONITORING_EVIDENCE_ROW_LIMIT,
     );
   }
+}
+
+function archivedKeywordState(payload: Record<string, unknown>, evaluations: readonly unknown[]) {
+  const raw = payload.raw && typeof payload.raw === "object" ? payload.raw as Record<string, unknown> : {};
+  return keywordReturnState(raw.keywordEvaluations, evaluations);
+}
+function rawSentimentLabel(payload: Record<string, unknown>): string | null {
+  const raw = payload.raw && typeof payload.raw === "object" ? payload.raw as Record<string, unknown> : {};
+  const value = raw.sentiment ?? raw.sentimentAnalysis;
+  return value === undefined || value === null ? null : JSON.stringify(value).slice(0, 2000);
 }

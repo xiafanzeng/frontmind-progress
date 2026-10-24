@@ -1,6 +1,8 @@
-import { useId, useRef, useState, type ReactNode } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { FolderCog, ListChecks, Plus, SlidersHorizontal, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@frontmind/module-ui/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@frontmind/module-ui/components/ui/tooltip";
+import MonitorGroupManager from "./MonitorGroupManager";
 import Modal from "../../components/Modal";
 import { monitorStatusLabel, type MonitorSummary } from "../../domain";
 import type { MonitorOrganization as Organization } from "../../../contracts/monitor-organization";
@@ -14,7 +16,6 @@ const UNGROUPED = "ungrouped";
 const ALL_FILTERS: Filters = { status: "all", cadence: "all", group: "all" };
 const cadenceLabels: Record<Cadence, string> = { manual: "手动", daily: "每日", weekly: "每周", unknown: "周期未提供" };
 const emptyOrganization = (): Organization => ({ version: 1, revision: 0, groups: [], membership: {} });
-const normalizeName = (value: string) => value.trim().replace(/\s+/gu, " ");
 
 function cadenceOf(monitor: MonitorSummary): Cadence {
   if (monitor.scheduleType === "none") return "manual";
@@ -92,10 +93,6 @@ function SidebarView({
   const [draftFilters, setDraftFilters] = useState<Filters>(ALL_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [editingId, setEditingId] = useState<string>();
-  const [editingName, setEditingName] = useState("");
-  const [groupToDelete, setGroupToDelete] = useState<string>();
   const [groupError, setGroupError] = useState("");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [batchMode, setBatchMode] = useState(false);
@@ -106,6 +103,23 @@ function SidebarView({
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [notice, setNotice] = useState("");
+  const batchButtonRef = useRef<HTMLButtonElement>(null);
+  const exitBatchMode = () => {
+    setBatchMode(false); setSelection(new Set());
+    batchButtonRef.current?.focus();
+  };
+  useEffect(() => {
+    if (!batchMode) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing || managerOpen || action || filterOpen || busyRef.current || organizationBusyRef.current) return;
+      // Let the topmost dialog/menu or native select handle its own Escape first.
+      if (batchButtonRef.current?.closest('[inert]') || document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]') || event.target instanceof HTMLSelectElement) return;
+      event.preventDefault(); event.stopPropagation();
+      setBatchMode(false); setSelection(new Set()); batchButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", onEscape, true);
+    return () => document.removeEventListener("keydown", onEscape, true);
+  }, [batchMode, managerOpen, action, filterOpen]);
   const controlId = useId();
   const groups = [...organization.groups, { id: UNGROUPED, name: "未分组" }];
   const groupOf = (id: string) => organization.groups.some((group) => group.id === organization.membership[id]) ? organization.membership[id] : UNGROUPED;
@@ -127,6 +141,7 @@ function SidebarView({
     organizationBusyRef.current = true; setOrganizationBusy(true); setGroupError("");
     try {
       await onSaveOrganization(next);
+      setSelection(new Set());
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "保存分组失败，请重试。";
@@ -135,36 +150,6 @@ function SidebarView({
     } finally {
       organizationBusyRef.current = false; setOrganizationBusy(false);
     }
-  };
-  const validateName = (input: string, exceptId?: string) => {
-    const name = normalizeName(input);
-    if (!name) return "请输入分组名称。";
-    if (name.length > 40) return "分组名称最多 40 个字符。";
-    if (name === "未分组") return "“未分组”是系统默认分组，请使用其他名称。";
-    if (organization.groups.some((group) => group.id !== exceptId && group.name.toLocaleLowerCase() === name.toLocaleLowerCase())) return "该分组名称已存在。";
-    return "";
-  };
-  const addGroup = async () => {
-    if (organization.groups.length >= 200) { setGroupError("每个项目最多支持 200 个分组。"); return; }
-    const error = validateName(newName);
-    if (error) { setGroupError(error); return; }
-    if (!await saveOrganization({ ...organization, groups: [...organization.groups, { id: crypto.randomUUID(), name: normalizeName(newName) }] })) return;
-    setNewName(""); setGroupError("");
-    setNotice("分组已添加。可勾选配置后，使用“移动到分组”整理配置。");
-  };
-  const renameGroup = async () => {
-    const error = validateName(editingName, editingId);
-    if (error) { setGroupError(error); return; }
-    if (!organization.groups.some((group) => group.id === editingId)) { setGroupError("分组已变化，请重新选择。"); return; }
-    if (!await saveOrganization({ ...organization, groups: organization.groups.map((group) => group.id === editingId ? { ...group, name: normalizeName(editingName) } : group) })) return;
-    setEditingId(undefined); setGroupError(""); setNotice("分组名称已更新。");
-  };
-  const deleteGroup = async (id: string) => {
-    // Includes memberships of recycled monitors, so restoring cannot revive a deleted group.
-    if (!await saveOrganization({ ...organization, groups: organization.groups.filter((group) => group.id !== id), membership: Object.fromEntries(Object.entries(organization.membership).filter(([, groupId]) => groupId !== id)) })) return;
-    if (filters.group === id) setFilters({ ...filters, group: "all" });
-    setSelection(new Set()); setGroupToDelete(undefined); setEditingId(undefined); setGroupError("");
-    setNotice("分组已删除，组内配置已移到“未分组”；配置和历史记录未删除。");
   };
   const resetConditions = () => {
     setSearch(""); setFilters(ALL_FILTERS); setDraftFilters(ALL_FILTERS); setSelection(new Set());
@@ -213,14 +198,16 @@ function SidebarView({
     }
   };
 
-  return <aside className="resource-outcomes monitoring-results-panel fm-monitor-config-panel" data-resource-pane="outcomes" tabIndex={0} aria-label="监控配置">
+  return <aside className="resource-outcomes monitoring-results-panel fm-monitor-config-panel" data-resource-pane="outcomes" tabIndex={0} aria-label="监控任务列表">
     {outcomeControls}
-    <header><div><span className="resource-outcomes-eyebrow">{brandName} / 监控中心</span><h3>监控配置</h3></div></header>
+    {configurationTools && <div className="fm-config-project-context">{configurationTools}</div>}
+    <header><div><span className="resource-outcomes-eyebrow">{brandName} / 监控中心</span><h3>监控任务列表</h3></div></header>
     <label className="resource-outcomes-field"><input type="search" aria-label="搜索监控配置" placeholder="搜索监控名称" value={search} onChange={(event) => { setSearch(event.target.value); setSelection(new Set()); }} /></label>
     <div className="fm-monitor-config-tools" aria-label="监控配置工具">
       <div className="fm-config-tool-buttons">
+        <Tooltip><TooltipTrigger asChild><button type="button" className="fm-config-create" aria-label="新建监控配置" onClick={onAdd}><Plus size={16} aria-hidden="true" />新建</button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>新建监控配置</TooltipContent></Tooltip>
         <Popover open={filterOpen} onOpenChange={(open) => { if (open) setDraftFilters({ ...filters, group: effectiveGroup }); setFilterOpen(open); }}>
-          <PopoverTrigger asChild><button type="button" className={activeFilterCount ? "is-active" : ""}>筛选{activeFilterCount > 0 && <small>{activeFilterCount}</small>}</button></PopoverTrigger>
+          <Tooltip><TooltipTrigger asChild><PopoverTrigger asChild><button type="button" aria-label={`筛选监控${activeFilterCount ? `，${activeFilterCount} 个条件` : ""}`} className={activeFilterCount ? "is-active" : ""}><SlidersHorizontal size={16} aria-hidden="true" />{activeFilterCount > 0 && <small>{activeFilterCount}</small>}</button></PopoverTrigger></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>筛选监控</TooltipContent></Tooltip>
           <PopoverContent className="fm-monitor-config-popover" align="start" sideOffset={8} collisionPadding={12} aria-label="筛选监控配置">
             <fieldset><legend>监控状态</legend><div className="fm-config-radio-options">{([["all", "全部"], ["active", "已启用"], ["paused", "已暂停"], ["draft", "待启动"]] as const).map(([value, label]) => <label key={value}><input type="radio" name={`${controlId}-status`} checked={draftFilters.status === value} onChange={() => setDraftFilters({ ...draftFilters, status: value })} />{label}</label>)}</div></fieldset>
             <fieldset><legend>监控周期</legend><div className="fm-config-radio-options">{([["all", "全部"], ["manual", "手动"], ["daily", "每日"], ["weekly", "每周"], ["unknown", "未提供"]] as const).map(([value, label]) => <label key={value}><input type="radio" name={`${controlId}-cadence`} checked={draftFilters.cadence === value} onChange={() => setDraftFilters({ ...draftFilters, cadence: value })} />{label}</label>)}</div></fieldset>
@@ -228,18 +215,19 @@ function SidebarView({
             <footer><button type="button" onClick={() => setDraftFilters(ALL_FILTERS)}>重置为全部</button><button type="button" onClick={() => { setFilters(draftFilters); setSelection(new Set()); setFilterOpen(false); }}>完成</button></footer>
           </PopoverContent>
         </Popover>
-        <button type="button" disabled={!organizationReady || organizationBusy} onClick={() => { setManagerOpen(true); setGroupError(""); setGroupToDelete(undefined); setEditingId(undefined); }}>分组</button>
-        <button type="button" aria-pressed={batchMode} onClick={() => { setBatchMode(!batchMode); setSelection(new Set()); }}>{batchMode ? "退出批量" : "批量"}</button>
+        <Tooltip><TooltipTrigger asChild><button type="button" aria-label="管理分组" disabled={organizationBusy} onClick={() => { setManagerOpen(true); setGroupError(""); }}><FolderCog size={17} aria-hidden="true" /></button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>管理分组</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><button ref={batchButtonRef} type="button" aria-label={batchMode ? "退出批量管理" : "批量管理"} aria-pressed={batchMode} onClick={() => { setBatchMode(!batchMode); setSelection(new Set()); }}>{batchMode ? <X size={17} aria-hidden="true" /> : <ListChecks size={17} aria-hidden="true" />}</button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>{batchMode ? "退出批量管理（Esc）" : "批量管理"}</TooltipContent></Tooltip>
       </div>
       {batchMode && <div className="fm-config-batch-bar" aria-label="批量操作">
         <strong role="status">已选 {selected.length} 项</strong>
+        <button type="button" className="fm-config-batch-exit" onClick={exitBatchMode}>退出批量管理 <kbd>Esc</kbd></button>
         <button type="button" disabled={!matching.length} onClick={() => setSelection(new Set(matching.map((monitor) => monitor.id)))}>全选当前结果</button>
         <button type="button" disabled={!selected.length} onClick={() => setSelection(new Set())}>清空</button>
         <button type="button" disabled={!selected.length || !organizationReady || organizationBusy} onClick={() => openAction("move")}>移动到分组</button>
         <button type="button" className="fm-config-danger" disabled={!selected.length || !onDeleteMonitor} onClick={() => openAction("delete")}>删除</button>
         <small>更改搜索或筛选条件后会清空选择。</small>
       </div>}
-      <div className="fm-monitor-config-summary"><span>{matching.length} / {monitors.length} 个配置</span>{hasConditions && <button type="button" className="fm-text-button" onClick={resetConditions}>清除条件</button>}</div>
+      <div className="fm-monitor-config-summary"><span>{matching.length} / {monitors.length} 项监控</span>{hasConditions && <button type="button" className="fm-text-button" onClick={resetConditions}>清除条件</button>}</div>
       {hasConditions && <p className="fm-monitor-config-conditions">{[search.trim() && `搜索：${search.trim()}`, filters.status !== "all" && monitorStatusLabel(filters.status), filters.cadence !== "all" && cadenceLabels[filters.cadence], effectiveGroup !== "all" && groups.find((group) => group.id === effectiveGroup)?.name].filter(Boolean).join(" · ")}</p>}
       {selectedId && monitors.some((monitor) => monitor.id === selectedId) && !matching.some((monitor) => monitor.id === selectedId) && <p className="fm-monitor-config-conditions">当前查看的配置不在筛选结果中，右侧内容保留。</p>}
       {notice && <p className="fm-monitor-config-conditions" role="status">{notice}</p>}
@@ -258,34 +246,16 @@ function SidebarView({
               <span>{monitor.questionsCount} 个问题 · {monitor.platformsCount} 个模型</span>
               <span>{monitorStatusLabel(monitor.status)} · {monitor.scheduleLabel || cadenceLabels[cadenceOf(monitor)]}</span>
             </button>
-          </div>) : <p className="fm-config-empty-group">暂无配置，可通过“批量 → 移动到分组”添加。</p>)}
+          </div>) : <p className="fm-config-empty-group">暂无监控，可通过“管理分组”添加已有监控。</p>)}
         </section>;
       })}
       {!matching.length && hasConditions && <div className="fm-config-no-results"><p>没有匹配的监控配置</p><button type="button" onClick={resetConditions}>清除搜索和筛选</button></div>}
     </div>
     <footer>
-      <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 新建监控配置</button>
-      {configurationTools}
       <button type="button" className="fm-text-button" onClick={onOpenRecycle}>回收站{deletedCount ? `（${deletedCount}）` : ""}</button>
     </footer>
 
-    <Modal open={managerOpen} onClose={() => { if (!organizationBusyRef.current) setManagerOpen(false); }} title="管理分组" description="新建、重命名、删除分组；删除分组后配置移到“未分组”。" size="large">
-      <fieldset className="fm-config-group-manager" disabled={organizationBusy} aria-busy={organizationBusy}>
-        <p className="fm-config-storage-note">{serverData ? "分组按当前项目保存，组内显示未删除的配置数量。" : "当前为预览，分组仅在本页面临时保存。"}</p>
-        {groups.map((group) => <div className="fm-config-manager-row" key={group.id}>
-          <div className="fm-config-manager-main">
-            {editingId === group.id ? <input aria-label={`重命名分组：${group.name}`} value={editingName} maxLength={40} onChange={(event) => { setEditingName(event.target.value); setGroupError(""); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); renameGroup(); } }} /> : <strong>{group.name}</strong>}
-            <span>{groupCount(group.id)} 个配置</span>
-            {group.id !== UNGROUPED && (editingId === group.id ? <><button type="button" disabled={!organizationReady} onClick={renameGroup}>保存</button><button type="button" onClick={() => { setEditingId(undefined); setGroupError(""); }}>取消</button></> : <><button type="button" onClick={() => { setEditingId(group.id); setEditingName(group.name); setGroupToDelete(undefined); setGroupError(""); }}>重命名</button><button type="button" className="fm-config-danger" onClick={() => { setGroupToDelete(group.id); setEditingId(undefined); setGroupError(""); }}>删除</button></>)}
-          </div>
-          {groupToDelete === group.id && <div className="fm-config-group-removal"><p>删除“{group.name}”？{groupCount(group.id)} 个配置将移到“未分组”，配置本身不会删除。</p><button type="button" onClick={() => setGroupToDelete(undefined)}>取消</button><button type="button" className="fm-config-danger" disabled={!organizationReady} onClick={() => deleteGroup(group.id)}>确认删除分组</button></div>}
-        </div>)}
-        <label className="fm-config-new-group">新分组名称<input value={newName} maxLength={40} placeholder="例如：验收项目、日常跟踪" onChange={(event) => { setNewName(event.target.value); setGroupError(""); }} onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); addGroup(); } }} /></label>
-        {groupError && <p className="fm-config-warning" role="alert">{groupError}</p>}
-        {organizationMessage && <p className="fm-config-warning" role="status">{organizationMessage}{retryOrganization && <button type="button" className="fm-text-button" onClick={retryOrganization}>重试读取</button>}</p>}
-        <footer><button type="button" className="fm-secondary-button" onClick={() => setManagerOpen(false)}>关闭</button><button type="button" className="fm-primary-button" disabled={!organizationReady} onClick={addGroup}>{organizationBusy ? "正在保存…" : "添加分组"}</button></footer>
-      </fieldset>
-    </Modal>
+    {managerOpen && <MonitorGroupManager organization={organization} monitors={monitors} ready={organizationReady} busy={organizationBusy} error={groupError} message={organizationMessage} serverData={serverData} onRetry={retryOrganization} onSave={saveOrganization} onClose={() => { if (!organizationBusyRef.current) setManagerOpen(false); }} />}
     <Modal open={Boolean(action)} onClose={() => { if (!busyRef.current && !organizationBusyRef.current) setAction(undefined); }} title={action?.kind === "move" ? `移动 ${action.monitors.length} 项配置` : `删除 ${action?.monitors.length || 0} 项配置`} description={action?.kind === "move" ? "仅改变分组归属，监控内容、执行计划和历史记录保持不变。" : "确认后移入回收站。删除后保留 30 天，历史运行与结果不会立即清除；恢复后自动计划保持暂停。"}>
       <fieldset className="fm-config-batch-dialog" disabled={busy || organizationBusy} aria-busy={busy || organizationBusy}>
         <ul>{action?.monitors.map((monitor) => <li key={monitor.id}><strong>{monitor.name}</strong>{actionErrors[monitor.id] && <p className="fm-config-warning">{actionErrors[monitor.id]}</p>}</li>)}</ul>
