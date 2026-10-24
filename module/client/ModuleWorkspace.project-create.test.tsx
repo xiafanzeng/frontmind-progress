@@ -124,7 +124,8 @@ it("keeps a failed creation open with the entered values and allows retry", asyn
   expect(within(dialog).getByRole("button", { name: "保存项目" })).toBeEnabled();
   fireEvent.click(within(dialog).getByRole("button", { name: "保存项目" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
+  // 创建成功后项目列表经 invalidate 异步刷新；等待选择器就绪而不是立即断言。
+  expect(await screen.findByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create", "projects.create"]);
 });
 
@@ -133,8 +134,9 @@ it("switches the shared shell report tab without creating a run or losing the se
   const view = render(<ModuleWorkspace view="monitoring" />);
   await screen.findByText("已有项目", { selector: '[data-testid="selected-project"]' });
   view.rerender(<ModuleWorkspace view="reports" />);
-  expect(await screen.findByText("演示数据 · 非真实评估")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "返回原报告" }));
+  // 新行为：报告视图默认展示真实报告，不再自动进入示例（示例由 ProgressReportWorkspace
+  // 的「查看示例报告」入口打开）。本测试 mock 了 MonitoringPage（直接渲染 renderReport(undefined)），
+  // 无运行时显示真实空态。
   expect(await screen.findByText("暂无运行报告。完成一次监控后，可在这里查看回答、引用和报告。")).toBeVisible();
   expect(screen.queryByTestId("selected-project")).not.toBeInTheDocument();
   view.rerender(<ModuleWorkspace view="monitoring" />);

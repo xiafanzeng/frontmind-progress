@@ -181,6 +181,19 @@ function mountWorkspace(options: {
         archivedScreenshots: [],
       } satisfies MonitoringAnswerDetail;
     }
+    if (path === "monitoring.overview.sentiment") {
+      // v3 概览情感分析由服务端 overview.sentiment 聚合（OverviewSentimentLive）。
+      // 返回与所选筛选一致的固定判定：全部命中为负面、无缺失。
+      return {
+        targetBrand: "台心医美", total: selected.length, classified: selected.length,
+        missing: 0, brandMismatch: 0,
+        counts: { positive: 0, neutral: 0, negative: selected.length },
+        keywordStates: { available: 0, empty: 0, not_returned: 0, unavailable: 0 },
+        filteredAnswers: selected.length, keywords: [], rows: [],
+        page: 1, pageSize: 10, rowCount: 0, pageCount: 0,
+        coverage: "测试固定范围",
+      };
+    }
     throw new Error(`Unexpected monitoring read: ${path}`);
   });
   const client = trpc.createClient({
@@ -344,27 +357,24 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   });
   await expectOverviewEffective(3);
   fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
-  // v2 概览情感分析为自绘四类环形图与图例（fm-ov-tone-legend），
-  // 不再经由 CompactAnswerInsights 的「当前筛选范围情感分布」标签。
-  const scopeSentiment = document.querySelector(
-    ".fm-ov-tone-legend",
+  // v3 概览情感分析改由服务端 overview.sentiment 驱动（OverviewSentimentLive），
+  // 环形图以 aria-label 汇报四类判定数量，取代 v2 的 fm-ov-tone-legend 图例。
+  await waitFor(() =>
+    expect(document.querySelector(".fm-ov-donut")).not.toBeNull(),
+  );
+  const sentimentDonut = document.querySelector(
+    ".fm-ov-donut",
   ) as HTMLElement;
-  expect(scopeSentiment).not.toBeNull();
+  expect(sentimentDonut.getAttribute("aria-label")).toContain("负面 3");
+  expect(sentimentDonut.getAttribute("aria-label")).toContain("缺失 0");
   expect(
     screen.getByText(/2026-09-13 — 2026-09-14/),
   ).toBeVisible();
-  expect(
-    within(scopeSentiment).getByText("负面").closest("li"),
-  ).toHaveTextContent(/负面\s*3\s*100\.0%/);
-  expect(
-    within(scopeSentiment).getByText("未判定").closest("li"),
-  ).toHaveTextContent(/未判定\s*0\s*0\.0%/);
-  // v2 会额外读取紧邻的等长前周期做环比（comparablePeriods），
-  // 最后一条 answers.list 记录可能是前周期读取；断言当前筛选的读取确实发生。
+  // 筛选联动改由 overview.sentiment 请求的 scope 携带；断言当前筛选的读取确实发生。
   expect(
     read.mock.calls
-      .filter(([path]) => path === "monitoring.answers.list")
-      .map((call) => call[1].scope),
+      .filter(([path]) => path === "monitoring.overview.sentiment")
+      .map(([, input]) => input.scope),
   ).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
