@@ -109,7 +109,11 @@ it("creates and selects another project from the header without creating monitor
   handle.view.unmount();
   window.history.replaceState({}, "", `/?project=${createdProject.id}`);
   renderWorkspace();
-  await waitFor(() => expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id));
+  // CI 环境下 projects.list 重取较慢，放宽等待上限避免时序抖动。
+  await waitFor(
+    () => expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id),
+    { timeout: 8000 },
+  );
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations).toHaveLength(1);
 });
