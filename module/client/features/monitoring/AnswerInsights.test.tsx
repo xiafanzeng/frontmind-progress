@@ -153,8 +153,10 @@ describe("current answer sentiment evidence", () => {
       { keyword: "Ａ 方案", nature: "negative", context: "原文负面依据" },
       { keyword: "  ", nature: "neutral" },
     ]);
+    // 本轮口径：同一词不同语境分别成行（去重键含 context），保留原始写法仅去首尾空白。
     expect(groups.positive).toEqual([
-      { keyword: "Ａ 方案", nature: "positive", context: "原文正面依据" },
+      { keyword: "Ａ 方案", nature: "positive" },
+      { keyword: "a   方案", nature: "positive", context: "原文正面依据" },
     ]);
     expect(groups.negative).toHaveLength(1);
     expect(groups.neutral).toHaveLength(0);
@@ -179,7 +181,7 @@ describe("current answer sentiment evidence", () => {
     );
     expect(screen.queryByText("评价词6")).not.toBeInTheDocument();
     fireEvent.click(
-      screen.getByRole("button", { name: "展开其余 3 个评价词" }),
+      screen.getByRole("button", { name: "展开其余 3 段语境" }),
     );
     expect(screen.getByText("评价词8")).toBeVisible();
     const contextButton = screen.getAllByRole("button", {
@@ -187,8 +189,9 @@ describe("current answer sentiment evidence", () => {
     })[0]!;
     fireEvent.click(contextButton);
     expect(contextButton).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText("75.0%")).toBeVisible();
-    expect(screen.getByText("100")).toBeVisible();
+    // 分母=已判定（75+10+5=90）：正面 75/90=83.3%；总数在说明行整体呈现。
+    expect(screen.getByText("83.3%")).toBeVisible();
+    expect(screen.getByText(/全部有效回答 100 条，标签缺失 10 条/)).toBeVisible();
     expect(screen.getByText("当前问题 · 9月1日至9月14日 · 豆包")).toBeVisible();
     rerender(
       <CompactAnswerInsights attempt={{ ...selected, id: "answer-2" }} />,
@@ -227,7 +230,7 @@ describe("current answer sentiment evidence", () => {
     const { rerender } = render(
       <CompactAnswerInsights attempt={{ ...attempt, sentiment: "unknown" }} />,
     );
-    expect(screen.getByText("未判定")).toBeVisible();
+    expect(screen.getByText("标签缺失")).toBeVisible();
     expect(screen.getByText("本条回答暂无评价词")).toBeVisible();
     rerender(<CompactAnswerInsights attempt={attempt} loading />);
     expect(screen.getByRole("status")).toHaveTextContent("正在读取");
@@ -250,16 +253,19 @@ describe("current answer sentiment evidence", () => {
     expect(screen.queryByText("可靠")).not.toBeInTheDocument();
     expect(screen.queryByText("100.0%")).not.toBeInTheDocument();
   });
-  it("uses one full-scope denominator, including unknown, without treating missing values as neutral", () => {
+  it("uses the classified denominator for three buckets and reports missing separately", () => {
     const result = sentimentDistribution({
       positive: 2,
       neutral: 1,
       negative: 1,
       unknown: 6,
     });
+    // 本轮口径：三类占比分母=已判定（4），标签缺失单列（missing/total），不并入中性。
     expect(result.total).toBe(10);
+    expect(result.classified).toBe(4);
+    expect(result.missing).toBe(6);
     expect(result.buckets.map((bucket) => bucket.percent)).toEqual([
-      20, 10, 10, 60,
+      50, 25, 25,
     ]);
     expect(
       sentimentDistribution({

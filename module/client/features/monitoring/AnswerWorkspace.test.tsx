@@ -406,7 +406,8 @@ describe("monitoring answer reading", () => {
 });
 
 describe("monitoring scope and sentiment", () => {
-  it("uses one denominator for all four sentiment buckets, including undetermined answers", () => {
+  it("uses the classified denominator for three buckets and reports missing separately", () => {
+    // 本轮口径：三类占比分母=已判定；标签缺失（missing）单列，不并入中性、不占分母。
     expect(
       sentimentDistribution({
         positive: 1,
@@ -414,15 +415,10 @@ describe("monitoring scope and sentiment", () => {
         negative: 1,
         unknown: 1,
       }).buckets.map((bucket) => bucket.percent),
-    ).toEqual([25, 25, 25, 25]);
+    ).toEqual([(1 / 3) * 100, (1 / 3) * 100, (1 / 3) * 100]);
     expect(
-      sentimentDistribution({
-        positive: 0,
-        neutral: 0,
-        negative: 0,
-        unknown: 3,
-      }).buckets.at(-1)?.percent,
-    ).toBe(100);
+      sentimentDistribution({ positive: 0, neutral: 0, negative: 0, unknown: 3 }),
+    ).toMatchObject({ total: 3, classified: 0, missing: 3 });
   });
   it("preserves a historical question/category intersection in URL state and exports", () => {
     const monitorId = "10000000-0000-4000-8000-000000000003";

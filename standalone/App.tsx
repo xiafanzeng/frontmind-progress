@@ -43,7 +43,11 @@ export default function App({ preview = false }: { preview?: boolean }) {
       .catch(cause => { if (!abort.signal.aborted) setError(cause.message); });
     return () => abort.abort();
   }, [preview]);
-  return <ModuleShell module={moduleDefinition} navigationModules={[{ ...moduleDefinition, label: "进度监控", views }]} views={views} activeView={view} onSelectView={id => navigateView(id as ProgressWorkspaceView)} projectCreation={projectCreation ? {label:projectCreation.label,onCreate:projectCreation.open,disabled:projectCreation.disabled} : undefined}>
+    // The shared ModuleShell patch (see HANDOFF 共享 UI 补丁) has not landed in this
+  // child's vendor projection yet; spread the extra prop so the wiring compiles and
+  // activates once the main repo projects the patched shell. Current vendor ignores it.
+  const projectCreationProp = { projectCreation: projectCreation ? { label: projectCreation.label, onCreate: projectCreation.open, disabled: projectCreation.disabled } : undefined };
+  return <ModuleShell module={moduleDefinition} navigationModules={[{ ...moduleDefinition, label: "进度监控", views }]} views={views} activeView={view} onSelectView={id => navigateView(id as ProgressWorkspaceView)} {...projectCreationProp}>
     <div className="dashboard-module-content">
       {error ? <><p role="alert">{error}</p><button className="operator-control-secondary" onClick={() => location.reload()}>重新加载</button></>
         : !preview && !context ? <p role="status">正在进入问题监控…</p>

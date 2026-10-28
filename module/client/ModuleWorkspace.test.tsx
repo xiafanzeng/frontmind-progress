@@ -96,6 +96,8 @@ it("quotes once across mutation and parent updates, then requotes when the input
 
   const view = render(<ModuleWorkspace />);
   await flushUpdates();
+  // 提问次数已移入「监控频次设置」弹窗（本轮表单改版）。
+  fireEvent.click(screen.getByRole("button", { name: "设置频次" }));
   expect(screen.getByLabelText("重复次数")).toHaveValue(1);
   expect(requests).toHaveLength(1);
   expect(requests[0]!.input.items[0]!.quantity).toBe(1);

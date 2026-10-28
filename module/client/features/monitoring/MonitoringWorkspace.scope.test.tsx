@@ -57,6 +57,7 @@ const items: MonitoringAnswerListItem[] = questions.flatMap(
       question: question.label,
       questionCategory: null,
       platform: platforms[index % 2],
+      brandContext: { targetBrand: "台心医美", currentBrand: "台心医美", matchesCurrent: true },
       repetition: index + 1,
       status: "completed" as const,
       result: {
@@ -153,6 +154,7 @@ function mountWorkspace(options: {
             unknown: 0,
           },
         },
+        brandScope: { targetBrand: "台心医美", eligibleAnswers: selected.length, excludedAnswers: 0 },
       } satisfies MonitoringSummaryData;
     }
     if (path === "monitoring.answers.list")

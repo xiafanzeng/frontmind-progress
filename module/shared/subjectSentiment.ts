@@ -1,6 +1,6 @@
 import { keywordReturnState, normalizedWord, sentimentTone } from "./overviewAnalysis.js";
 
-type Evaluation = { keyword: string; nature: "positive" | "neutral" | "negative"; context?: string };
+type Evaluation = { keyword: string; nature: "positive" | "neutral" | "negative"; context: string | null };
 export type SentimentSubject = { kind: "self" } | { kind: "competitor"; name: string; aliases: string[] };
 const record = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 export function jsonField(value: unknown): unknown {
@@ -27,7 +27,7 @@ export function evaluationWords(value: unknown): Evaluation[] {
     const keyword = typeof row.keyword === "string" ? row.keyword.trim() : "";
     if (!keyword || !nature) continue;
     const context = typeof row.context === "string" ? row.context.trim() : "";
-    unique.set(`${nature}:${normalizedWord(keyword)}:${context}`, { keyword, nature, ...(context ? { context } : {}) });
+    unique.set(`${nature}:${normalizedWord(keyword)}:${context}`, { keyword, nature, context: context || null });
   }
   return [...unique.values()];
 }

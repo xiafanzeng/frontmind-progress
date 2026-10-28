@@ -64,17 +64,24 @@ function installServer(create: (input: unknown) => Promise<Response>) {
   return { projects, mutations };
 }
 
-async function openCreateForm() {
+/** 全局创建入口：ModuleWorkspace 通过 onProjectCreationChange 注册 action（本轮起入口移至全局加号）。 */
+function renderWorkspace(props: { view?: "monitoring" | "reports" } = {}) {
+  let creation: { label: string; open: () => void; disabled: boolean } | undefined;
+  const latest = () => creation;
+  const view = render(<ModuleWorkspace {...props} onProjectCreationChange={action => { creation = action ?? undefined; }} />);
+  return { view, latest };
+}
+async function openCreateForm(latest: () => { open: () => void } | undefined) {
   await waitFor(() => expect(screen.getByTestId("selected-project")).toHaveTextContent("已有项目"));
-  // 创建项目入口与上移后的当前项目选择器位于同一区域。
-  const settings = document.querySelector(".fm-config-project-picker")!;
-  fireEvent.click(within(settings as HTMLElement).getByRole("button", { name: "创建项目" }));
+  const action = latest();
+  if (!action) throw new Error("project creation action was not registered");
+  action.open();
   const dialog = await screen.findByRole("dialog", { name: "创建项目" });
   expect(within(dialog).getByRole("textbox", { name: /项目名称/ })).toHaveValue("");
-  expect(within(dialog).getByRole("textbox", { name: /主品牌名称/ })).toHaveValue("");
+  expect(within(dialog).getByRole("textbox", { name: /默认监控品牌/ })).toHaveValue("");
   fireEvent.change(within(dialog).getByRole("textbox", { name: /项目名称/ }), { target: { value: createdProject.name } });
-  fireEvent.change(within(dialog).getByRole("textbox", { name: /主品牌名称/ }), { target: { value: createdProject.mainBrand } });
-  fireEvent.change(within(dialog).getByRole("textbox", { name: /品牌别名/ }), { target: { value: "新别名" } });
+  fireEvent.change(within(dialog).getByRole("textbox", { name: /默认监控品牌/ }), { target: { value: createdProject.mainBrand } });
+  fireEvent.change(within(dialog).getByRole("textbox", { name: /默认品牌别名/ }), { target: { value: "新别名" } });
   fireEvent.change(within(dialog).getByRole("textbox", { name: "竞品品牌" }), { target: { value: "竞品｜竞品别名" } });
   return dialog;
 }
@@ -82,8 +89,8 @@ async function openCreateForm() {
 it("creates and selects another project from the header without creating monitors or runs", async () => {
   let finishCreate!: (value: Response) => void;
   const server = installServer(() => new Promise(resolve => { finishCreate = resolve; }));
-  const view = render(<ModuleWorkspace />);
-  const dialog = await openCreateForm();
+  const handle = renderWorkspace();
+  const dialog = await openCreateForm(handle.latest);
   fireEvent.click(within(dialog).getByRole("button", { name: "保存项目" }));
   await waitFor(() => expect(server.mutations).toHaveLength(1));
   expect(within(dialog).getByRole("button", { name: "正在保存…" })).toBeDisabled();
@@ -99,9 +106,9 @@ it("creates and selects another project from the header without creating monitor
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create"]);
 
-  view.unmount();
+  handle.view.unmount();
   window.history.replaceState({}, "", `/?project=${createdProject.id}`);
-  render(<ModuleWorkspace />);
+  renderWorkspace();
   await waitFor(() => expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id));
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations).toHaveLength(1);
@@ -116,8 +123,8 @@ it("keeps a failed creation open with the entered values and allows retry", asyn
     server.projects.push(createdProject as typeof existingProject);
     return response([createdProject]);
   });
-  render(<ModuleWorkspace />);
-  const dialog = await openCreateForm();
+  const handle = renderWorkspace();
+  const dialog = await openCreateForm(handle.latest);
   fireEvent.click(within(dialog).getByRole("button", { name: "保存项目" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("项目名称已存在");
   expect(within(dialog).getByRole("textbox", { name: /项目名称/ })).toHaveValue(createdProject.name);

@@ -12,6 +12,7 @@ import {
   FileUp,
   Globe2,
   ListChecks,
+  ListPlus,
   MonitorSmartphone,
   Pencil,
   Plus,

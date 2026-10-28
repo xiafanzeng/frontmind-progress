@@ -32,6 +32,7 @@ test('funds failure rolls back run and attempts before any queue is committed',a
  const platform={id:'platform',providerCode:'deepseek',displayName:'DeepSeek',clientType:'web',enabled:true,verified:true,supportsReasoning:false,supportsScreenshot:false,supportsDomesticRegion:false,supportsOverseasRegion:false,acceptanceRequired:false,acceptanceFingerprint:null,providerMetadata:null};
  const f=fixture([
   [{enterpriseProjectId:'workspace'}],[],
+  [{id:'monitor',projectId:'project',activeVersionId:'version',status:'active'}],[{id:'project'}],
   [{id:'monitor',projectId:'project',activeVersionId:'version',status:'active'}],[],
   [{id:'version',monitorId:'monitor',projectBrandVersionId:'brand',repetitions:1,expectedAttempts:1}],
   [{id:'project',currentBrandVersionId:'brand'}],[{id:'brand'}],[],

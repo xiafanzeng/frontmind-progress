@@ -1,4 +1,10 @@
 import { subjectSentiment, jsonField } from "../shared/subjectSentiment.js";
+// Contract-boundary normalization: the shared monitoring contracts require the
+// four-valued sentiment union; provider archives and inferred row types widen
+// to string, so normalize once where repository results enter the API layer.
+type MonitoringSentimentTone = "positive" | "neutral" | "negative" | "unknown";
+const toneOrUnknown = (value: unknown): MonitoringSentimentTone =>
+  value === "positive" || value === "neutral" || value === "negative" ? value : "unknown";
 /** Progress-owned monitoring SQL and aggregation. Core supplies identity scoping in-process. */
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import type { ProgressSchema } from "../schema/index.js";
@@ -221,7 +227,7 @@ export class ProgressMonitoringReadRepository {
             row.resultUpdatedAt
               ? {
                   answerPreview: row.answerPreview,
-                  sentiment: sentiment ?? "unknown",
+                  sentiment: toneOrUnknown(sentiment),
                   mentioned: eligible ? subject.mentioned : null,
                   position: subject.position,
                   citationProvenance: provenance ?? "unavailable",
@@ -424,7 +430,7 @@ export class ProgressMonitoringReadRepository {
             (keyword): keyword is string => typeof keyword === "string",
           )
         : [],
-      sentiment: evaluation.sentiment ?? "unknown",
+      sentiment: toneOrUnknown(evaluation.sentiment),
       mentioned: contribution.mentioned,
       position: contribution.position,
       rankings: normalizedMonitoringRankings({

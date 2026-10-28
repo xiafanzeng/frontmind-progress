@@ -64,6 +64,7 @@ const listItem: MonitoringAnswerListItem = {
   questionCategory: "industry",
   platform,
   repetition: 1,
+  brandContext: { targetBrand: "验收品牌", currentBrand: "验收品牌", matchesCurrent: true },
   status: "processing",
   result: null,
 };
@@ -125,6 +126,7 @@ function setup(options: { delayLists?: boolean } = {}) {
           subjects: [{ kind: "self", label: "品牌" }],
         },
         metrics: { ...metrics, answers: completed ? 1 : 0 },
+        brandScope: { targetBrand: "验收品牌", eligibleAnswers: completed ? 1 : 0, excludedAnswers: 0 },
       };
       return summary;
     }
@@ -175,6 +177,7 @@ function setup(options: { delayLists?: boolean } = {}) {
       return {
         kind: "metrics",
         metrics: { ...metrics, answers: completed ? 1 : 0 },
+        brandScope: { targetBrand: "验收品牌", eligibleAnswers: completed ? 1 : 0, excludedAnswers: 0 },
         rows: [],
       };
     }
