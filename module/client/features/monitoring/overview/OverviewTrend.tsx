@@ -6,28 +6,27 @@ import { formatDateTime } from "../../../domain";
 import type { MonitoringQueryState } from "../types";
 import { metricText, overviewMetrics, runSignature, scopedAttempts, subjectAttempts, type OverviewMetric } from "./overviewModel";
 
-export default function OverviewTrend({ runs, query, competitors, loading, complete, onConfigure }: {
+export default function OverviewTrend({ runs, query, competitors, currentBrand, loading, complete, onConfigure }: {
   runs: MonitorRun[]; query: MonitoringQueryState; competitors: CompetitorInput[];
-  loading: boolean; complete: boolean; onConfigure: () => void;
+  currentBrand: string; loading: boolean; complete: boolean; onConfigure: () => void;
 }) {
   const [activePoint, setActivePoint] = useState("");
   const [metric, setMetric] = useState<OverviewMetric>("mentionRate");
   const [hidden, setHidden] = useState<string[]>([]);
   const ordered = runs.filter((run) => scopedAttempts(run, query).length).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const points = ordered.filter(run => Number.isFinite(Date.parse(run.createdAt)));
-  const effectivePoints = points.filter(run => calculateEvidenceMetrics(scopedAttempts(run, query)).effective > 0);
   const signatures = new Map(points.map((run) => [run.id, runSignature(run, query)]));
   const comparable = points.length > 1 && new Set(signatures.values()).size === 1;
   const series = [
-    { name: query.subject === "self" ? "当前品牌" : query.subject.slice(11), subject: query.subject },
-    ...(query.subject === "self" ? [] : [{ name: "当前品牌", subject: "self" as const }]),
+    { name: query.subject === "self" ? currentBrand || "监控品牌待读取" : query.subject.slice(11), subject: query.subject },
+    ...(query.subject === "self" ? [] : [{ name: currentBrand || "监控品牌待读取", subject: "self" as const }]),
     ...competitors.filter((item) => `competitor:${item.name}` !== query.subject).map((item) => ({ name: item.name, subject: `competitor:${item.name}` as const })),
   ].map((item) => ({ ...item, values: points.map((run) => {
-    const name = item.subject === "self" ? undefined : item.subject.slice(11);
-    const configured = !name || run.config.competitors.some((competitor) =>
-      [competitor.name, ...competitor.aliases].some((alias) => alias === name || competitors.find((entry) => entry.name === name)?.aliases.includes(alias)));
-    return configured && calculateEvidenceMetrics(scopedAttempts(run, query)).effective > 0 ? calculateEvidenceMetrics(subjectAttempts(run, { ...query, subject: item.subject }, competitors))[metric] : undefined;
+    const selected = subjectAttempts(run, { ...query, subject: item.subject }, competitors, currentBrand);
+    const values = calculateEvidenceMetrics(selected);
+    return values.effective > 0 ? values[metric] : undefined;
   }) }));
+  const effectivePoints = points.filter((_, index) => series.some(item => item.values[index] !== undefined));
   const max = metric === "mentionRate" || metric === "top3Rate" ? 100 : Math.max(1, ...series.flatMap((item) => item.values.flatMap((value) => value === undefined ? [] : [value])));
   const startTime = Date.parse(points[0]?.createdAt || "");
   const endTime = Date.parse(points.at(-1)?.createdAt || "");
@@ -56,7 +55,7 @@ export default function OverviewTrend({ runs, query, competitors, loading, compl
       {effectivePoints.length === 1 && <p className="fm-ov-notice pending">当前仅有一个有效采集点，展示真实值，暂不连线。</p>}
       <p className={`fm-ov-notice ${comparable ? "verified" : "pending"}`}>{comparable ? "已核对：所示运行配置及计划采集次数一致。" : "存在配置或采集次数差异：不同口径的运行不连线，周期变化暂不作改善结论。"} {complete ? "已读取当前筛选的完整历史目录与批次证据。" : "当前展示已读取批次，继续加载可补全范围。"}</p>
       <div className="fm-ov-legend" role="group" aria-label="显示或隐藏品牌曲线">{series.map((item, index) => <button type="button" key={item.subject} aria-pressed={!hidden.includes(item.subject)} onClick={() => setHidden(value => value.includes(item.subject) ? value.filter(subject => subject !== item.subject) : [...value, item.subject])}><i style={{ background: colors[index % colors.length] }} />{item.name}</button>)}</div>
-      <div className="fm-ov-chart"><svg viewBox="0 0 780 255" role="img" aria-label={`${overviewMetrics.find((item) => item.key === metric)?.label}按运行对比曲线；下方提供完整数据表`}>
+      <div className="fm-ov-chart"><svg viewBox="0 0 780 255" role="img" aria-label={`${overviewMetrics.find((item) => item.key === metric)?.label}按运行对比曲线；聚焦采集点可查看真实值`}>
         {[0, .5, 1].map((fraction) => <g key={fraction}><line x1="48" y1={y(max * fraction)} x2="742" y2={y(max * fraction)} stroke="#e9e7ef" /><text x="4" y={y(max * fraction) + 4} fontSize="11" fill="#667085">{metricText(metric, max * fraction)}</text></g>)}
         {series.map((item, seriesIndex) => hidden.includes(item.subject) ? null : <g key={item.subject} stroke={colors[seriesIndex % colors.length]} fill={colors[seriesIndex % colors.length]}>
           {paths(item.values).map((path, index) => <path key={index} d={path} fill="none" strokeWidth="2.5" strokeLinejoin="round" />)}
@@ -72,7 +71,7 @@ export default function OverviewTrend({ runs, query, competitors, loading, compl
         const values = item.values.filter((value): value is number => value !== undefined);
         return <p key={item.subject}><strong>{item.name}</strong> 本周期 {values.length ? `${metricText(metric, Math.min(...values))}–${metricText(metric, Math.max(...values))}` : "—"}<small>各运行范围{complete ? "" : " · 已读取部分"}</small></p>;
       })}</div>
-      <details className="fm-ov-run-details"><summary>查看运行明细与统计口径</summary><p className="fm-ov-note">对比条件：问题及分类、模型及模式、地区、时窗、每题采集次数与品牌配置一致。概览先合并有效回答再计算比例，不平均每日百分比。</p><div className="fm-table-scroll"><table className="fm-data-table"><caption>按运行的真实指标；缺失值不补零、不插值</caption><thead><tr><th>采集运行</th>{series.map((item) => <th key={item.subject}>{item.name}</th>)}</tr></thead><tbody>{points.map((run, index) => <tr key={run.id}><th>{formatDateTime(run.createdAt)} · {run.id.slice(0, 8)}</th>{series.map((item) => <td key={item.subject}>{metricText(metric, item.values[index])}</td>)}</tr>)}</tbody></table></div></details>
+
     </>}</section>
   </section>;
 }

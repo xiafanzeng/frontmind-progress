@@ -1,0 +1,25 @@
+{
+  "sources": {
+    "baidu-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/baidu-color.svg",
+    "bing-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/bing-color.svg",
+    "copilot-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/copilot-color.svg",
+    "deepseek-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/deepseek-color.svg",
+    "doubao-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/doubao-color.svg",
+    "gemini-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/gemini-color.svg",
+    "google-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/google-color.svg",
+    "grok.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/grok.svg",
+    "kimi-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/kimi-color.svg",
+    "openai.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/openai.svg",
+    "perplexity-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/perplexity-color.svg",
+    "qwen-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/qwen-color.svg",
+    "yuanbao-color.svg": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/yuanbao-color.svg",
+    "sinaweibo.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/sinaweibo.svg",
+    "tiktok.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/tiktok.svg",
+    "xiaohongshu.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/xiaohongshu.svg",
+    "LICENSE-LobeHub.txt": "https://raw.githubusercontent.com/lobehub/lobe-icons/master/LICENSE",
+    "LICENSE-SimpleIcons.txt": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/LICENSE.md",
+    "quark.png": "https://gw.alicdn.com/imgextra/i3/O1CN018r2tKf28YP7ev0fPF_!!6000000007944-2-tps-48-48.png",
+    "antafu.jpg": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/d6/1d/d4/d61dd477-8e14-fc92-92b4-8d05da200eba/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg"
+  },
+  "note": "Brand artwork is used to identify supported platforms; trademarks belong to their owners. Retrieved 2026-10-27."
+}

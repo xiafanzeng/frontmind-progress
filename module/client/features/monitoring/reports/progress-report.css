@@ -72,3 +72,9 @@
 
 .monitoring-module .fm-report-mode-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
 .monitoring-module .fm-report-mode-entry > span { color: #596579; font-size: 13px; }
+
+.monitoring-module .fm-pr-return { display: flex; flex-wrap: wrap; gap: 10px; }
+.monitoring-module .fm-pr-execution { min-width: 0; padding: 18px; border: 1px solid #e3dce9; border-radius: 12px; background: #fff; }
+.monitoring-module .fm-pr-execution > header { display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.monitoring-module .fm-pr-execution > header h3 { margin: 0 0 6px; font-size: 16px; color: #3d1560; }
+.monitoring-module .fm-pr-execution > header :is(p, small) { margin: 0; color: #756b7e; font-size: 12px; overflow-wrap: anywhere; }

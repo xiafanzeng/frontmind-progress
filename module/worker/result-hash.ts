@@ -38,6 +38,9 @@ export function hashAuthoritativeResult(item: MoliResultItem): string {
     allRankings: item.allRankings,
     categoryRanking: item.categoryRanking,
     keywordEvaluations: item.keywordEvaluations,
+    competitorEvaluations: item.competitorEvaluations,
+    // Preserve null/empty/missing evidence states and competitor-only revisions.
+    rawCompetitorEvaluations: item.raw?.competitorEvaluations,
     // null -> [] is a real evidence-state change even when both normalize to [].
     // Keep it versioned so a later empty result cannot retain an older null state.
     keywordEvaluationState: keywordReturnState(item.raw?.keywordEvaluations, item.keywordEvaluations || []),

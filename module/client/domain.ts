@@ -87,7 +87,9 @@ export type MonitorPlatformInput = {
 
 export type MonitorInput = {
   name: string;
-  /** Monitor-scoped brand identity; first entry is the primary brand. */
+  /** Explicit task identity. Aliases never select the primary brand. */
+  mainBrand?: string;
+  groupAssignment?: { groupId: string | null; revision: number };
   brandAliases: string[];
   competitors: CompetitorInput[];
   questions: string[];
@@ -103,6 +105,7 @@ export type MonitorInput = {
 };
 
 export type MonitorSummary = {
+  mainBrand?: string;
   id: string;
   projectId: string;
   name: string;
@@ -184,6 +187,7 @@ export type ResultAsset = {
 };
 
 export type RunAttempt = {
+  brandContext?: { targetBrand: string | null; currentBrand: string; matchesCurrent: boolean };
   id: string;
   /** Stable run identity used by the cross-run monitoring workspace. */
   runId?: string;

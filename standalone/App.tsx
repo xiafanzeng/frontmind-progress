@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { progressRunRoute, progressViewForPath } from "../module/client/features/monitoring/reportNavigation";
 import { ModuleShell } from "@frontmind/module-ui/dashboard/ModuleShell";
 import MonitoringDemo from "./MonitoringDemo";
-import ModuleWorkspace, { ProgressClientProvider, type ModuleContext, type ProgressWorkspaceView } from "../module/client/ModuleWorkspace";
+import ModuleWorkspace, { ProgressClientProvider, type ModuleContext, type ProgressWorkspaceView, type ProgressProjectCreationAction } from "../module/client/ModuleWorkspace";
 import { PROGRESS_MODULE_LABEL } from "../module/client/module-label";
 import "./standalone.css";
 
@@ -13,6 +13,8 @@ const views = [{ id: "monitoring", label: "问题监控" }, { id: "reports", lab
 export default function App({ preview = false }: { preview?: boolean }) {
   const [context, setContext] = useState<ModuleContext>();
   const [error, setError] = useState("");
+  const [projectCreation, setProjectCreation] = useState<ProgressProjectCreationAction>();
+  const registerProjectCreation = useCallback((action: ProgressProjectCreationAction | undefined) => setProjectCreation(action), []);
   const [path, navigate] = useLocation();
   const view = progressViewForPath(path);
   const navigateView = (next: ProgressWorkspaceView) => {
@@ -41,12 +43,12 @@ export default function App({ preview = false }: { preview?: boolean }) {
       .catch(cause => { if (!abort.signal.aborted) setError(cause.message); });
     return () => abort.abort();
   }, [preview]);
-  return <ModuleShell module={moduleDefinition} navigationModules={[{ ...moduleDefinition, label: "进度监控", views }]} views={views} activeView={view} onSelectView={id => navigateView(id as ProgressWorkspaceView)}>
+  return <ModuleShell module={moduleDefinition} navigationModules={[{ ...moduleDefinition, label: "进度监控", views }]} views={views} activeView={view} onSelectView={id => navigateView(id as ProgressWorkspaceView)} projectCreation={projectCreation ? {label:projectCreation.label,onCreate:projectCreation.open,disabled:projectCreation.disabled} : undefined}>
     <div className="dashboard-module-content">
       {error ? <><p role="alert">{error}</p><button className="operator-control-secondary" onClick={() => location.reload()}>重新加载</button></>
         : !preview && !context ? <p role="status">正在进入问题监控…</p>
           : preview ? <ProgressClientProvider><MonitoringDemo view={view} /></ProgressClientProvider>
-            : <ModuleWorkspace context={context} view={view} onViewChange={navigateView} />}
+            : <ModuleWorkspace context={context} view={view} onViewChange={navigateView} onProjectCreationChange={registerProjectCreation} />}
     </div>
   </ModuleShell>;
 }

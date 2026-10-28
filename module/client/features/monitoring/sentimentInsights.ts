@@ -10,7 +10,7 @@ export const SENTIMENT_BUCKETS = [
   { key: "positive", label: "正面", color: "#219b77" },
   { key: "neutral", label: "中性", color: "#7b91ac" },
   { key: "negative", label: "负面", color: "#df6a73" },
-  { key: "unknown", label: "未判定", color: "#d7dce3" },
+  { key: "unknown", label: "标签缺失", color: "#d7dce3" },
 ] as const;
 
 export function sentimentDistribution(counts: SentimentCounts) {
@@ -20,12 +20,13 @@ export function sentimentDistribution(counts: SentimentCounts) {
     (sum, bucket) => sum + safeCount(counts[bucket.key]),
     0,
   );
+  const classified = safeCount(counts.positive) + safeCount(counts.neutral) + safeCount(counts.negative);
   return {
-    total,
-    buckets: SENTIMENT_BUCKETS.map((bucket) => ({
+    total, classified, missing: safeCount(counts.unknown),
+    buckets: SENTIMENT_BUCKETS.filter(bucket => bucket.key !== "unknown").map((bucket) => ({
       ...bucket,
       count: safeCount(counts[bucket.key]),
-      percent: total ? (safeCount(counts[bucket.key]) / total) * 100 : 0,
+      percent: classified ? (safeCount(counts[bucket.key]) / classified) * 100 : 0,
     })),
   };
 }
@@ -46,13 +47,8 @@ export function groupKeywordEvaluations(
       .replace(/\s+/g, " ")
       .toLocaleLowerCase("zh-CN");
     if (!normalized || !groups[evaluation.nature]) continue;
-    const key = `${evaluation.nature}:${normalized}`;
-    const existing = seen.get(key);
-    if (existing) {
-      if (!existing.context?.trim() && evaluation.context?.trim())
-        existing.context = evaluation.context;
-      continue;
-    }
+    const key = JSON.stringify([evaluation.nature, normalized, evaluation.context?.trim() || ""]);
+    if (seen.has(key)) continue;
     const row = { ...evaluation, keyword: evaluation.keyword.trim() };
     seen.set(key, row);
     groups[evaluation.nature].push(row);

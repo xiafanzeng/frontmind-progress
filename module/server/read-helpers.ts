@@ -1,3 +1,4 @@
+import { subjectSentiment } from "../shared/subjectSentiment.js";
 import { eq, isNull, gte, lt, sql, inArray, type SQL } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import type { CitationProvenance, MonitoringAnalysisInput, MonitoringAnswersListInput, MonitoringScope, Sentiment } from "@frontmind/monitoring-contracts";
@@ -423,13 +424,18 @@ export function monitoringListRowAsFact(row: {
   };
 }
 
+export function monitoringSubjectEligible(fact: MonitoringFact, subject: ResolvedMonitoringSubject) {
+  return subject.kind === "self" ? fact.selfBrandMatches !== false : fact.monitorCompetitors.some(item => item.name === subject.name);
+}
+
 export function monitoringMetrics(
   facts: readonly MonitoringFact[],
   evidence: MonitoringEvidence,
   subject: ResolvedMonitoringSubject,
 ) {
   const answers = facts.filter(isEffectiveMonitoringAnswer);
-  const contributions = answers.map((fact) =>
+  const eligibleAnswers = answers.filter(fact => monitoringSubjectEligible(fact, subject));
+  const contributions = eligibleAnswers.map((fact) =>
     monitoringSubjectContribution(fact, subject),
   );
   const mentionedAnswers = contributions.filter(
@@ -448,27 +454,22 @@ export function monitoringMetrics(
     discoveredSourceCount += references.length;
     for (const reference of references) domains.add(reference.domain);
   }
-  const sentiments =
-    subject.kind === "self"
-      ? {
-          positive: answers.filter((fact) => fact.sentiment === "positive")
-            .length,
-          neutral: answers.filter((fact) => fact.sentiment === "neutral")
-            .length,
-          negative: answers.filter((fact) => fact.sentiment === "negative")
-            .length,
-          unknown: answers.filter((fact) => fact.sentiment === "unknown")
-            .length,
-        }
-      : null;
-  const positionRates = monitoringPositionRates(positions, answers.length);
+  const sentiments = { positive: 0, neutral: 0, negative: 0, unknown: 0 };
+  const competitorName = subject.kind === "competitor" ? subject.name : null;
+  for (const answer of answers) {
+    const historical = competitorName ? answer.monitorCompetitors.find(item => item.name === competitorName) : null;
+    const tone = !monitoringSubjectEligible(answer, subject) ? null : subject.kind === "self" ? answer.sentiment : historical
+      ? subjectSentiment({ competitorEvaluations: answer.competitorSentiments }, { kind: "competitor", ...historical }).sentiment : null;
+    sentiments[tone === "positive" || tone === "neutral" || tone === "negative" ? tone : "unknown"]++;
+  }
+  const positionRates = monitoringPositionRates(positions, eligibleAnswers.length);
   return {
     runs: new Set(facts.map((fact) => fact.runId)).size,
     attempts: facts.length,
     answers: answers.length,
     mentionedAnswers,
     mentionRate:
-      answers.length === 0 ? null : mentionedAnswers / answers.length,
+      eligibleAnswers.length === 0 ? null : mentionedAnswers / eligibleAnswers.length,
     averagePosition:
       positions.length === 0
         ? null
@@ -486,6 +487,7 @@ export function monitoringSubjectContribution(
   fact: MonitoringFact,
   subject: ResolvedMonitoringSubject,
 ) {
+  if (!monitoringSubjectEligible(fact, subject)) return { mentioned: false, position: null };
   if (subject.kind === "self") {
     return {
       mentioned: fact.brandMentioned ?? false,
@@ -495,14 +497,7 @@ export function monitoringSubjectContribution(
       ),
     };
   }
-  const currentNames = new Set(
-    [subject.name, ...subject.aliases].map(normalizedBrandName),
-  );
-  const historicalSubject = fact.monitorCompetitors.find((competitor) =>
-    [competitor.name, ...competitor.aliases]
-      .map(normalizedBrandName)
-      .some((name) => currentNames.has(name)),
-  );
+  const historicalSubject = fact.monitorCompetitors.find(competitor => competitor.name === subject.name);
   if (!historicalSubject) return { mentioned: false, position: null };
   const names = new Set(
     [historicalSubject.name, ...historicalSubject.aliases].map(
@@ -629,6 +624,8 @@ export type MonitoringEvidence = {
 };
 
 export type MonitoringFact = {
+  /** Explicit on current-scope reads; absent on immutable single-run reads. */
+  selfBrandMatches?: boolean;
   attemptId: string;
   runId: string;
   runCreatedAt: Date;
@@ -638,6 +635,7 @@ export type MonitoringFact = {
   revisionId: string | null;
   hasNonEmptyAnswer: boolean;
   sentiment: Sentiment | null;
+  competitorSentiments?: Array<{ name: string; sentiment: unknown }>;
   brandMentioned: boolean | null;
   mentionPosition: number | null;
   competitorRankings: Array<Record<string, unknown>> | null;
@@ -706,42 +704,21 @@ export function monitoringCompetitorAnalysisItems(
   competitors: ReadonlyArray<{ name: string; aliases: string[] }>,
 ) {
   const effectiveAnswers = facts.filter(isEffectiveMonitoringAnswer);
-  const answerCount = effectiveAnswers.length;
   const aggregates = competitors.map((competitor) => ({
     name: competitor.name,
     appearances: 0,
+    answerCount: 0,
     positions: [] as number[],
   }));
-  const currentIndexesByName = new Map<string, Set<number>>();
-  competitors.forEach((competitor, index) => {
-    for (const name of new Set(
-      [competitor.name, ...competitor.aliases].map(normalizedBrandName),
-    )) {
-      const indexes = currentIndexesByName.get(name) ?? new Set<number>();
-      indexes.add(index);
-      currentIndexesByName.set(name, indexes);
-    }
-  });
+  const currentIndexesByName = new Map(competitors.map((competitor, index) => [competitor.name, index]));
 
   for (const fact of effectiveAnswers) {
-    // Preserve the old `.find()` semantics: if multiple immutable historical
-    // competitors overlap a current alias, the first snapshot entry wins.
+    // Identity comes from the configured name. Only that run's aliases resolve
+    // vendor rankings; a newly added alias must not relabel an old competitor.
     const historicalNamesByCurrentIndex = new Map<number, Set<string>>();
     for (const historical of fact.monitorCompetitors) {
-      const historicalNames = new Set(
-        [historical.name, ...historical.aliases].map(normalizedBrandName),
-      );
-      const matchingCurrentIndexes = new Set<number>();
-      for (const name of historicalNames) {
-        for (const index of currentIndexesByName.get(name) ?? []) {
-          matchingCurrentIndexes.add(index);
-        }
-      }
-      for (const index of matchingCurrentIndexes) {
-        if (!historicalNamesByCurrentIndex.has(index)) {
-          historicalNamesByCurrentIndex.set(index, historicalNames);
-        }
-      }
+      const index = currentIndexesByName.get(historical.name);
+      if (index !== undefined) historicalNamesByCurrentIndex.set(index, new Set([historical.name, ...historical.aliases].map(normalizedBrandName)));
     }
 
     const rankingsByName = new Map<
@@ -756,6 +733,7 @@ export function monitoringCompetitorAnalysisItems(
     }
 
     for (const [index, historicalNames] of historicalNamesByCurrentIndex) {
+      aggregates[index]!.answerCount += 1;
       let mentioned = false;
       let position: number | null = null;
       for (const name of historicalNames) {
@@ -778,8 +756,8 @@ export function monitoringCompetitorAnalysisItems(
   return aggregates.map((aggregate) => ({
     name: aggregate.name,
     appearances: aggregate.appearances,
-    answerCount,
-    mentionRate: answerCount === 0 ? null : aggregate.appearances / answerCount,
+    answerCount: aggregate.answerCount,
+    mentionRate: aggregate.answerCount === 0 ? null : aggregate.appearances / aggregate.answerCount,
     averagePosition:
       aggregate.positions.length === 0
         ? null
@@ -787,7 +765,7 @@ export function monitoringCompetitorAnalysisItems(
           aggregate.positions.length,
     highPositionExposure: monitoringPositionRates(
       aggregate.positions,
-      answerCount,
+      aggregate.answerCount,
     ).top3Rate,
   }));
 }

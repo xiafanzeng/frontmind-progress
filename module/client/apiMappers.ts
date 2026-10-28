@@ -96,6 +96,7 @@ export function mapMonitor(
     id: value.id,
     projectId: value.projectId,
     name: value.name,
+    mainBrand: value.mainBrand || undefined,
     questionsCount: Number(value.questionsCount),
     platformsCount: Number(value.platformsCount),
     repetitions: value.repetitions || 1,
@@ -131,6 +132,7 @@ export function monitorDetailToInput(
   );
   return {
     name: output.version.name,
+    mainBrand: output.mainBrand,
     brandAliases: output.version.brandAliases || [],
     competitors: output.version.competitors,
     questions: output.questions.map((question) => question.questionSnapshot),
@@ -162,15 +164,15 @@ export function monitorDetailToInput(
 
 export function monitorInputToConfiguration(
   value: MonitorInput,
-  project: ProjectSummary,
   models: ProviderModel[],
 ) {
+  const mainBrand = value.mainBrand?.trim();
+  if (!mainBrand) throw new Error("请填写本监控配置的监控品牌后再保存。");
   return {
     name: value.name,
-    brandAliases:
-      value.brandAliases && value.brandAliases.length
-        ? value.brandAliases
-        : project.brandAliases,
+    mainBrand,
+    brandAliases: value.brandAliases,
+    groupAssignment: value.groupAssignment,
     competitors: value.competitors,
     questions: value.questions,
     questionCategories: value.questionCategories,
@@ -211,6 +213,7 @@ export function mapMonitorDetailSummary(
     id: value.monitor.id,
     projectId: value.monitor.projectId,
     name: value.version.name,
+    mainBrand: value.mainBrand,
     questionsCount: value.questions.length,
     platformsCount: value.platforms.length,
     repetitions: value.version.repetitions,

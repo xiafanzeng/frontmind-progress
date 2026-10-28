@@ -1,3 +1,6 @@
+import { monitoringSubjectEligible } from "./read-helpers.js";
+import { subjectSentiment } from "../shared/subjectSentiment.js";
+import type { TaskConfiguration } from "../contracts/monitor-configuration.js";
 import {affectedRows,pricingDimensionsKey} from "./repository-utils.js";
 import { monitoringFactConditions as progressMonitoringFactConditions } from "./read-helpers.js";
 import { MONITORING_EVIDENCE_REVISION_BATCH_SIZE, MONITORING_EVIDENCE_ROW_LIMIT, MONITORING_FACT_LIMIT, MONITORING_LEGACY_DISCOVERY_FALLBACK_LIMIT, buildMonitoringAnalysis, buildMonitoringEvidence, decodeMonitoringAnswerCursor, encodeMonitoringAnswerCursor, monitoringDetailRowAsFact, monitoringListRowAsFact, monitoringMetrics, monitoringSubjectContribution, normalizedMonitoringRankings, safeKeywordEvaluations, monitoringAnswerShareUrl, chunks, emptyMonitoringEvidence, parseCitationProvenanceHint, monitoringLocalDate, monitoringCompetitorAnalysisItems, isEffectiveMonitoringAnswer, canonicalUrl, publicationTimeBucket, publicationTimeBuckets, groupByRevision, monitoringFactCitationProvenance, discoveredSourcesFromNormalizedPayload, monitoringScopeFingerprint, isUuid, hasLegacyCitationList, monitoringPositionRates, monitoringMentionPosition, normalizedBrandName, safeRankingEntries, firstString, zonedParts, payloadArray, safeNormalizedReference, deterministicUuid, sha256, stableJson, firstNumber, firstBoolean, positiveInteger, type MonitoringEvidence, type MonitoringFact, type ResolvedMonitoringScope, type ResolvedMonitoringSubject, type MonitoringSourceRow, type MonitoringDiscoveredRow, type PublicationTimeBucket, type MonitoringReference, type MonitoringCitation, type DiscoveredSourceRow } from "./read-helpers.js";
@@ -712,153 +715,8 @@ async updateProjectBrand(
         createdBy: ownerId,
       });
 
-      // Brand settings are project-scoped. Derive an immutable monitor version
-      // for every live monitor so future manual and newly materialized scheduled
-      // runs use the new brand snapshot without making the user edit monitors
-      // one by one. Existing runs and already materialized occurrences keep
-      // their previous monitorVersionId and therefore remain historically exact.
-      const projectMonitors = await tx
-        .select()
-        .from(monitors)
-        .where(
-          and(
-            eq(monitors.projectId, input.projectId),
-            monitoringChildOwnerPredicate(monitors, ownerId),
-            isNull(monitors.deletedAt),
-          ),
-        )
-        .orderBy(asc(monitors.id))
-        .for("update");
-      for (const monitor of projectMonitors) {
-        if (!monitor.activeVersionId) {
-          throw new RepositoryError(
-            "INVALID_STATE",
-            "Monitor has no active configuration",
-          );
-        }
-        const [activeVersion] = await tx
-          .select()
-          .from(monitorVersions)
-          .where(
-            and(
-              eq(monitorVersions.id, monitor.activeVersionId),
-              eq(monitorVersions.monitorId, monitor.id),
-            ),
-          )
-          .limit(1);
-        if (!activeVersion) {
-          throw new RepositoryError(
-            "INVALID_STATE",
-            "Monitor active configuration is invalid",
-          );
-        }
-        const [latestMonitorVersion] = await tx
-          .select({ version: monitorVersions.version })
-          .from(monitorVersions)
-          .where(eq(monitorVersions.monitorId, monitor.id))
-          .orderBy(desc(monitorVersions.version))
-          .limit(1);
-        const monitorVersion = (latestMonitorVersion?.version ?? 0) + 1;
-        const newMonitorVersionId = randomUUID();
-        const [questions, platforms] = await Promise.all([
-          tx
-            .select()
-            .from(monitorQuestions)
-            .where(eq(monitorQuestions.monitorVersionId, activeVersion.id))
-            .orderBy(asc(monitorQuestions.ordinal)),
-          tx
-            .select()
-            .from(monitorPlatforms)
-            .where(eq(monitorPlatforms.monitorVersionId, activeVersion.id))
-            .orderBy(asc(monitorPlatforms.ordinal)),
-        ]);
-        const configurationSnapshot = {
-          name: activeVersion.name,
-          brandAliases: aliases,
-          competitors,
-          questions: questions.map((question) => question.questionSnapshot),
-          platforms: platforms.map((platform) => ({
-            platformId: platform.platformId,
-            providerCode: platform.providerCodeSnapshot,
-            clientType: platform.clientType,
-            mode: platform.mode,
-            screenshot: platform.screenshot,
-            regionCode: platform.regionCode,
-          })),
-          repetitions: activeVersion.repetitions,
-          schedule: {
-            type: monitor.scheduleType,
-            timezone: monitor.scheduleTimezone,
-            localTime: monitor.scheduleLocalTime,
-            weekday: monitor.scheduleWeekday,
-          },
-        };
-        await tx.insert(monitorVersions).values({
-          id: newMonitorVersionId,
-          monitorId: monitor.id,
-          projectBrandVersionId: versionId,
-          version: monitorVersion,
-          name: activeVersion.name,
-          brandAliases: aliases,
-          competitors,
-          repetitions: activeVersion.repetitions,
-          expectedAttempts: activeVersion.expectedAttempts,
-          configurationHash: monitorConfigurationSnapshotHash(
-            configurationSnapshot,
-            Object.fromEntries(
-              questions.flatMap((question) =>
-                question.categorySnapshot
-                  ? [[question.questionSnapshot, question.categorySnapshot]]
-                  : [],
-              ),
-            ),
-          ),
-          createdBy: ownerId,
-        });
-        if (questions.length > 0) {
-          await tx.insert(monitorQuestions).values(
-            questions.map((question) => ({
-              monitorVersionId: newMonitorVersionId,
-              ordinal: question.ordinal,
-              questionId: question.questionId,
-              questionSnapshot: question.questionSnapshot,
-              categorySnapshot: question.categorySnapshot,
-            })),
-          );
-        }
-        if (platforms.length > 0) {
-          await tx.insert(monitorPlatforms).values(
-            platforms.map((platform) => ({
-              monitorVersionId: newMonitorVersionId,
-              ordinal: platform.ordinal,
-              platformId: platform.platformId,
-              providerCodeSnapshot: platform.providerCodeSnapshot,
-              clientType: platform.clientType,
-              mode: platform.mode,
-              screenshot: platform.screenshot,
-              regionCode: platform.regionCode,
-            })),
-          );
-        }
-        await tx
-          .update(monitors)
-          .set({ activeVersionId: newMonitorVersionId })
-          .where(eq(monitors.id, monitor.id));
-        await insertAudit(
-          tx,
-          audit,
-          "monitor.version_created",
-          "monitor",
-          monitor.id,
-          ownerId,
-          {
-            version: monitorVersion,
-            expectedAttempts: activeVersion.expectedAttempts,
-            reason: "project_brand_updated",
-            projectBrandVersion: version,
-          },
-        );
-      }
+      // Project settings are defaults for new tasks. Existing task and run
+      // snapshots remain independent, including scheduled occurrences.
       await tx
         .update(projects)
         .set({
@@ -876,7 +734,7 @@ async updateProjectBrand(
         ownerId,
         {
           version,
-          propagatedMonitors: projectMonitors.length,
+          propagatedMonitors: 0,
           ...(input.name !== undefined ? { name: input.name } : {}),
           ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
         },
@@ -1852,10 +1710,50 @@ async listPlatformAcceptanceBatches(limit = 30) {
     );
   }
 
+async saveTaskBrand(tx: Transaction, ownerId: string, projectId: string, previousBrandVersionId: string, configuration: TaskConfiguration) {
+    const [previous] = await tx.select().from(projectBrandVersions)
+      .where(and(eq(projectBrandVersions.id, previousBrandVersionId), eq(projectBrandVersions.projectId, projectId))).limit(1);
+    if (!previous) throw new RepositoryError("NOT_FOUND", "监控品牌版本不存在");
+    const mainBrand = configuration.mainBrand?.trim();
+    if (!mainBrand || mainBrand.length > 120) throw new RepositoryError("INVALID_STATE", "请填写本监控配置的监控品牌（1–120 个字符）");
+    const aliases = uniqueTrimmed(configuration.brandAliases).filter(alias => normalizedBrandName(alias) !== normalizedBrandName(mainBrand));
+    const competitors = normalizeCompetitors(configuration.competitors);
+    if (mainBrand === previous.mainBrand && stableJson(aliases) === stableJson(previous.aliases) && stableJson(competitors) === stableJson(previous.competitors)) return { id: previous.id, mainBrand, aliases, competitors };
+    // All callers lock the project row before assigning a project-local version.
+    const [latest] = await tx.select({ version: projectBrandVersions.version }).from(projectBrandVersions)
+      .where(eq(projectBrandVersions.projectId, projectId)).orderBy(desc(projectBrandVersions.version)).limit(1);
+    const id = randomUUID();
+    await tx.insert(projectBrandVersions).values({ id, projectId, version: (latest?.version ?? 0) + 1, mainBrand, aliases, competitors, createdBy: ownerId });
+    return { id, mainBrand, aliases, competitors };
+  }
+
+async assignTaskGroup(tx: Transaction, ownerId: string, projectId: string, monitorId: string, assignment: TaskConfiguration["groupAssignment"]) {
+    if (!assignment) return;
+    const table = tables.monitorOrganizations;
+    const [stored] = await tx.select().from(table).where(eq(table.projectId, projectId)).for("update").limit(1);
+    if ((stored?.revision ?? 0) !== assignment.revision) throw new RepositoryError("CONFLICT", "分组已更新，请刷新分组后重新保存；本次任务配置未保存。");
+    const groups = stored?.groups ?? [];
+    if (assignment.groupId && !groups.some(group => group.id === assignment.groupId)) throw new RepositoryError("CONFLICT", "所选分组已不存在，请重新选择。");
+    const membership = { ...stored?.membership };
+    if (assignment.groupId) membership[monitorId] = assignment.groupId;
+    else delete membership[monitorId];
+    const values = { groups, membership, revision: assignment.revision + 1 };
+    if (stored) await tx.update(table).set(values).where(eq(table.projectId, projectId));
+    else await tx.insert(table).values({ projectId, ...values });
+  }
+
+async lockTaskProject(tx: Transaction, ownerId: string, monitorId: string) {
+    const [task] = await tx.select({ projectId: monitors.projectId }).from(monitors)
+      .where(and(eq(monitors.id, monitorId), monitoringChildOwnerPredicate(monitors, ownerId), isNull(monitors.deletedAt))).limit(1);
+    if (!task) throw new RepositoryError("NOT_FOUND", "Monitor not found");
+    const [project] = await tx.select({ id: projects.id }).from(projects).where(and(eq(projects.id, task.projectId), monitoringProjectOwnerPredicate(projects, ownerId), isNull(projects.deletedAt))).for("update").limit(1);
+    if (!project) throw new RepositoryError("NOT_FOUND", "Project not found");
+  }
+
 async createMonitor(
     ownerId: string,
     projectId: string,
-    configuration: MonitorConfiguration,
+    configuration: TaskConfiguration,
     audit: RequestAudit,
     transaction?: Transaction,
   ) {
@@ -1875,6 +1773,8 @@ async createMonitor(
         .limit(1);
       if (!project?.currentBrandVersionId)
         throw new RepositoryError("NOT_FOUND", "Project not found");
+      const taskBrand = await this.saveTaskBrand(tx, ownerId, projectId, project.currentBrandVersionId, configuration);
+      configuration = { ...configuration, mainBrand: taskBrand.mainBrand, brandAliases: taskBrand.aliases, competitors: taskBrand.competitors };
       await validatePlatforms(tx, configuration);
 
       const monitorId = randomUUID();
@@ -1906,7 +1806,7 @@ async createMonitor(
       await tx.insert(monitorVersions).values({
         id: versionId,
         monitorId,
-        projectBrandVersionId: project.currentBrandVersionId,
+        projectBrandVersionId: taskBrand.id,
         version: 1,
         name: configuration.name,
         brandAliases: configuration.brandAliases,
@@ -1923,6 +1823,7 @@ async createMonitor(
         versionId,
         configuration,
       );
+      await this.assignTaskGroup(tx, ownerId, projectId, monitorId, configuration.groupAssignment);
       await insertAudit(
         tx,
         audit,
@@ -1940,12 +1841,13 @@ async createMonitor(
 async updateMonitor(
     ownerId: string,
     monitorId: string,
-    configuration: MonitorConfiguration,
+    configuration: TaskConfiguration,
     audit: RequestAudit,
     transaction?: Transaction,
   ) {
     const execute = async (tx: Transaction) => {
       await this.lockMonitorAdmission(tx, ownerId, monitorId);
+      await this.lockTaskProject(tx, ownerId, monitorId);
       const [monitor] = await tx
         .select()
         .from(monitors)
@@ -1972,6 +1874,10 @@ async updateMonitor(
         .limit(1);
       if (!project?.currentBrandVersionId)
         throw new RepositoryError("NOT_FOUND", "Project not found");
+      const [activeVersion] = await tx.select().from(monitorVersions).where(eq(monitorVersions.id, monitor.activeVersionId!)).limit(1);
+      if (!activeVersion) throw new RepositoryError("NOT_FOUND", "Monitor version not found");
+      const taskBrand = await this.saveTaskBrand(tx, ownerId, monitor.projectId, activeVersion.projectBrandVersionId, configuration);
+      configuration = { ...configuration, mainBrand: taskBrand.mainBrand, brandAliases: taskBrand.aliases, competitors: taskBrand.competitors };
       await validatePlatforms(tx, configuration);
       const [latest] = await tx
         .select({ version: monitorVersions.version })
@@ -1994,7 +1900,7 @@ async updateMonitor(
       await tx.insert(monitorVersions).values({
         id: versionId,
         monitorId,
-        projectBrandVersionId: project.currentBrandVersionId,
+        projectBrandVersionId: taskBrand.id,
         version,
         name: configuration.name,
         brandAliases: configuration.brandAliases,
@@ -2026,6 +1932,7 @@ async updateMonitor(
               : null,
         })
         .where(eq(monitors.id, monitorId));
+      await this.assignTaskGroup(tx, ownerId, monitor.projectId, monitorId, configuration.groupAssignment);
       await insertAudit(
         tx,
         audit,
@@ -2043,12 +1950,13 @@ async updateMonitor(
 async createMonitorAndRun(
     ownerId: string,
     projectId: string,
-    configuration: MonitorConfiguration,
+    configuration: TaskConfiguration,
     idempotencyKey: string,
     audit: RequestAudit,
   ) {
     return this.db.transaction(async (tx) => {
       await this.lockProjectAdmission(tx, ownerId, projectId);
+      await tx.select({ id: projects.id }).from(projects).where(eq(projects.id, projectId)).for("update").limit(1);
       // Enterprise admission precedes all wallet/monitor locks. The wallet is
       // the stable per-owner serialization point available before
       // a new monitor has an id. Taking this lock before the replay lookup makes
@@ -2100,12 +2008,13 @@ async createMonitorAndRun(
 async updateMonitorAndRun(
     ownerId: string,
     monitorId: string,
-    configuration: MonitorConfiguration,
+    configuration: TaskConfiguration,
     idempotencyKey: string,
     audit: RequestAudit,
   ) {
     return this.db.transaction(async (tx) => {
       await this.lockMonitorAdmission(tx, ownerId, monitorId);
+      await this.lockTaskProject(tx, ownerId, monitorId);
       const [lockedMonitor] = await tx
         .select({ id: monitors.id })
         .from(monitors)
@@ -2187,6 +2096,7 @@ async listMonitors(ownerId: string, projectId?: string) {
         id: monitors.id,
         projectId: monitors.projectId,
         name: monitors.name,
+        mainBrand: projectBrandVersions.mainBrand,
         status: monitors.status,
         activeVersionId: monitors.activeVersionId,
         scheduleType: monitors.scheduleType,
@@ -2220,6 +2130,7 @@ async listMonitors(ownerId: string, projectId?: string) {
         monitorVersions,
         eq(monitors.activeVersionId, monitorVersions.id),
       )
+      .leftJoin(projectBrandVersions, eq(monitorVersions.projectBrandVersionId, projectBrandVersions.id))
       .where(and(...conditions))
       .orderBy(desc(monitors.createdAt));
   }
@@ -2258,7 +2169,10 @@ async getMonitor(ownerId: string, monitorId: string) {
         .where(eq(monitorPlatforms.monitorVersionId, version.id))
         .orderBy(asc(monitorPlatforms.ordinal)),
     ]);
-    return { monitor, version, questions, platforms };
+    const [brand] = await this.db.select({ mainBrand: projectBrandVersions.mainBrand }).from(projectBrandVersions)
+      .where(and(eq(projectBrandVersions.id, version.projectBrandVersionId), eq(projectBrandVersions.projectId, monitor.projectId))).limit(1);
+    if (!brand) throw new RepositoryError("NOT_FOUND", "Monitor brand not found");
+    return { monitor, version, questions, platforms, mainBrand: brand.mainBrand };
   }
 
 async setMonitorPaused(
@@ -2492,6 +2406,10 @@ async createRun(
         }
         return { run: duplicate, duplicate: true };
       }
+      // Task-brand versions are allocated under the project lock. Keep run
+      // admission in the same project -> monitor -> wallet order, including
+      // the FK checks when a run captures that immutable brand snapshot.
+      await this.lockTaskProject(tx, ownerId, monitorId);
       const [monitor] = await tx
         .select()
         .from(monitors)
@@ -3025,6 +2943,9 @@ async getMonitoringReportData(ownerId: string, scope: MonitoringReportScope, sig
       const conditions = monitoringFactConditions(ownerId, scope);
       const shareUrl = sql<string | null>`JSON_UNQUOTE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.shareUrl'))`;
       const legacyShareUrl = sql<string | null>`JSON_UNQUOTE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.shareUrl'))`;
+      const competitorEvaluations = scope.subject.kind === "competitor"
+        ? sql<unknown>`COALESCE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.competitorEvaluations'), JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.competitorEvaluations'))`
+        : sql<null>`NULL`;
       const answerConditions = [...conditions, sql`CHAR_LENGTH(TRIM(${attemptResults.answerMarkdown})) > 0`];
       const bounded = tx.select({ bytes: sql<number>`(${MONITORING_ANSWER_EXPORT_ROW_OVERHEAD_BYTES}
         + OCTET_LENGTH(${attempts.question}) + OCTET_LENGTH(${attemptResults.answerMarkdown})
@@ -3032,6 +2953,7 @@ async getMonitoringReportData(ownerId: string, scope: MonitoringReportScope, sig
         + COALESCE(OCTET_LENGTH(CAST(${attemptResults.searchKeywords} AS CHAR)), 0)
         + COALESCE(OCTET_LENGTH(CAST(${attemptResults.keywordEvaluations} AS CHAR)), 0)
         + COALESCE(OCTET_LENGTH(CAST(${attemptResults.competitorRankings} AS CHAR)), 0)
+        + COALESCE(OCTET_LENGTH(CAST(${competitorEvaluations} AS CHAR)), 0)
         + COALESCE(OCTET_LENGTH(${shareUrl}), 0) + COALESCE(OCTET_LENGTH(${legacyShareUrl}), 0))`.as("bytes")
       }).from(attempts).innerJoin(runs, eq(runs.id, attempts.runId))
         .innerJoin(monitorQuestions, and(eq(monitorQuestions.monitorVersionId, runs.monitorVersionId), eq(monitorQuestions.ordinal, attempts.monitorQuestionOrdinal)))
@@ -3050,7 +2972,7 @@ async getMonitoringReportData(ownerId: string, scope: MonitoringReportScope, sig
         mode: attempts.mode, repetition: attempts.repetition, status: attempts.status,
         currentRevisionId: attemptResults.currentRevisionId, answerMarkdown: attemptResults.answerMarkdown,
         reasoningMarkdown: attemptResults.reasoningMarkdown, searchKeywords: attemptResults.searchKeywords,
-        sentiment: attemptResults.sentiment, keywordEvaluations: attemptResults.keywordEvaluations,
+        sentiment: attemptResults.sentiment, keywordEvaluations: attemptResults.keywordEvaluations, competitorEvaluations,
         shareUrl, legacyShareUrl,
       }).from(attempts).innerJoin(runs, eq(runs.id, attempts.runId))
         .innerJoin(projectBrandVersions, eq(projectBrandVersions.id, runs.projectBrandVersionId))
@@ -3062,6 +2984,9 @@ async getMonitoringReportData(ownerId: string, scope: MonitoringReportScope, sig
         .limit(MONITORING_ANSWER_EXPORT_ROW_LIMIT + 1);
       assertMonitoringAnswerExportPreflight(rows.length, preflight!.bytes);
       const facts = await reader.readMonitoringFacts(ownerId, resolved);
+      if (facts.some(fact => isEffectiveMonitoringAnswer(fact) && !monitoringSubjectEligible(fact, resolved.subject))) {
+        throw new RepositoryError("INVALID_STATE", "当前范围包含不同目标品牌的历史回答，或当时未配置所选竞品。请缩小到同一目标品牌的日期范围后下载报告；历史原回答仍可查看。");
+      }
       const answerIds = new Set(rows.map((row) => row.answerId));
       const answerFacts = facts.filter((fact) => answerIds.has(fact.attemptId));
       const revisions = [...new Set(rows.map((row) => row.currentRevisionId))];
@@ -3101,9 +3026,15 @@ async getMonitoringReportData(ownerId: string, scope: MonitoringReportScope, sig
       }
       const answers = rows.map((row) => {
         const fact = factsById.get(row.answerId)!;
+        const requested = resolved.subject.kind === "competitor" ? resolved.subject : null;
+        const selected = requested ? { ...requested, aliases: fact.monitorCompetitors.find(item => item.name === requested.name)?.aliases ?? [] } : { kind: "self" as const };
+        const evaluation = subjectSentiment({ competitorEvaluations: row.competitorEvaluations }, selected, { sentiment: row.sentiment, evaluations: row.keywordEvaluations });
+        const { competitorEvaluations: originalCompetitorEvaluations, ...answerRow } = row;
         const configuredNames = new Set(fact.monitorCompetitors.flatMap((c) => [c.name, ...c.aliases]).map(normalizedBrandName));
         const rankings = safeRankingEntries(fact.competitorRankings);
-        return { ...row, legacyShareUrl: undefined,
+        return { ...answerRow, legacyShareUrl: undefined,
+          mainBrand: resolved.subject.kind === "self" ? row.mainBrand : resolved.subject.name,
+          sentiment: evaluation.sentiment ?? "unknown", keywordEvaluations: evaluation.evaluations,
           shareUrl: monitoringAnswerShareUrl({ shareUrl: row.shareUrl, raw: { shareUrl: row.legacyShareUrl } }),
           ...monitoringSubjectContribution(fact, resolved.subject),
           configuredCompetitors: fact.monitorCompetitors.map((competitor) => ({ name: competitor.name, ...monitoringSubjectContribution(fact, { kind: "competitor", ...competitor }) })),
@@ -3146,6 +3077,9 @@ async getMonitoringExportData(
       ? await this.readMonitoringExportAnswers(ownerId, resolved.scope)
       : [];
     const facts = await this.readMonitoringFacts(ownerId, resolved);
+    if (sections.includes("answers") && resolved.subject.kind === "self" && facts.some(fact => isEffectiveMonitoringAnswer(fact) && !monitoringSubjectEligible(fact, resolved.subject))) {
+      throw new RepositoryError("INVALID_STATE", "导出回答前请缩小到同一监控品牌的日期范围，避免混用不同历史品牌的标签。");
+    }
     const evidence = await this.readMonitoringEvidence(facts);
     const factsByAttempt = new Map(
       facts.map((fact) => [fact.attemptId, fact] as const),
@@ -3524,63 +3458,8 @@ async resolveMonitoringReadScope(
     };
   }
 
-async readMonitoringFacts(
-    ownerId: string,
-    resolved: ResolvedMonitoringScope,
-  ): Promise<MonitoringFact[]> {
-    const conditions = monitoringFactConditions(ownerId, resolved.scope);
-    const rows = await this.db
-      .select({
-        attemptId: attempts.id,
-        runId: runs.id,
-        runCreatedAt: runs.createdAt,
-        questionId: monitorQuestions.questionId,
-        platformId: attempts.platformId,
-        status: attempts.status,
-        revisionId: attemptResults.currentRevisionId,
-        hasNonEmptyAnswer: sql<number>`CASE WHEN ${attemptResults.attemptId} IS NOT NULL AND CHAR_LENGTH(TRIM(${attemptResults.answerMarkdown})) > 0 THEN 1 ELSE 0 END`,
-        sentiment: attemptResults.sentiment,
-        brandMentioned: attemptResults.brandMentioned,
-        mentionPosition: attemptResults.mentionPosition,
-        competitorRankings: attemptResults.competitorRankings,
-        monitorCompetitors: monitorVersions.competitors,
-        citationProvenanceHint: sql<
-          string | null
-        >`JSON_UNQUOTE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.citationProvenance'))`,
-        hasLegacyCitationList: sql<number>`CASE WHEN JSON_TYPE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.citationList')) = 'ARRAY' THEN 1 ELSE 0 END`,
-        revisionCreatedAt: resultRevisions.createdAt,
-      })
-      .from(attempts)
-      .innerJoin(runs, eq(attempts.runId, runs.id))
-      .innerJoin(monitorVersions, eq(runs.monitorVersionId, monitorVersions.id))
-      .innerJoin(
-        monitorQuestions,
-        and(
-          eq(monitorQuestions.monitorVersionId, runs.monitorVersionId),
-          eq(monitorQuestions.ordinal, attempts.monitorQuestionOrdinal),
-        ),
-      )
-      .leftJoin(attemptResults, eq(attemptResults.attemptId, attempts.id))
-      .leftJoin(
-        resultRevisions,
-        eq(resultRevisions.id, attemptResults.currentRevisionId),
-      )
-      .where(and(...conditions))
-      .limit(MONITORING_FACT_LIMIT + 1);
-    if (rows.length > MONITORING_FACT_LIMIT) {
-      throw new RepositoryError(
-        "INVALID_STATE",
-        `Monitoring scope exceeds the ${MONITORING_FACT_LIMIT.toLocaleString("en-US")} attempt aggregation limit; narrow the date or dimension filters`,
-      );
-    }
-    return rows.map((row) => ({
-      ...row,
-      hasNonEmptyAnswer: Number(row.hasNonEmptyAnswer) === 1,
-      citationProvenanceHint: parseCitationProvenanceHint(
-        row.citationProvenanceHint,
-      ),
-      hasLegacyCitationList: Number(row.hasLegacyCitationList) === 1,
-    }));
+async readMonitoringFacts(ownerId: string, resolved: ResolvedMonitoringScope): Promise<MonitoringFact[]> {
+    return this.progressMonitoringReadRepository().readMonitoringFacts(ownerId, resolved);
   }
 
 async readMonitoringEvidence(
@@ -4717,6 +4596,7 @@ function monitorConfigurationSnapshotHash(
   categories: Record<string, MonitoringQuestionCategory>,
 ) {
   const snapshot: Record<string, unknown> = { ...configuration };
+  delete snapshot.groupAssignment;
   if (Object.keys(categories).length) snapshot.questionCategories = categories;
   else delete snapshot.questionCategories;
   return sha256(stableJson(snapshot));

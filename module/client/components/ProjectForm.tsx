@@ -111,7 +111,7 @@ export default function ProjectForm({
         </label>
         <label className="field">
           <span>
-            主品牌名称 <b>*</b>
+            默认监控品牌 <b>*</b>
           </span>
           <input
             value={brandName}
@@ -143,7 +143,7 @@ export default function ProjectForm({
           <small>请输入标准 IANA 时区；新监控默认继承此值。</small>
         </label>
         <label className="field field-wide">
-          <span>品牌别名</span>
+          <span>默认品牌别名</span>
           <textarea
             value={aliases}
             onChange={(event) => setAliases(event.target.value)}
@@ -153,7 +153,7 @@ export default function ProjectForm({
           <small>{parseTags(aliases).length}/50</small>
         </label>
         <label className="field field-wide">
-          <span>竞品品牌</span>
+          <span>默认竞品品牌</span>
           <textarea
             aria-label="竞品品牌"
             value={competitors}

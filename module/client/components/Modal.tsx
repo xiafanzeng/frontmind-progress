@@ -8,6 +8,9 @@ type ModalProps = {
   title: string;
   description?: string;
   size?: "medium" | "large" | "wide";
+  layer?: "base" | "nested";
+  className?: string;
+  onCloseAutoFocus?: (event: Event) => void;
   onClose: () => void;
   children: ReactNode;
 };
@@ -18,6 +21,9 @@ export default function Modal({
   title,
   description,
   size = "medium",
+  layer = "base",
+  className = "",
+  onCloseAutoFocus,
   onClose,
   children,
 }: ModalProps) {
@@ -57,10 +63,11 @@ export default function Modal({
       <Dialog.Portal
         container={document.getElementById("monitoring-module-portals")}
       >
-        <Dialog.Overlay className="modal-backdrop" />
+        <Dialog.Overlay className={`modal-backdrop${layer === "nested" ? " modal-backdrop-nested" : ""}`} />
         <Dialog.Content
           ref={contentRef}
-          className={`modal-card modal-${size}`}
+          className={`modal-card modal-${size}${layer === "nested" ? " modal-nested" : ""}${className ? ` ${className}` : ""}`}
+          onCloseAutoFocus={onCloseAutoFocus}
           {...(!description ? { "aria-describedby": undefined } : {})}
           onOpenAutoFocus={(event) => {
             const firstEditableControl =

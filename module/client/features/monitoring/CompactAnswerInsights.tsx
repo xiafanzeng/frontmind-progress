@@ -89,7 +89,7 @@ function AnswerInsights({
     SENTIMENT_BUCKETS.find((bucket) => bucket.key === attempt.sentiment) ||
     SENTIMENT_BUCKETS[3];
   let gradientEnd = 0;
-  const ring = distribution?.total
+  const ring = distribution?.classified
     ? `conic-gradient(${distribution.buckets
         .map((bucket) => {
           const start = gradientEnd;
@@ -155,13 +155,13 @@ function AnswerInsights({
                       <h5>
                         <i />
                         {bucket.label}
-                        <span>{rows.length} 个评价词</span>
+                        <span>{new Set(rows.map(row => row.keyword.normalize("NFKC").trim().toLocaleLowerCase("zh-CN"))).size} 个评价词 · {rows.length} 段语境</span>
                       </h5>
                       <ul>
                         {(expanded ? rows : rows.slice(0, 5)).map(
                           (evaluation) => (
                             <EvaluationWord
-                              key={`${evaluation.nature}:${evaluation.keyword}`}
+                              key={JSON.stringify([evaluation.nature, evaluation.keyword, evaluation.context || ""])}
                               evaluation={evaluation}
                             />
                           ),
@@ -183,7 +183,7 @@ function AnswerInsights({
                         >
                           {expanded
                             ? "收起更多评价词"
-                            : `展开其余 ${rows.length - 5} 个评价词`}
+                            : `展开其余 ${rows.length - 5} 段语境`}
                         </button>
                       )}
                     </section>
@@ -208,11 +208,11 @@ function AnswerInsights({
                   className="fm-answer-sentiment-ring"
                   style={{ background: ring }}
                   role="img"
-                  aria-label={`${distribution.total} 条有效回答`}
+                  aria-label={`全部 ${distribution.total} 条有效回答，已判定 ${distribution.classified} 条，标签缺失 ${distribution.missing} 条`}
                 >
                   <div>
-                    <strong>{distribution.total}</strong>
-                    <span>有效回答</span>
+                    <strong>{distribution.classified}</strong>
+                    <span>已判定回答</span>
                   </div>
                 </div>
                 <ul>
@@ -222,7 +222,7 @@ function AnswerInsights({
                       <span>{bucket.label}</span>
                       <strong>{bucket.count}</strong>
                       <span>
-                        {distribution.total
+                        {distribution.classified
                           ? `${bucket.percent.toFixed(1)}%`
                           : "—"}
                       </span>
@@ -231,7 +231,7 @@ function AnswerInsights({
                 </ul>
               </div>
               <p className="fm-answer-sentiment-note">
-                占比基于当前筛选范围内的全部有效回答。
+                全部有效回答 {distribution.total} 条，标签缺失 {distribution.missing} 条；占比以 {distribution.classified} 条已判定回答为分母。
               </p>
             </aside>
           )}

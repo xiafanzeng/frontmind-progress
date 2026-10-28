@@ -12,7 +12,6 @@ import {
   FileUp,
   Globe2,
   ListChecks,
-  ListPlus,
   MonitorSmartphone,
   Pencil,
   Plus,
@@ -55,13 +54,21 @@ import {
   type RunCostQuoteInput,
   type RunCostQuoteView,
 } from "../runBilling";
-import ModelBrandIcon from "./ModelBrandIcon";
+import Modal from "./Modal";
+import { trpc } from "../trpc";
+import type { MonitorOrganization } from "../../contracts/monitor-organization";
+import ModelBrandIcon, { modelDisplayRegion } from "./ModelBrandIcon";
 import { useOptimizedQuestions } from "./OptimizedQuestionsContext";
 import { DemoBrandPicker, DemoKeywordPanel } from "./DemoMonitorFields";
 import "./MonitorForm.css";
 
 type MonitorFormProps = {
   project: ProjectSummary;
+  serverData?: boolean;
+  monitorId?: string;
+  organization?: MonitorOrganization;
+  organizationError?: boolean;
+  reloadOrganization?: () => void;
   models: ProviderModel[];
   availableBalanceTenThousandths: string;
   quoteRunCost: QuoteRunCost;
@@ -211,8 +218,31 @@ const readQuestionFile = (file: File) => {
   });
 };
 
-export default function MonitorForm({
+export default function MonitorForm(props: MonitorFormProps) {
+  return props.serverData ? <LiveMonitorForm {...props} /> : <MonitorFormFields {...props} />;
+}
+
+function LiveMonitorForm(props: MonitorFormProps) {
+  const input = { projectId: props.project.id };
+  const query = trpc.projects.monitorOrganization.get.useQuery(input);
+  const utils = trpc.useUtils();
+  return <MonitorFormFields {...props} organization={query.error ? undefined : query.data}
+    organizationError={Boolean(query.error)} reloadOrganization={() => { void query.refetch(); }}
+    onSubmit={async (...args) => {
+      try {
+        const result = await props.onSubmit(...args);
+        void utils.projects.monitorOrganization.get.invalidate(input);
+        return result;
+      } catch (error) {
+        void query.refetch();
+        throw error;
+      }
+    }} />;
+}
+
+function MonitorFormFields({
   project,
+  serverData, monitorId, organization, organizationError, reloadOrganization,
   models,
   availableBalanceTenThousandths,
   quoteRunCost,
@@ -225,6 +255,8 @@ export default function MonitorForm({
   onSubmit,
   onDraftChange,
 }: MonitorFormProps) {
+  const [groupChoice, setGroupChoice] = useState<string | null | undefined>(initial?.groupAssignment?.groupId);
+  const [scheduleSettingsOpen, setScheduleSettingsOpen] = useState(false);
   const submitInFlight = useRef(false);
   const immediateRequest = useRef<{
     fingerprint: string;
@@ -256,13 +288,8 @@ export default function MonitorForm({
       ),
   );
   const [questionDraft, setQuestionDraft] = useState("");
-  const initialBrandAliases = initial?.brandAliases?.length
-    ? initial.brandAliases
-    : [project.brandName, ...project.brandAliases];
-  const [brandName, setBrandName] = useState(initialBrandAliases[0] || "");
-  const [brandAliasText, setBrandAliasText] = useState(
-    initialBrandAliases.slice(1).join("、"),
-  );
+  const [brandName, setBrandName] = useState(initial ? initial.mainBrand || "" : project.brandName);
+  const [brandAliasText, setBrandAliasText] = useState((initial?.brandAliases ?? project.brandAliases).join("、"));
   const [questionMode, setQuestionMode] = useState<"list" | "batch">("list");
   const [questionImportOpen, setQuestionImportOpen] = useState(false);
   const [questionImportDraft, setQuestionImportDraft] = useState("");
@@ -828,7 +855,7 @@ export default function MonitorForm({
 
   const brandAliases = [
     ...new Set(
-      [brandName.trim(), ...brandAliasText.split(/[,，、;；]+/)]
+      brandAliasText.split(/[,，、;；]+/)
         .map((alias) => alias.trim())
         .filter(Boolean),
     ),
@@ -836,7 +863,12 @@ export default function MonitorForm({
 
   const buildValue = (): MonitorInput => ({
     name: name.trim(),
-    brandAliases,
+    mainBrand: brandName.trim(),
+    ...(organization ? { groupAssignment: {
+      groupId: groupChoice === undefined ? (monitorId ? organization.membership[monitorId] ?? null : null) : groupChoice,
+      revision: organization.revision,
+    } } : {}),
+    brandAliases: brandAliases.filter(alias => alias !== brandName.trim()),
     competitors: normalizedCompetitors,
     questions: normalized.questions,
     questionCategories: Object.fromEntries(
@@ -870,6 +902,9 @@ export default function MonitorForm({
     if (submitting || submitInFlight.current) return;
     if (!name.trim()) return setError("请填写监控名称。");
     if (!brandName.trim()) return setError("请填写监控品牌。");
+    if (brandName.trim().length > 120) return setError("监控品牌最多 120 个字符。");
+    if (groupChoice && !organization) return setError("请先重新读取分组，再保存所选分组。");
+    if (groupChoice && !organization?.groups.some(group => group.id === groupChoice)) return setError("所选分组已不存在，请重新选择分组。");
     if (!normalized.questions.length)
       return setError("请至少添加一个监控问题。");
     if (normalized.questions.length > 50)
@@ -921,6 +956,7 @@ export default function MonitorForm({
     if (runNow && !balanceSufficient)
       return setError("当前可用余额不足，无法立即执行；仍可先保存监控配置。");
     if (scheduleType !== "none") {
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(localTime)) return setError("请选择有效的每日执行时间。");
       if (!isValidTimezone(timezone)) {
         return setError("请输入有效的 IANA 时区，例如 Asia/Shanghai。");
       }
@@ -979,7 +1015,7 @@ export default function MonitorForm({
               <>
                 <label className="field">
                   <span className="field-label">
-                    监控品牌 <small>默认继承项目，可修改</small>
+                    监控品牌 <small>仅用于本任务，可独立修改</small>
                   </span>
                   <input
                     value={brandName}
@@ -1237,7 +1273,7 @@ export default function MonitorForm({
                       }}
                     >
                       <FileUp size={12} />
-                      导入问题
+                      文件导入
                     </button>
                     {questionImportOpen && (
                       <div
@@ -1248,9 +1284,9 @@ export default function MonitorForm({
                         aria-describedby={questionImportHelpId}
                       >
                         <div className="question-import-heading">
-                          <strong id={questionImportTitleId}>导入问题</strong>
+                          <strong id={questionImportTitleId}>文件导入</strong>
                           <span id={questionImportHelpId}>
-                            每行一个问题，确认后追加到当前列表
+                            选择 TXT 文件，预览并确认后追加到当前列表
                           </span>
                         </div>
                         <textarea
@@ -1284,7 +1320,6 @@ export default function MonitorForm({
                             type="button"
                             onClick={() => {
                               setQuestionImportOpen(false);
-                              setQuestionImportDraft("");
                               setQuestionImportError("");
                               questionImportButton.current?.focus();
                             }}
@@ -1307,19 +1342,7 @@ export default function MonitorForm({
                       </div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    className={questionMode === "batch" ? "active" : ""}
-                    aria-pressed={questionMode === "batch"}
-                    onClick={() =>
-                      setQuestionMode((mode) =>
-                        mode === "list" ? "batch" : "list",
-                      )
-                    }
-                  >
-                    <ListPlus size={12} />
-                    {questionMode === "batch" ? "逐条编辑" : "批量粘贴"}
-                  </button>
+                  {([['list', '单条输入'], ['batch', '批量输入']] as const).map(([mode, label]) => <button type="button" key={mode} className={questionMode === mode ? "active" : ""} aria-pressed={questionMode === mode} onClick={() => { setQuestionMode(mode); setQuestionImportOpen(false); }}>{label}</button>)}
                   <span
                     className={
                       normalized.questions.length > 50
@@ -1647,7 +1670,9 @@ export default function MonitorForm({
                   暂无可用模型。请联系管理员完成官方模型同步。
                 </div>
               )}
-              {models.map((model) => {
+              {(["domestic", "overseas", "other"] as const).filter(region => models.some(model => modelDisplayRegion(model.code, model.name) === region)).map(region => <div className="model-region-group" key={region}>
+                <h4>{region === "domestic" ? "国内模型" : region === "overseas" ? "海外模型" : "其他模型（区域待确认）"}</h4>
+                <div className="model-grid">{models.filter(model => modelDisplayRegion(model.code, model.name) === region).map((model) => {
                 const active = Boolean(selected[model.id]);
                 const support = modelReasoningSupport(model);
                 const reasoningEnabled = Boolean(reasoning[model.id]);
@@ -1788,7 +1813,7 @@ export default function MonitorForm({
                     )}
                   </article>
                 );
-              })}
+              })}</div></div>)}
             </div>
             {unsupportedScreenshotCount > 0 && (
               <small className="capability-warning">
@@ -1798,11 +1823,24 @@ export default function MonitorForm({
             )}
           </section>
 
+          {serverData && <section className="form-section monitor-task-group">
+            <label className="field"><span className="field-label">任务分组</span>
+              <select aria-label="任务分组" disabled={!organization}
+                value={groupChoice === undefined ? (monitorId ? organization?.membership[monitorId] ?? "" : "") : groupChoice ?? ""}
+                onChange={event => setGroupChoice(event.target.value || null)}>
+                <option value="">未分组</option>
+                {organization?.groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
+              </select>
+            </label>
+            <small>自定义分组仅整理任务，不改变执行方式。 <button type="button" onClick={reloadOrganization}>刷新分组</button></small>
+            {organizationError ? <p role="alert">分组暂不可用，保存时保留原分组。<button type="button" onClick={reloadOrganization}>重新读取</button></p> : !organization && <p role="status">正在读取分组…</p>}
+          </section>}
+
           <section className="form-section monitor-frequency-section">
             <div className="section-heading frequency-heading">
               <div>
                 <h3>监控频次</h3>
-                <p>设置后续自动执行节奏；暂停不会终止已运行任务。</p>
+                <p>选择自动监控或按需手动执行。</p>
               </div>
               <div
                 className="schedule-status-toggle"
@@ -1815,7 +1853,7 @@ export default function MonitorForm({
                   aria-pressed={scheduleType !== "none"}
                   onClick={() => setScheduleEnabled(true)}
                 >
-                  开启
+                  自动监控模式
                 </button>
                 <button
                   type="button"
@@ -1823,11 +1861,13 @@ export default function MonitorForm({
                   aria-pressed={scheduleType === "none"}
                   onClick={() => setScheduleEnabled(false)}
                 >
-                  暂停
+                  手动执行模式
                 </button>
               </div>
             </div>
-            <div className="frequency-grid">
+            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>设置频次</button></div>
+            <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title="监控频次设置" description="设置执行时间和每个平台的提问次数。">
+            <div className="monitor-frequency-dialog"><div className="frequency-grid">
               <label className="field">
                 <span className="field-label">自动监控</span>
                 <select
@@ -1891,7 +1931,13 @@ export default function MonitorForm({
                   <span className="number-input-suffix">次 / 平台</span>
                 </span>
               </label>
+              {scheduleType !== "none" && <>
+                <label className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></label>
+                <label className="field"><span className="field-label">时区</span><input aria-label="执行时区" value={timezone} onChange={event => setTimezone(event.target.value)} placeholder="Asia/Shanghai" /></label>
+              </>}
             </div>
+            <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => setScheduleSettingsOpen(false)}>完成设置</button></div>
+            </div></Modal>
           </section>
 
           <div className="monitor-bottom-grid">

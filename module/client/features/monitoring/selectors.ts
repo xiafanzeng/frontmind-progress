@@ -278,6 +278,8 @@ export function projectAttemptsForSubject(
       ...attempt,
       brandMentioned: fact.mentioned,
       mentionPosition: fact.mentioned ? fact.position : undefined,
+      sentiment: "unknown" as const,
+      keywordEvaluations: [],
     };
   });
 }
@@ -296,6 +298,8 @@ export function projectAttemptsForRunSubject(
     ...attempt,
     brandMentioned: false,
     mentionPosition: undefined,
+    sentiment: "unknown" as const,
+    keywordEvaluations: [],
   }));
 }
 

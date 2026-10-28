@@ -61,9 +61,10 @@ export function analyzeSentiment(answers: SentimentAnswer[], targetBrand: string
     filteredAnswers: filtered.length, keywords, rows: selected.slice((page - 1) * 10, page * 10), page, pageSize: 10, rowCount: selected.length, pageCount, coverage };
 }
 
-export type CitationRow = { title: string; url: string; domain: string };
+export type CitationRow = { title: string; url: string; domain: string; siteName?: string | null };
 export function citationPage(citations: Iterable<CitationRow>, input: Pick<OverviewSourcesInput, "domain" | "domainPage" | "contentPage">, coverage: string): OverviewSourcesData {
   const domains = new Map<string, number>();
+  const siteNames = new Map<string, Map<string, number>>();
   const contents = new Map<string, CitationRow & { count: number }>();
   let total = 0;
   for (const source of citations) {
@@ -71,10 +72,15 @@ export function citationPage(citations: Iterable<CitationRow>, input: Pick<Overv
     try { const parsed = new URL(url); parsed.hash = ""; url = parsed.toString(); } catch { /* Keep an opaque source identifier unchanged. */ }
     total++;
     domains.set(source.domain, (domains.get(source.domain) || 0) + 1);
+    const name = source.siteName?.trim();
+    if (name && name !== source.domain) {
+      const names = siteNames.get(source.domain) || new Map<string, number>();
+      names.set(name, (names.get(name) || 0) + 1); siteNames.set(source.domain, names);
+    }
     const content = contents.get(url) || { ...source, url, count: 0 };
     content.count++; contents.set(url, content);
   }
-  const rankedDomains = [...domains].map(([domain, count]) => ({ domain, count })).sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
+  const rankedDomains = [...domains].map(([domain, count]) => ({ domain, count, siteName: [...(siteNames.get(domain) || [])].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null })).sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
   const rankedContents = [...contents.values()].filter(item => input.domain === null || item.domain === input.domain).sort((a, b) => b.count - a.count || a.url.localeCompare(b.url));
   const domainPage = Math.min(input.domainPage, Math.max(1, Math.ceil(rankedDomains.length / 10)));
   const contentPage = Math.min(input.contentPage, Math.max(1, Math.ceil(rankedContents.length / 10)));

@@ -130,6 +130,7 @@ export interface MoliResultItem {
   competitorRankings?: unknown;
   allRankings?: unknown;
   categoryRanking?: unknown;
+  competitorEvaluations?: Array<{ name: string; sentiment: MoliSentiment | null; keywordEvaluations: MoliKeywordEvaluation[] }>;
   keywordEvaluations?: readonly MoliKeywordEvaluation[];
   amount?: string;
   errorMessage?: string;

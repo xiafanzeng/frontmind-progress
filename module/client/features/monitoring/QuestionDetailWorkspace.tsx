@@ -24,7 +24,7 @@ type MentionFilter = "all" | "mentioned" | "unmentioned";
 const clearAnswer = { answerQuestion: undefined, answerId: undefined, fullscreen: false };
 const categoryLabel = (category?: string | null) => KEYWORD_CATEGORY_OPTIONS.find((item) => item.key === category)?.label.replace(/词$/, "问题") || "未分类";
 const mentionLabel = (attempt?: RunAttempt) => attempt?.brandMentioned === true ? "已提及品牌" : attempt?.brandMentioned === false ? "未提及品牌" : "提及待判定";
-const sentimentLabel = (attempt?: RunAttempt) => ({ positive: "正面", neutral: "中性", negative: "负面", unknown: "未判定" }[attempt?.sentiment || "unknown"]);
+const sentimentLabel = (attempt?: RunAttempt) => ({ positive: "正面", neutral: "中性", negative: "负面", unknown: "标签缺失" }[attempt?.sentiment || "unknown"]);
 
 export default function QuestionDetailWorkspace(props: Props) {
   return props.serverData ? <LiveQuestionDetail {...props} /> : <QuestionDetail {...props} data={previewQuestionDetailData(props.runs, props.query, props.project.timezone)} />;
@@ -166,7 +166,7 @@ function QuestionDetail({ query, project, onChange, navigation, data }: Props & 
       <div className="fm-qa-question-heading">
         <div><span>当前批次 · {formatDateTime(run?.createdAt)}</span><span>问题 {selectedQuestionIndex + 1} / {questions.length}</span></div>
         <h3>{question?.label || "请选择监控问题"}</h3>
-        {selectedAnswer && <p><span className="fm-meta-pill">{categoryLabel(question?.category)}</span><span className="fm-meta-pill">{mentionLabel(selectedAnswer)}</span>{query.subject === "self" && <span className="fm-meta-pill">{sentimentLabel(selectedAnswer)}</span>}<span>品牌排名 {selectedAnswer.mentionPosition ? `第 ${selectedAnswer.mentionPosition} 位` : "—"}</span></p>}
+        {selectedAnswer && <p><span className="fm-meta-pill">{categoryLabel(question?.category)}</span><span className="fm-meta-pill">{mentionLabel(selectedAnswer)}</span><span className="fm-meta-pill">{sentimentLabel(selectedAnswer)}</span><span>品牌排名 {selectedAnswer.mentionPosition ? `第 ${selectedAnswer.mentionPosition} 位` : "—"}</span></p>}
       </div>
       <div className="fm-qa-models" role="group" aria-label="切换回答模型">
         {(run?.config.platforms || []).filter((platform) => !query.model || platform.platformId === query.model).map((platform) => {
@@ -178,11 +178,17 @@ function QuestionDetail({ query, project, onChange, navigation, data }: Props & 
         })}
       </div>
       <div className="fm-qa-repetitions">
-        <div role="group" aria-label="切换回答次数"><span>回答次数</span>{Array.from({ length: run?.config.repetitions || 0 }, (_, index) => {
-          const repetition = index + 1;
-          const attempt = modelAttempts.find((item) => item.repetition === repetition);
-          return <button type="button" key={repetition} aria-pressed={selected?.repetition === repetition} disabled={!attempt} title={attempt ? attemptStatusLabel(attempt.status) : "该次回答尚未生成"} onClick={() => attempt && selectAnswer(attempt)}>第 {repetition} 次</button>;
-        })}</div>
+        <div role="group" aria-label="切换回答次数"><span>回答次数</span>
+          <button type="button" aria-label="上一次回答" disabled={!selected || !modelAttempts.some(item => item.repetition < selected.repetition)} onClick={() => {
+            const previous = modelAttempts.filter(item => item.repetition < (selected?.repetition ?? 0)).sort((a, b) => b.repetition - a.repetition)[0];
+            if (previous) selectAnswer(previous);
+          }}><ChevronLeft size={16} /></button>
+          <span aria-live="polite">{selected?.repetition ?? "—"} / {run?.config.repetitions || 0}</span>
+          <button type="button" aria-label="下一次回答" disabled={!selected || !modelAttempts.some(item => item.repetition > selected.repetition)} onClick={() => {
+            const next = modelAttempts.filter(item => item.repetition > (selected?.repetition ?? 0)).sort((a, b) => a.repetition - b.repetition)[0];
+            if (next) selectAnswer(next);
+          }}><ChevronRight size={16} /></button>
+        </div>
         {selected && <small><span className={`fm-attempt-state ${selected.status}`}>{attemptStatusLabel(selected.status)}</span> {formatDateTime(selected.capturedAt)} · 回答 ID：{selected.id}</small>}
       </div>
     </div>
@@ -196,7 +202,7 @@ function QuestionDetail({ query, project, onChange, navigation, data }: Props & 
       {!data.loading && !availableRuns.length && <p className="fm-qa-notice">当前日期范围内没有运行记录，请调整日期范围。</p>}
       {pinnedRun && <p className="fm-qa-notice">已定位到指定历史运行；该记录位于当前日期范围或最近运行列表之外。</p>}
       {data.historyLimited && <p className="fm-qa-notice">运行列表展示最近 100 次记录；更早的记录可通过已有运行或回答链接定位。</p>}
-      {snapshotOpen && run && <div className="fm-qa-snapshot"><h4>本次运行的配置快照 · V{run.version}</h4><p>{run.config.brandAliases[0] || run.config.brandName} · {data.questions.length} 个问题 · {run.config.platforms.length} 个模型 · 每模型 {run.config.repetitions} 次 · {run.config.regionLabel}</p><ol>{data.questions.map((item) => <li key={item.id}>{item.label} <small>{categoryLabel(item.category)}</small></li>)}</ol><ul>{run.config.platforms.map((item) => <li key={item.platformId}>{item.displayName} · {clientTypeLabel(item.clientType)} · {item.mode === "reasoning_search" ? "深度思考" : "联网搜索"} · 截图：{item.screenshotPolicy === 2 ? "全部回答" : item.screenshotPolicy === 1 ? "提及时" : "不采集"}</li>)}</ul></div>}
+      {snapshotOpen && run && <div className="fm-qa-snapshot"><h4>本次运行的配置快照 · V{run.version}</h4><p>{run.config.brandName} · {data.questions.length} 个问题 · {run.config.platforms.length} 个模型 · 每模型 {run.config.repetitions} 次 · {run.config.regionLabel}</p><ol>{data.questions.map((item) => <li key={item.id}>{item.label} <small>{categoryLabel(item.category)}</small></li>)}</ol><ul>{run.config.platforms.map((item) => <li key={item.platformId}>{item.displayName} · {clientTypeLabel(item.clientType)} · {item.mode === "reasoning_search" ? "深度思考" : "联网搜索"} · 截图：{item.screenshotPolicy === 2 ? "全部回答" : item.screenshotPolicy === 1 ? "提及时" : "不采集"}</li>)}</ul></div>}
     </section>
     {data.error && <div className="fm-data-notice" role="alert">问题明细读取失败：{data.error}<button type="button" className="fm-secondary-button" onClick={data.retry}>重新读取</button></div>}
     {(data.loading || incomingRunPending) && <p className="fm-qa-notice" role="status">正在读取所选运行与回答…</p>}
@@ -216,7 +222,7 @@ function QuestionDetail({ query, project, onChange, navigation, data }: Props & 
         <footer><small>共 {questions.length} 个问题</small><small>滚动查看更多</small></footer>
       </aside>
       <div className="fm-qa-answer">
-        {selectedAnswer ? <AnswerWorkspace attempts={modelAttempts} selected={selectedAnswer} fullscreen={query.fullscreen} onSelect={selectAnswer} onFullscreenChange={(fullscreen) => onChange({ fullscreen })} sourceScope={query.sourceScope} onSourceScopeChange={(sourceScope) => onChange({ sourceScope })} scopeKey={`${run.id}:${question?.id}:${selectedModel}:${query.subject}`} showSentiment={query.subject === "self"} detailLayout selectionHeader={selectionHeader} totalAnswers={modelAttempts.filter((attempt) => attempt.status === "completed" && attempt.answer?.trim()).length} /> : <div className="fm-qa-empty-answer">{selectionHeader}<p>{query.answerId ? "指定回答不在本次运行中，或已无法读取。" : question ? "该问题在所选模型下尚无回答记录。" : "请调整筛选条件后选择问题。"}</p>{query.answerId && <button type="button" className="fm-secondary-button" onClick={() => onChange({ answerId: undefined, fullscreen: false })}>查看当前问题的可用回答</button>}</div>}
+        {selectedAnswer ? <AnswerWorkspace attempts={modelAttempts} selected={selectedAnswer} fullscreen={query.fullscreen} onSelect={selectAnswer} onFullscreenChange={(fullscreen) => onChange({ fullscreen })} sourceScope={query.sourceScope} onSourceScopeChange={(sourceScope) => onChange({ sourceScope })} scopeKey={`${run.id}:${question?.id}:${selectedModel}:${query.subject}`} showSentiment detailLayout selectionHeader={selectionHeader} totalAnswers={modelAttempts.filter((attempt) => attempt.status === "completed" && attempt.answer?.trim()).length} /> : <div className="fm-qa-empty-answer">{selectionHeader}<p>{query.answerId ? "指定回答不在本次运行中，或已无法读取。" : question ? "该问题在所选模型下尚无回答记录。" : "请调整筛选条件后选择问题。"}</p>{query.answerId && <button type="button" className="fm-secondary-button" onClick={() => onChange({ answerId: undefined, fullscreen: false })}>查看当前问题的可用回答</button>}</div>}
       </div>
     </div>}
     <p className="fm-qa-footnote">{query.from} 至 {shiftCalendarDate(query.to, -1)} · 问题、模型与回答次数取自选中运行的配置快照。</p>

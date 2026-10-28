@@ -281,7 +281,7 @@ function normalizePublishedAt(...values: unknown[]): string | undefined {
 
 function normalizeKeywordEvaluations(value: unknown): MoliKeywordEvaluation[] {
   const normalized: MoliKeywordEvaluation[] = [];
-  const indexByKeywordAndNature = new Map<string, number>();
+  const seenEvaluations = new Set<string>();
 
   for (const entry of findArray(value, ["list", "records"])) {
     if (!isRecord(entry)) continue;
@@ -290,17 +290,9 @@ function normalizeKeywordEvaluations(value: unknown): MoliKeywordEvaluation[] {
     if (!keyword || !nature) continue;
 
     const context = stringValue(entry.context);
-    const dedupeKey = `${keyword.toLowerCase()}\u0000${nature}`;
-    const existingIndex = indexByKeywordAndNature.get(dedupeKey);
-    if (existingIndex !== undefined) {
-      const existing = normalized[existingIndex];
-      if (existing && !existing.context && context) {
-        normalized[existingIndex] = { ...existing, context };
-      }
-      continue;
-    }
-
-    indexByKeywordAndNature.set(dedupeKey, normalized.length);
+    const dedupeKey = `${keyword.toLowerCase()}\u0000${nature}\u0000${context || ""}`;
+    if (seenEvaluations.has(dedupeKey)) continue;
+    seenEvaluations.add(dedupeKey);
     normalized.push(
       context ? { keyword, nature, context } : { keyword, nature },
     );
@@ -537,6 +529,13 @@ export function normalizeResultItem(
     allRankings: value.allRankings,
     categoryRanking: value.categoryRanking,
     keywordEvaluations,
+    competitorEvaluations: findArray(value.competitorEvaluations, ["list", "records"]).flatMap(entry => {
+      if (!isRecord(entry)) return [];
+      const name = stringValue(entry.name);
+      if (!name) return [];
+      return [{ name, sentiment: normalizeSentiment(entry.sentiment) ?? null,
+        keywordEvaluations: normalizeKeywordEvaluations(entry.keywordEvaluations) }];
+    }),
     amount: stringValue(value.amount, value.cost),
     errorMessage: stringValue(
       value.errorMessage,
