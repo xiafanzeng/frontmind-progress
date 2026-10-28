@@ -839,7 +839,7 @@ function MonitoringWorkspaceController({
                   </span>
                 </div>
                 <p>
-                  <span>{project.brandName}</span>
+                  <span>{visibleSelectedMonitor.mainBrand || "监控品牌待读取"}</span>
                   <i />
                   <span>{visibleSelectedMonitor.scheduleLabel}</span>
                   <i />
@@ -1219,7 +1219,7 @@ function MonitoringWorkspaceController({
         key={project.id}
         projectId={project.id}
         serverData={serverData}
-        brandName={project.brandName}
+        brandName={project.name}
         monitors={monitors}
         selectedId={query.monitorId}
         deletedCount={deletedCount}

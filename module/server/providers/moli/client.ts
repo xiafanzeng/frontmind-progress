@@ -217,6 +217,57 @@ async function readJsonResponse(
   }
 }
 
+// Pure serialization shared by submission and local parameter inspection.
+// Calling this function never performs a network request.
+export function buildMoliSingleAttemptBody(input: SubmitSingleAttemptInput) {
+  assertSingleAttemptInput(input);
+  const consumerTaskId =
+    input.consumerTaskId ?? createConsumerTaskId(input.attemptId);
+  assertConsumerTaskId(consumerTaskId);
+  const body = {
+    ...(input.monitorKeyword?.trim()
+      ? { monitorKeywords: input.monitorKeyword.trim() }
+      : {}),
+    monitorKeywordAliases: [
+      ...new Set(
+        input.monitorKeywordAliases
+          ?.map((value) => value.trim())
+          .filter(Boolean) ?? [],
+      ),
+    ],
+    competitors:
+      input.competitors?.map((competitor) => ({
+        name: competitor.name.trim(),
+        aliases: [
+          ...new Set(
+            competitor.aliases
+              ?.map((value) => value.trim())
+              .filter(Boolean) ?? [],
+          ),
+        ],
+      })) ?? [],
+    prompts: [input.prompt.trim()],
+    platforms: [
+      {
+        platform: input.platform.trim(),
+        mode: input.mode,
+        screenshot: input.screenshot,
+      },
+    ],
+    // Mobile clients do not support region selection. Use the verified
+    // catalog dimension explicitly; provider codes are opaque and must never
+    // be interpreted by naming convention.
+    ...(input.regionCode?.trim() && input.clientType !== "mobile"
+      ? { regionCode: [input.regionCode.trim()] }
+      : {}),
+    ...(input.callbackUrl?.trim()
+      ? { callbackUrl: input.callbackUrl.trim() }
+      : {}),
+    consumerTaskId,
+  };
+  return body;
+}
+
 export class MoliClient {
   readonly origin: string;
   readonly timeoutMs: number;
@@ -272,51 +323,8 @@ export class MoliClient {
     input: SubmitSingleAttemptInput,
     signal?: AbortSignal,
   ): Promise<SubmitTaskResponse> {
-    assertSingleAttemptInput(input);
-    const consumerTaskId =
-      input.consumerTaskId ?? createConsumerTaskId(input.attemptId);
-    assertConsumerTaskId(consumerTaskId);
-    const body = {
-      ...(input.monitorKeyword?.trim()
-        ? { monitorKeywords: input.monitorKeyword.trim() }
-        : {}),
-      monitorKeywordAliases: [
-        ...new Set(
-          input.monitorKeywordAliases
-            ?.map((value) => value.trim())
-            .filter(Boolean) ?? [],
-        ),
-      ],
-      competitors:
-        input.competitors?.map((competitor) => ({
-          name: competitor.name.trim(),
-          aliases: [
-            ...new Set(
-              competitor.aliases
-                ?.map((value) => value.trim())
-                .filter(Boolean) ?? [],
-            ),
-          ],
-        })) ?? [],
-      prompts: [input.prompt.trim()],
-      platforms: [
-        {
-          platform: input.platform.trim(),
-          mode: input.mode,
-          screenshot: input.screenshot,
-        },
-      ],
-      // Mobile clients do not support region selection. Use the verified
-      // catalog dimension explicitly; provider codes are opaque and must never
-      // be interpreted by naming convention.
-      ...(input.regionCode?.trim() && input.clientType !== "mobile"
-        ? { regionCode: [input.regionCode.trim()] }
-        : {}),
-      ...(input.callbackUrl?.trim()
-        ? { callbackUrl: input.callbackUrl.trim() }
-        : {}),
-      consumerTaskId,
-    };
+    const body = buildMoliSingleAttemptBody(input);
+    const consumerTaskId = body.consumerTaskId;
 
     const response = await this.request("POST", MOLI_API_PATHS.submitTask, {
       body,

@@ -626,6 +626,11 @@ class DrizzleWorkerRepository {
       .where(eq(attempts.id, attemptId))
       .limit(1);
     if (!row) return undefined;
+    // An existing attempt belongs to its saved configuration, even if the task
+    // was edited afterwards. Never replace that snapshot with a project default.
+    if (row.run.projectBrandVersionId !== row.version.projectBrandVersionId || !row.brand.mainBrand?.trim()) {
+      throw new RepositoryError("INVALID_STATE", "监控品牌快照不一致，不能提交供应商");
+    }
     return {
       attemptId: row.attempt.id,
       tenantId: row.attempt.ownerId,
@@ -633,7 +638,7 @@ class DrizzleWorkerRepository {
       runId: row.run.id,
       status: row.attempt.status,
       consumerTaskId: row.attempt.consumerTaskId,
-      monitorKeyword: row.brand.mainBrand,
+      monitorKeyword: row.brand.mainBrand.trim(),
       monitorKeywordAliases: row.version.brandAliases,
       competitors: row.version.competitors,
       prompt: row.attempt.question,
@@ -3050,6 +3055,7 @@ function normalizedResultPayload(
     allRankings: item.allRankings,
     categoryRanking: item.categoryRanking,
     keywordEvaluations: item.keywordEvaluations,
+    competitorEvaluations: item.competitorEvaluations,
     amount: item.amount,
     errorMessage: item.errorMessage,
     rawUpdatedAt: item.rawUpdatedAt,

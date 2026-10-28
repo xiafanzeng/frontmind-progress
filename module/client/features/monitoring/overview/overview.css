@@ -359,3 +359,17 @@
 
 .monitoring-module .fm-overview-workspace fieldset.fm-ov-versioned-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
 .monitoring-module .fm-overview-workspace .fm-ov-draft-version-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+/* Rounded, bounded pagination with keyboard page jumps. */
+.monitoring-module .fm-overview-workspace .fm-ov-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls, .monitoring-module .fm-overview-workspace .fm-ov-page-number, .monitoring-module .fm-overview-workspace .fm-ov-page-jump { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px 8px; border: 1px solid #e3dce9; border-radius: 8px; background: #fff; color: #655b70; font: inherit; cursor: pointer; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls button:hover:not(:disabled) { background: #f6f1fa; border-color: #c4a8d8; color: #3d1560; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls button[aria-current="page"] { background: #3d1560; color: #fff; border-color: #3d1560; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls button:disabled { opacity: .4; cursor: default; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-controls :is(button, input):focus-visible { outline: 2px solid #6e4293; outline-offset: 2px; }
+.monitoring-module .fm-overview-workspace .fm-ov-page-jump input { width: 44px; height: 32px; padding: 4px; border: 1px solid #d9c7e7; border-radius: 8px; text-align: center; color: #3d1560; font: inherit; }
+.monitoring-module .fm-overview-workspace .fm-ov-pagination.compact { justify-content: flex-start; }
+.monitoring-module .fm-overview-workspace .fm-ov-site-label { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.monitoring-module .fm-overview-workspace .fm-ov-site-label b { font-size: 13px; font-weight: 600; }
+.monitoring-module .fm-overview-workspace .fm-ov-site-label:has(b) > span { color: #756b7e; font-size: 12px; }

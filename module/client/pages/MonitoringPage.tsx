@@ -241,9 +241,9 @@ export default function MonitoringPage({
   );
 
   useEffect(() => {
-    if (!loading && !project && !activeEnterpriseProjectId())
+    if (!serverData && !loading && !project && !activeEnterpriseProjectId())
       setProjectModal(true);
-  }, [loading, project]);
+  }, [loading, project, serverData]);
 
   useEffect(() => {
     if (!loading || monitors.length > 0) {
@@ -658,14 +658,14 @@ export default function MonitoringPage({
       ) : (
         <section className="panel-state" aria-label="监控项目空态">
           <strong>尚未创建监控项目</strong>
-          <span>创建项目后，可配置问题、模型与监控计划。</span>
-          <button
+          <span>{serverData ? "请通过左侧全局项目入口的加号创建监控项目。" : "创建项目后，可配置问题、模型与监控计划。"}</span>
+          {!serverData && <button
             type="button"
             className="primary-button"
             onClick={() => setProjectModal(true)}
           >
             创建项目
-          </button>
+          </button>}
         </section>
       )}
 
@@ -690,7 +690,7 @@ export default function MonitoringPage({
         open={projectModal}
         onClose={() => !submitting && setProjectModal(false)}
         title={project ? "编辑项目" : "创建第一个项目"}
-        description="一个项目对应一个主监控品牌，历史运行保留当时的品牌版本。"
+        description="一个项目可包含多个品牌的监控任务；此处设置新任务的默认品牌，已有任务及历史运行保留各自的品牌配置。"
         size="large"
       >
         {submitError && (
@@ -739,6 +739,8 @@ export default function MonitoringPage({
               )
             ) : (
               <MonitorForm
+                serverData={serverData}
+                monitorId={monitorEditor.kind === "edit" ? monitorEditor.monitorId : undefined}
                 key={
                   monitorEditor.kind === "edit"
                     ? monitorEditor.monitorId

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { monitoringScopeSchema, monitoringAnswerDetailOutputSchema } from "@frontmind/monitoring-contracts";
+import { monitoringScopeSchema, monitoringSubjectSchema } from "@frontmind/monitoring-contracts";
+import { brandScopedAnswerDetailOutputSchema } from "./monitoring-brand-scope.js";
 
 export const sentimentToneSchema = z.enum(["positive", "neutral", "negative"]);
 export const keywordStateSchema = z.enum(["available", "empty", "not_returned", "unavailable"]);
@@ -31,12 +32,12 @@ export const overviewSourcesInputSchema = z.object({
 });
 export const overviewSourcesOutputSchema = z.object({
   total: z.number(), domainCount: z.number(), contentCount: z.number(), domainPage: z.number(), contentPage: z.number(), pageSize: z.literal(10),
-  domains: z.array(z.object({ domain: z.string(), count: z.number() })),
+  domains: z.array(z.object({ domain: z.string(), siteName: z.string().nullable(), count: z.number() })),
   contents: z.array(z.object({ title: z.string(), url: z.string(), domain: z.string(), count: z.number() })),
   coverage: z.string(),
 });
-export const overviewEvidenceInputSchema = z.object({ monitorId: z.string().uuid(), answerId: z.string().uuid(), revisionId: z.string().uuid() });
-export const overviewEvidenceOutputSchema = monitoringAnswerDetailOutputSchema.extend({
+export const overviewEvidenceInputSchema = z.object({ monitorId: z.string().uuid(), answerId: z.string().uuid(), revisionId: z.string().uuid(), subject: monitoringSubjectSchema.default({ kind: "self" }) });
+export const overviewEvidenceOutputSchema = brandScopedAnswerDetailOutputSchema.extend({
   revisionId: z.string(), revision: z.number(), resultUpdatedAt: z.string(),
   targetBrand: z.string(), brandVersionId: z.string(), brandAliases: z.array(z.string()),
   provider: z.literal("moli"), rawSentiment: z.string().nullable(), keywordState: keywordStateSchema,

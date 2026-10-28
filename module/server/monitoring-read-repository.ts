@@ -1,14 +1,16 @@
+import { subjectSentiment, jsonField } from "../shared/subjectSentiment.js";
 /** Progress-owned monitoring SQL and aggregation. Core supplies identity scoping in-process. */
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import type { ProgressSchema } from "../schema/index.js";
 import type { ProgressScopePorts } from "./read-helpers.js";
 import {
-  MONITORING_EVIDENCE_REVISION_BATCH_SIZE, MONITORING_EVIDENCE_ROW_LIMIT, MONITORING_FACT_LIMIT, MONITORING_LEGACY_DISCOVERY_FALLBACK_LIMIT, buildMonitoringAnalysis, buildMonitoringEvidence, decodeMonitoringAnswerCursor, encodeMonitoringAnswerCursor, monitoringDetailRowAsFact, monitoringFactConditions, monitoringListRowAsFact, monitoringMetrics, monitoringSubjectContribution, normalizedMonitoringRankings, safeKeywordEvaluations, monitoringAnswerShareUrl, chunks, emptyMonitoringEvidence, parseCitationProvenanceHint, type MonitoringEvidence, type MonitoringFact, type ResolvedMonitoringScope, type ResolvedMonitoringSubject, type MonitoringSourceRow, type MonitoringDiscoveredRow, RepositoryError } from "./read-helpers.js";
+  MONITORING_EVIDENCE_REVISION_BATCH_SIZE, MONITORING_EVIDENCE_ROW_LIMIT, MONITORING_FACT_LIMIT, MONITORING_LEGACY_DISCOVERY_FALLBACK_LIMIT, buildMonitoringAnalysis, buildMonitoringEvidence, decodeMonitoringAnswerCursor, encodeMonitoringAnswerCursor, monitoringDetailRowAsFact, monitoringFactConditions, monitoringListRowAsFact, monitoringMetrics, monitoringSubjectContribution, normalizedMonitoringRankings, monitoringAnswerShareUrl, chunks, emptyMonitoringEvidence, parseCitationProvenanceHint, type MonitoringEvidence, type MonitoringFact, type ResolvedMonitoringScope, type ResolvedMonitoringSubject, type MonitoringSourceRow, type MonitoringDiscoveredRow, RepositoryError } from "./read-helpers.js";
 import { and, asc, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { MonitoringAnalysisInput, MonitoringAnswersListInput, MonitoringScope } from "@frontmind/monitoring-contracts";
 import type { OverviewSentimentInput, OverviewSourcesInput, OverviewEvidenceInput } from "../contracts/overview.js";
-import { analyzeSentiment, citationPage, keywordReturnState, type KeywordState } from "../shared/overviewAnalysis.js";
+import { analyzeSentiment, citationPage, normalizedWord } from "../shared/overviewAnalysis.js";
 import { isEffectiveMonitoringAnswer } from "./read-helpers.js";
+import { monitoringSubjectEligible } from "./read-helpers.js";
 type Database = MySql2Database<any>;
 
 export interface ProgressMonitorReader extends ProgressScopePorts {
@@ -92,6 +94,11 @@ export class ProgressMonitoringReadRepository {
         ],
       },
       metrics: monitoringMetrics(facts, evidence, resolved.subject),
+      brandScope: {
+        targetBrand: resolved.subject.kind === "self" ? resolved.brand.mainBrand : resolved.subject.name,
+        eligibleAnswers: facts.filter(fact => isEffectiveMonitoringAnswer(fact) && monitoringSubjectEligible(fact, resolved.subject)).length,
+        excludedAnswers: facts.filter(fact => isEffectiveMonitoringAnswer(fact) && !monitoringSubjectEligible(fact, resolved.subject)).length,
+      },
     };
   }
 
@@ -146,6 +153,7 @@ export class ProgressMonitoringReadRepository {
         mentionPosition: attemptResults.mentionPosition,
         competitorRankings: attemptResults.competitorRankings,
         monitorCompetitors: monitorVersions.competitors,
+        targetBrand: projectBrandVersions.mainBrand,
         resultUpdatedAt: attemptResults.updatedAt,
         normalizedPayload: resultRevisions.normalizedPayload,
         revisionCreatedAt: resultRevisions.createdAt,
@@ -153,6 +161,7 @@ export class ProgressMonitoringReadRepository {
       .from(attempts)
       .innerJoin(runs, eq(attempts.runId, runs.id))
       .innerJoin(monitorVersions, eq(runs.monitorVersionId, monitorVersions.id))
+      .innerJoin(projectBrandVersions, eq(runs.projectBrandVersionId, projectBrandVersions.id))
       .innerJoin(
         monitorQuestions,
         and(
@@ -170,17 +179,27 @@ export class ProgressMonitoringReadRepository {
       .orderBy(desc(runs.createdAt), desc(attempts.id))
       .limit(input.limit + 1);
     const page = rows.slice(0, input.limit);
-    const facts = page.map(monitoringListRowAsFact);
+    const facts = page.map(row => ({ ...monitoringListRowAsFact(row), selfBrandMatches: normalizedWord(row.targetBrand) === normalizedWord(resolved.brand.mainBrand) }));
     const evidence = await this.readMonitoringEvidence(facts);
     return {
       items: page.map((row, index) => {
         const fact = facts[index]!;
         const subject = monitoringSubjectContribution(fact, resolved.subject);
+        const requested = resolved.subject.kind === "competitor" ? resolved.subject : null;
+        const competitor = requested ? row.monitorCompetitors.find(item => item.name === requested.name) : undefined;
+        const selected = resolved.subject.kind === "self" ? { kind: "self" as const } : { kind: "competitor" as const, name: resolved.subject.name, aliases: competitor?.aliases ?? [] };
+        const eligible = monitoringSubjectEligible(fact, resolved.subject);
+        const sentiment = eligible ? subjectSentiment(row.normalizedPayload, selected, { sentiment: row.sentiment }).sentiment : null;
         const provenance = evidence.provenanceByRevision.get(
           row.currentRevisionId ?? "",
         );
         return {
           answerId: row.answerId,
+          brandContext: {
+            targetBrand: resolved.subject.kind === "self" ? row.targetBrand : competitor?.name ?? null,
+            currentBrand: resolved.subject.kind === "self" ? resolved.brand.mainBrand : resolved.subject.name,
+            matchesCurrent: eligible,
+          },
           runId: row.runId,
           runCreatedAt: row.runCreatedAt,
           questionId: row.questionId,
@@ -198,13 +217,12 @@ export class ProgressMonitoringReadRepository {
           result:
             row.currentRevisionId &&
             row.answerPreview !== null &&
-            row.sentiment &&
             row.brandMentioned !== null &&
             row.resultUpdatedAt
               ? {
                   answerPreview: row.answerPreview,
-                  sentiment: row.sentiment,
-                  mentioned: subject.mentioned,
+                  sentiment: sentiment ?? "unknown",
+                  mentioned: eligible ? subject.mentioned : null,
                   position: subject.position,
                   citationProvenance: provenance ?? "unavailable",
                   citationCount:
@@ -246,23 +264,9 @@ export class ProgressMonitoringReadRepository {
     // keeps the monitor boundary explicit even though the answer belongs to an
     // immutable historical version.
     const current = await this.core.getMonitor(ownerId, monitorId);
-    let resolvedSubject: ResolvedMonitoringSubject = { kind: "self" };
-    if (subject.kind === "competitor") {
-      const competitor = current.version.competitors.find(
-        (candidate) => candidate.name === subject.name,
-      );
-      if (!competitor) {
-        throw new RepositoryError(
-          "INVALID_STATE",
-          "Competitor is not in the current monitor configuration",
-        );
-      }
-      resolvedSubject = {
-        kind: "competitor",
-        name: competitor.name,
-        aliases: competitor.aliases,
-      };
-    }
+    const [currentBrand] = await this.db.select({ mainBrand: projectBrandVersions.mainBrand }).from(projectBrandVersions)
+      .where(eq(projectBrandVersions.id, current.version.projectBrandVersionId)).limit(1);
+    if (!currentBrand) throw new RepositoryError("NOT_FOUND", "当前监控品牌不存在");
     const [row] = await this.db
       .select({
         answerId: attempts.id,
@@ -346,6 +350,13 @@ export class ProgressMonitoringReadRepository {
         "Monitoring answer configuration not found",
       );
     }
+    let resolvedSubject: ResolvedMonitoringSubject = { kind: "self" };
+    if (subject.kind === "competitor") {
+      const competitor = version.competitors.find(candidate => candidate.name === subject.name);
+      if (!competitor) throw new RepositoryError("INVALID_STATE", "所选竞品不属于这次回答的监控配置，请重新选择品牌主体。");
+      resolvedSubject = { kind: "competitor", name: competitor.name, aliases: competitor.aliases };
+    }
+    const evaluation = subjectSentiment(row.normalizedPayload, resolvedSubject, { sentiment: row.sentiment, evaluations: row.keywordEvaluations });
     const fact = monitoringDetailRowAsFact(row, version.competitors);
     const contribution = monitoringSubjectContribution(fact, resolvedSubject);
     const evidence = await this.readMonitoringEvidence([fact]);
@@ -376,12 +387,18 @@ export class ProgressMonitoringReadRepository {
       revisionId: row.currentRevisionId,
       revision: row.revision,
       resultUpdatedAt: row.resultUpdatedAt.toISOString(),
-      targetBrand: brand.mainBrand,
+      targetBrand: resolvedSubject.kind === "self" ? brand.mainBrand : resolvedSubject.name,
+      brandContext: {
+        targetBrand: resolvedSubject.kind === "self" ? brand.mainBrand : resolvedSubject.name,
+        currentBrand: subject.kind === "self" ? currentBrand.mainBrand : subject.name,
+        matchesCurrent: subject.kind === "self" ? normalizedWord(brand.mainBrand) === normalizedWord(currentBrand.mainBrand)
+          : current.version.competitors.some(item => item.name === subject.name),
+      },
       brandVersionId: row.projectBrandVersionId,
-      brandAliases: version.brandAliases,
+      brandAliases: resolvedSubject.kind === "self" ? version.brandAliases : resolvedSubject.aliases,
       provider: "moli" as const,
-      rawSentiment: rawSentimentLabel(row.normalizedPayload),
-      keywordState: archivedKeywordState(row.normalizedPayload, safeKeywordEvaluations(row.keywordEvaluations)),
+      rawSentiment: evaluation.rawSentiment,
+      keywordState: evaluation.keywordState,
       runId: row.runId,
       runCreatedAt: row.runCreatedAt,
       questionId: row.questionId,
@@ -400,14 +417,14 @@ export class ProgressMonitoringReadRepository {
       shareUrl: monitoringAnswerShareUrl(row.normalizedPayload),
       screenshotPolicy: row.screenshotPolicy === 0 || row.screenshotPolicy === 1 || row.screenshotPolicy === 2 ? row.screenshotPolicy as 0 | 1 | 2 : null,
       screenshotBrandMentioned: row.brandMentioned,
-      keywordEvaluations: safeKeywordEvaluations(row.keywordEvaluations),
+      keywordEvaluations: evaluation.evaluations,
       reasoningMarkdown: row.reasoningMarkdown,
       searchKeywords: Array.isArray(row.searchKeywords)
         ? row.searchKeywords.filter(
             (keyword): keyword is string => typeof keyword === "string",
           )
         : [],
-      sentiment: row.sentiment,
+      sentiment: evaluation.sentiment ?? "unknown",
       mentioned: contribution.mentioned,
       position: contribution.position,
       rankings: normalizedMonitoringRankings({
@@ -473,8 +490,7 @@ export class ProgressMonitoringReadRepository {
 
   async getOverviewSentiment(ownerId: string, input: OverviewSentimentInput) {
     const resolved = await this.resolveMonitoringReadScope(ownerId, input.scope);
-    if (resolved.subject.kind !== "self") throw new RepositoryError("INVALID_STATE", "情感分析仅支持当前品牌");
-    const { attempts, attemptResults, runs, monitorQuestions, projectBrandVersions, resultRevisions, platformCatalog } = this.tables;
+    const { attempts, attemptResults, runs, monitorQuestions, monitorVersions, projectBrandVersions, resultRevisions, platformCatalog } = this.tables;
     // Do not read every answer body or citation to aggregate labels. Historical brand
     // snapshots belong to each run, not the monitor's latest configuration.
     const rows = await this.db.select({
@@ -482,11 +498,14 @@ export class ProgressMonitoringReadRepository {
       platformName: platformCatalog.displayName, capturedAt: runs.createdAt,
       revisionId: attemptResults.currentRevisionId, revision: attemptResults.revision,
       targetBrand: projectBrandVersions.mainBrand, sentiment: attemptResults.sentiment,
-      evaluations: attemptResults.keywordEvaluations,
-      keywordType: sql<string | null>`JSON_TYPE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations'))`,
-      keywordLength: sql<number | null>`JSON_LENGTH(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations'))`,
+      evaluations: resolved.subject.kind === "self" ? attemptResults.keywordEvaluations : sql<null>`NULL`,
+      monitorCompetitors: monitorVersions.competitors,
+      originalWordsType: resolved.subject.kind === "self" ? sql<string | null>`JSON_TYPE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations'))` : sql<null>`NULL`,
+      originalWords: resolved.subject.kind === "self" ? sql<unknown>`JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.keywordEvaluations')` : sql<null>`NULL`,
+      competitorEvaluations: resolved.subject.kind === "competitor" ? sql<unknown>`COALESCE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.competitorEvaluations'), JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.competitorEvaluations'))` : sql<null>`NULL`,
     }).from(attempts)
       .innerJoin(runs, eq(attempts.runId, runs.id))
+      .innerJoin(monitorVersions, eq(runs.monitorVersionId, monitorVersions.id))
       .innerJoin(monitorQuestions, and(eq(monitorQuestions.monitorVersionId, runs.monitorVersionId), eq(monitorQuestions.ordinal, attempts.monitorQuestionOrdinal)))
       .innerJoin(projectBrandVersions, eq(projectBrandVersions.id, runs.projectBrandVersionId))
       .innerJoin(platformCatalog, eq(platformCatalog.id, attempts.platformId))
@@ -495,11 +514,19 @@ export class ProgressMonitoringReadRepository {
       .where(and(...monitoringFactConditions(ownerId, resolved.scope, this.core), eq(attempts.status, "completed"), sql`CHAR_LENGTH(TRIM(${attemptResults.answerMarkdown})) > 0`))
       .limit(MONITORING_FACT_LIMIT + 1);
     if (rows.length > MONITORING_FACT_LIMIT) throw new RepositoryError("INVALID_STATE", "情感分析超过 50,000 条有效回答，请缩小日期或筛选范围");
+    const targetBrand = resolved.subject.kind === "self" ? resolved.brand.mainBrand : resolved.subject.name;
     return analyzeSentiment(rows.map(row => {
-      const evaluations = safeKeywordEvaluations(row.evaluations);
-      const keywordState: KeywordState = row.keywordType === "NULL" ? "not_returned" : row.keywordType === "ARRAY" && Number(row.keywordLength) === 0 ? "empty" : evaluations.length ? "available" : "unavailable";
-      return { ...row, capturedAt: row.capturedAt.toISOString(), evaluations, keywordState };
-    }), resolved.brand.mainBrand, input, "当前筛选的全部有效回答；上限 50,000 条，超限需缩小范围，不截断统计。");
+      // Resolve each competitor against that run's immutable configuration, not current aliases.
+      const requested = resolved.subject.kind === "competitor" ? resolved.subject : null;
+      const historical = requested ? row.monitorCompetitors.find(item => item.name === requested.name) : null;
+      const selected = requested ? { kind: "competitor" as const, name: historical?.name ?? requested.name, aliases: historical?.aliases ?? [] } : { kind: "self" as const };
+      const originalWords = row.originalWordsType === null ? undefined : row.originalWordsType === "NULL" ? null : jsonField(row.originalWords);
+      const evaluation = subjectSentiment({ raw: { keywordEvaluations: originalWords, competitorEvaluations: historical ? jsonField(row.competitorEvaluations) : [] } }, selected,
+        { sentiment: row.sentiment, evaluations: row.evaluations });
+      return { answerId: row.answerId, runId: row.runId, questionId: row.questionId, question: row.question, platformName: row.platformName,
+        capturedAt: row.capturedAt.toISOString(), revisionId: row.revisionId, revision: row.revision,
+        targetBrand: requested ? historical?.name ?? "" : row.targetBrand, sentiment: evaluation.sentiment, evaluations: evaluation.evaluations, keywordState: evaluation.keywordState };
+    }), targetBrand, input, "当前筛选的全部有效回答；不同品牌的历史本品标签不混算，缺失标签不计入情感占比分母。");
   }
 
   async getOverviewSources(ownerId: string, input: OverviewSourcesInput) {
@@ -511,7 +538,7 @@ export class ProgressMonitoringReadRepository {
   }
 
   async getOverviewEvidence(ownerId: string, input: OverviewEvidenceInput) {
-    const answer = await this.getMonitoringAnswer(ownerId, input.monitorId, input.answerId);
+    const answer = await this.getMonitoringAnswer(ownerId, input.monitorId, input.answerId, input.subject);
     if (answer.revisionId !== input.revisionId) throw new RepositoryError("INVALID_STATE", "回答版本已更新，请刷新情感分析后重新选择证据");
     return answer;
   }
@@ -684,6 +711,10 @@ export class ProgressMonitoringReadRepository {
         revisionId: attemptResults.currentRevisionId,
         hasNonEmptyAnswer: sql<number>`CASE WHEN ${attemptResults.attemptId} IS NOT NULL AND CHAR_LENGTH(TRIM(${attemptResults.answerMarkdown})) > 0 THEN 1 ELSE 0 END`,
         sentiment: attemptResults.sentiment,
+        targetBrand: projectBrandVersions.mainBrand,
+        competitorCount: resolved.subject.kind === "competitor" ? sql<number | null>`JSON_LENGTH(COALESCE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.competitorEvaluations'), JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.competitorEvaluations')))` : sql<null>`NULL`,
+        competitorNames: resolved.subject.kind === "competitor" ? sql<unknown>`JSON_EXTRACT(COALESCE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.competitorEvaluations'), JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.competitorEvaluations')), '$[*].name')` : sql<null>`NULL`,
+        competitorTones: resolved.subject.kind === "competitor" ? sql<unknown>`JSON_EXTRACT(COALESCE(JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.raw.competitorEvaluations'), JSON_EXTRACT(${resultRevisions.normalizedPayload}, '$.competitorEvaluations')), '$[*].sentiment')` : sql<null>`NULL`,
         brandMentioned: attemptResults.brandMentioned,
         mentionPosition: attemptResults.mentionPosition,
         competitorRankings: attemptResults.competitorRankings,
@@ -697,6 +728,7 @@ export class ProgressMonitoringReadRepository {
       .from(attempts)
       .innerJoin(runs, eq(attempts.runId, runs.id))
       .innerJoin(monitorVersions, eq(runs.monitorVersionId, monitorVersions.id))
+      .leftJoin(projectBrandVersions, eq(runs.projectBrandVersionId, projectBrandVersions.id))
       .innerJoin(
         monitorQuestions,
         and(
@@ -719,6 +751,14 @@ export class ProgressMonitoringReadRepository {
     }
     return rows.map((row) => ({
       ...row,
+      selfBrandMatches: Boolean(row.targetBrand && normalizedWord(row.targetBrand) === normalizedWord(resolved.brand.mainBrand)),
+      sentiment: row.targetBrand && normalizedWord(row.targetBrand) === normalizedWord(resolved.brand.mainBrand) ? row.sentiment : null,
+      competitorSentiments: (() => {
+        const names = jsonField(row.competitorNames), tones = jsonField(row.competitorTones);
+        // If a field is absent, JSON path arrays can differ in length. Do not pair uncertain labels.
+        return Array.isArray(names) && Array.isArray(tones) && names.length === Number(row.competitorCount) && tones.length === names.length
+          ? names.flatMap((name, index) => typeof name === "string" ? [{ name, sentiment: tones[index] }] : []) : [];
+      })(),
       hasNonEmptyAnswer: Number(row.hasNonEmptyAnswer) === 1,
       citationProvenanceHint: parseCitationProvenanceHint(
         row.citationProvenanceHint,
@@ -886,12 +926,3 @@ export class ProgressMonitoringReadRepository {
   }
 }
 
-function archivedKeywordState(payload: Record<string, unknown>, evaluations: readonly unknown[]) {
-  const raw = payload.raw && typeof payload.raw === "object" ? payload.raw as Record<string, unknown> : {};
-  return keywordReturnState(raw.keywordEvaluations, evaluations);
-}
-function rawSentimentLabel(payload: Record<string, unknown>): string | null {
-  const raw = payload.raw && typeof payload.raw === "object" ? payload.raw as Record<string, unknown> : {};
-  const value = raw.sentiment ?? raw.sentimentAnalysis;
-  return value === undefined || value === null ? null : JSON.stringify(value).slice(0, 2000);
-}

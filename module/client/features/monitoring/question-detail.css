@@ -354,3 +354,12 @@
 /* Overview flows naturally in the same scrolling detail pane as question detail.
    The shared sticky filter remains outside this content; there is no nested scrollbar. */
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-body > .fm-ov-content { grid-template-columns: minmax(0,1fr); grid-auto-rows: max-content; height: auto; overflow: visible; }
+
+/* Keep the same filter treatment in overview and answer detail. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-qa-filters select {
+  appearance: none; padding-right: 32px; background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23756b7e' stroke-width='1.6'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions [role="group"] { display: flex; align-items: center; gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions button { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; min-height: 30px; padding: 4px; border-radius: 8px; }

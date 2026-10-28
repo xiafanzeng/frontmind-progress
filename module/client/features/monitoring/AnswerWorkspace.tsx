@@ -120,6 +120,10 @@ export function AnswerReader({
         </div>
       </header>
       <div className="fm-answer-scroll" aria-busy={loading || undefined}>
+        {attempt.brandContext && <p className="fm-ov-notice pending">
+          采集时的评价对象：{attempt.brandContext.targetBrand || "该主体当时未配置"}。
+          {!attempt.brandContext.matchesCurrent && <> 当前监控品牌为{attempt.brandContext.currentBrand}；下方保留历史原始结果，不计入当前品牌指标。</>}
+        </p>}
         {loading && !attempt.answer?.trim() ? (
           <div className="fm-reader-loading" role="status">
             <span />
@@ -476,7 +480,8 @@ export default function AnswerWorkspace({
       </div>
     </header>
   );
-  const insights = (
+  const insights = (<>
+    {selected.brandContext && !selected.brandContext.matchesCurrent && <p className="fm-ov-notice pending">本条回答属于历史品牌“{selected.brandContext.targetBrand || "未配置"}”，下方单条标签按历史对象展示；范围统计按当前品牌计算。</p>}
     <CompactAnswerInsights
       attempt={selected}
       sentiments={sentiments}
@@ -486,6 +491,7 @@ export default function AnswerWorkspace({
       scopeLabel={sentimentScopeLabel}
       showSentiment={showSentiment}
     />
+    </>
   );
   const focusSource = (number: number) => {
     setActiveCitation(number);

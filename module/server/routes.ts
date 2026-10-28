@@ -1,3 +1,5 @@
+import { taskCreateInputSchema, taskUpdateInputSchema, taskDetailOutputSchema, taskListOutputSchema } from "../contracts/monitor-configuration.js";
+import { brandScopedSummaryOutputSchema, brandScopedAnswersListOutputSchema, brandScopedAnswerDetailOutputSchema } from "../contracts/monitoring-brand-scope.js";
 import type * as TRPCCore from "@trpc/server/unstable-core-do-not-import";
 import { overviewSentimentInputSchema, overviewSentimentOutputSchema, overviewSourcesInputSchema, overviewSourcesOutputSchema, overviewEvidenceInputSchema, overviewEvidenceOutputSchema } from "../contracts/overview.js";
 import type { BuiltRouter, CreateRootTypes, DecorateCreateRouterOptions, DefaultErrorShape, QueryProcedure, MutationProcedure, Router, ProcedureBuilder } from "@trpc/server/unstable-core-do-not-import";
@@ -55,17 +57,10 @@ import {
   mediaPublishingTopupStatusOutputSchema,
   monitoringAnalysisInputSchema,
   monitoringAnalysisOutputSchema,
-  monitoringAnswerDetailOutputSchema,
   monitoringAnswerGetInputSchema,
   monitoringAnswersListInputSchema,
-  monitoringAnswersListOutputSchema,
   monitoringScopeSchema,
-  monitoringSummaryOutputSchema,
-  monitorCreateInputSchema,
-  monitorDetailOutputSchema,
-  monitorListOutputSchema,
   monitorMutationOutputSchema,
-  monitorUpdateInputSchema,
   paymentMethodsOutputSchema,
   platformAcceptanceBatchOutputSchema,
   platformAcceptanceGetInputSchema,
@@ -247,7 +242,7 @@ regions: t.router({
 monitors: t.router({
     list: customerProcedure
       .input(z.object({ projectId: idSchema.optional() }).optional())
-      .output(z.array(monitorListOutputSchema))
+      .output(z.array(taskListOutputSchema))
       .query(({ ctx, input }) =>
         ctx.repository.listMonitors(ctx.user.id, input?.projectId),
       ),
@@ -256,14 +251,14 @@ monitors: t.router({
       .query(({ ctx }) => ctx.repository.listDeletedMonitors(ctx.user.id)),
     get: customerProcedure
       .input(z.object({ monitorId: idSchema }))
-      .output(monitorDetailOutputSchema)
+      .output(taskDetailOutputSchema)
       .query(({ ctx, input }) =>
         translateRepositoryErrors(() =>
           ctx.repository.getMonitor(ctx.user.id, input.monitorId),
         ),
       ),
     create: customerProcedure
-      .input(monitorCreateInputSchema)
+      .input(taskCreateInputSchema)
       .output(monitorMutationOutputSchema)
       .mutation(async ({ ctx, input }) => {
         if (input.runImmediately && !input.idempotencyKey)
@@ -291,7 +286,7 @@ monitors: t.router({
         });
       }),
     update: customerProcedure
-      .input(monitorUpdateInputSchema)
+      .input(taskUpdateInputSchema)
       .output(monitorMutationOutputSchema)
       .mutation(async ({ ctx, input }) => {
         if (input.runImmediately && !input.idempotencyKey)
@@ -404,7 +399,7 @@ monitoring: t.router({
     }),
     summary: customerProcedure
       .input(monitoringScopeSchema)
-      .output(monitoringSummaryOutputSchema)
+      .output(brandScopedSummaryOutputSchema)
       .query(({ ctx, input }) =>
         translateRepositoryErrors(() =>
           ctx.repository.getMonitoringSummary(ctx.user.id, input),
@@ -413,7 +408,7 @@ monitoring: t.router({
     answers: t.router({
       list: customerProcedure
         .input(monitoringAnswersListInputSchema)
-        .output(monitoringAnswersListOutputSchema)
+        .output(brandScopedAnswersListOutputSchema)
         .query(({ ctx, input }) =>
           translateRepositoryErrors(() =>
             ctx.repository.listMonitoringAnswers(ctx.user.id, input),
@@ -421,7 +416,7 @@ monitoring: t.router({
         ),
       get: customerProcedure
         .input(monitoringAnswerGetInputSchema)
-        .output(monitoringAnswerDetailOutputSchema)
+        .output(brandScopedAnswerDetailOutputSchema)
         .query(({ ctx, input }) =>
           translateRepositoryErrors(() =>
             ctx.repository.getMonitoringAnswer(

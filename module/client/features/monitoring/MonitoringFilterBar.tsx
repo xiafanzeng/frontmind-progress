@@ -70,12 +70,12 @@ export default function MonitoringFilterBar({
           item.kind === "self"
             ? ("self" as const)
             : (`competitor:${item.name}` as const),
-        label: item.label,
+        label: `${item.kind === "self" ? "本品" : "竞品"} · ${item.label.replace(/^(本品|竞品)\s*[·：:]\s*/u, "")}`,
       }))
     : [
         {
           value: "self" as const,
-          label: `本品 · ${run?.config.brandName || project.brandName}`,
+          label: `本品 · ${run?.config.brandName || "监控品牌待读取"}`,
         },
         ...(run?.config.competitors || []).map((competitor) => ({
           value: `competitor:${competitor.name}` as const,

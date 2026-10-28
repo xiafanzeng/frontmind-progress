@@ -4,6 +4,7 @@ import { calendarDateRangeToUtc, monitoringQueryString } from "../queryState";
 import type { MonitoringQueryState } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
 import { projectWorkspaceUrl } from "../../../host-runtime";
+import { normalizedWord } from "../../../../shared/overviewAnalysis";
 
 export type OverviewMetric = "mentionRate" | "top3Rate" | "averagePosition" | "effective";
 export const overviewMetrics: Array<{ key: OverviewMetric; label: string }> = [
@@ -35,11 +36,13 @@ export function scopedAttempts(run: MonitorRun, query: MonitoringQueryState) {
   );
 }
 
-export function subjectAttempts(run: MonitorRun, query: MonitoringQueryState, competitors: CompetitorInput[]) {
+export function subjectAttempts(run: MonitorRun, query: MonitoringQueryState, competitors: CompetitorInput[], currentBrand?: string) {
+  if (query.subject === "self" && currentBrand !== undefined && (!currentBrand || normalizedWord(run.config.brandName) !== normalizedWord(currentBrand))) return [];
   const name = query.subject.startsWith("competitor:") ? query.subject.slice(11) : undefined;
   const competitor = name ? competitors.find((item) => item.name === name) : undefined;
   // Never silently project a missing competitor back to the main brand.
   if (name && !competitor) return [];
+  if (name && !run.config.competitors.some(item => item.name === name)) return [];
   return projectAttemptsForRunSubject(scopedAttempts(run, query), competitor || "self", run.config.competitors);
 }
 

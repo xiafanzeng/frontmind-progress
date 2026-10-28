@@ -121,6 +121,7 @@ function mergeAnswerSources(
 export function attemptFromList(item: MonitoringAnswerListItem): RunAttempt {
   return {
     id: item.answerId,
+    brandContext: item.brandContext,
     runId: item.runId,
     questionId: item.questionId,
     question: item.question,
@@ -138,7 +139,7 @@ export function attemptFromList(item: MonitoringAnswerListItem): RunAttempt {
       ? new Date(item.result.updatedAt).toISOString()
       : undefined,
     sentiment: item.result?.sentiment,
-    brandMentioned: item.result?.mentioned,
+    brandMentioned: item.result?.mentioned ?? undefined,
     mentionPosition: item.result?.position,
     citationProvenance: item.result?.citationProvenance,
     sources: [],
@@ -157,6 +158,7 @@ export function attemptFromDetail(detail: MonitoringAnswerDetail): RunAttempt {
   );
   return {
     id: detail.answerId,
+    brandContext: detail.brandContext,
     runId: detail.runId,
     questionId: detail.questionId,
     question: detail.question,

@@ -85,9 +85,9 @@
 .fm-config-group-manager button:disabled, .fm-config-batch-dialog button:disabled { opacity: .5; cursor: default; }
 
 /* Project scope precedes the task list; toolbar actions remain beside search. */
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-project-context { flex: none; min-width: 0; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e8e1ee; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-project-context { flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; }
 .monitoring-module .fm-config-project-picker { display: grid; gap: 8px; min-width: 0; }
-.monitoring-module .fm-config-project-picker .module-project-picker { display: grid; gap: 6px; min-width: 0; color: #716a80; font-size: 13px; }
+.monitoring-module .fm-config-project-picker .module-project-picker { display: flex; align-items: center; gap: 8px; min-width: 0; color: #716a80; font-size: 13px; white-space: nowrap; }
 .monitoring-module .fm-config-project-picker .module-project-picker select { width: 100%; max-width: 100%; min-width: 0; height: 38px; padding: 6px 24px 6px 9px; color: #292333; font: inherit; font-size: 14px; border-color: #d9c7e7; }
 .monitoring-module .fm-config-project-picker > button { justify-self: start; padding: 4px 0; min-height: 32px; border: 0; color: #3d1560; background: transparent; font-size: 14px; }
 .monitoring-module .fm-config-project-picker > button:hover:not(:disabled) { background: transparent; text-decoration: underline; text-underline-offset: 4px; }
@@ -100,14 +100,25 @@
 .fm-config-tooltip { z-index: 120; padding: 6px 10px; border-radius: 6px; background: #302438; color: #fff; font-size: 13px; line-height: 1.5; }
 .fm-config-tooltip svg { fill: #302438; background: #302438; }
 
-/* Searchable directory and member management use the existing modal scroll area. */
-.fm-config-group-manager { padding: 20px; }
-.fm-config-group-manager .fm-group-manager-layout { display: grid; grid-template-columns: minmax(160px, .7fr) minmax(0, 1.6fr); gap: 20px; min-width: 0; align-items: start; }
-.fm-config-group-manager .fm-group-directory { display: grid; gap: 12px; min-width: 0; padding-right: 18px; border-right: 1px solid #e8e1ee; }
-.fm-config-group-manager .fm-group-search { display: flex; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid #ded5e6; border-radius: 7px; color: #756b7e; background: #fff; min-width: 0; }
+/* Only the group dialog gets a definite frame; editing other configurations keeps its existing layout. */
+.monitoring-module .modal-card:not(.fm-group-picker-dialog):has(> .fm-config-group-manager) { height: min(720px, calc(100vh - 44px)); height: min(720px, calc(100dvh - 44px)); }
+.monitoring-module .modal-backdrop-nested { z-index: 130; background: rgba(25, 20, 34, .28); }
+.monitoring-module .modal-card.modal-nested { z-index: 131; }
+.monitoring-module .modal-card.fm-group-picker-dialog { width: min(640px, calc(100vw - 64px)); height: min(620px, calc(100vh - 72px)); height: min(620px, calc(100dvh - 72px)); }
+.fm-config-group-manager { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; padding: 20px; overflow: hidden; }
+.fm-config-group-manager > :not(.fm-group-manager-layout):not(.fm-group-picker-list) { flex-shrink: 0; }
+.fm-config-group-manager > footer { flex: none; margin-top: 16px; }
+.fm-config-group-manager .fm-group-manager-layout { display: grid; flex: 1 1 0; grid-template-columns: minmax(160px, .7fr) minmax(0, 1.6fr); grid-template-rows: minmax(0, 1fr); gap: 20px; min-width: 0; min-height: 0; align-items: stretch; }
+.fm-config-group-manager .fm-group-directory { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; padding-right: 18px; border-right: 1px solid #e8e1ee; }
+.fm-config-group-manager .fm-group-directory > :not(.fm-group-list) { flex-shrink: 0; }
+.fm-config-group-manager .fm-group-directory-tools { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.fm-config-group-manager .fm-group-directory-tools > .fm-group-search { flex: 1; }
+.fm-config-group-manager .fm-group-create-trigger { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid #d7dbe2; border-radius: 7px; color: #3d1560; background: #fff; cursor: pointer; }
+.fm-config-group-manager .fm-group-create-trigger:hover:not(:disabled) { background: #f6f2fa; border-color: #bba3cc; }
+.fm-config-group-manager .fm-group-search { display: flex; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid #d7dbe2; border-radius: 7px; color: #747c88; background: #fff; min-width: 0; }
 .fm-config-group-manager .fm-group-search svg { flex: none; }
 .fm-config-group-manager .fm-group-search input { width: 100%; min-width: 0; border: 0; padding: 8px 0; font-size: 13px; background: transparent; box-shadow: none; }
-.fm-config-group-manager .fm-group-list { display: grid; gap: 4px; }
+.fm-config-group-manager .fm-group-list { display: grid; flex: 1 1 0; min-height: 0; align-content: start; gap: 4px; padding: 4px; overflow-y: auto; scrollbar-gutter: stable; }
 .fm-config-group-manager .fm-group-list > button { display: flex; align-items: center; gap: 8px; padding: 10px; min-width: 0; width: 100%; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #655b70; font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
 .fm-config-group-manager .fm-group-list > button > svg { flex: none; }
 .fm-config-group-manager .fm-group-list > button > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -115,38 +126,55 @@
 .fm-config-group-manager .fm-group-list > button[aria-pressed="true"] { color: #3d1560; background: #f1eaf7; border-color: #d9c7e7; font-weight: 600; }
 .fm-config-group-manager .fm-group-create { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid #e8e1ee; }
 .fm-config-group-manager .fm-group-create label { display: grid; gap: 6px; color: #655b70; font-size: 13px; }
-.fm-config-group-manager .fm-primary-button { background: #3d1560; color: #fff; border: 1px solid #3d1560; padding: 7px 10px; min-height: 36px; font-size: 14px; box-shadow: none; }
+.fm-config-group-manager .fm-primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: #3d1560; color: #fff; border: 1px solid #3d1560; padding: 7px 10px; min-height: 36px; font-size: 14px; box-shadow: none; }
 .fm-config-group-manager .fm-primary-button:hover:not(:disabled) { background: #2d1049; }
 .fm-config-group-manager button:disabled { cursor: not-allowed; opacity: .5; }
-.fm-config-group-manager .fm-group-members { display: grid; gap: 12px; min-width: 0; }
+.fm-config-group-manager .fm-group-members { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
+.fm-config-group-manager .fm-group-members > :not(.fm-group-member-list) { flex-shrink: 0; }
 .fm-config-group-manager .fm-group-members > header { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 0; border: 0; }
 .fm-config-group-manager .fm-group-members > header > div:first-child { min-width: 0; }
 .fm-config-group-manager .fm-group-members h3 { margin: 0 0 5px; font-size: 17px; color: #292333; overflow-wrap: anywhere; }
 .fm-config-group-manager .fm-group-members header span { font-size: 13px; color: #756b7e; }
-.fm-config-group-manager .fm-group-name-actions { display: flex; gap: 12px; }
-.fm-config-group-manager :is(.fm-group-name-actions, .fm-group-rename, .fm-group-delete-confirm, .fm-group-member-actions) > button:not(.fm-primary-button) { border: 0; padding: 4px 0; min-height: 32px; background: transparent; color: #3d1560; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.fm-config-group-manager .fm-group-name-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.fm-config-group-manager :is(.fm-group-name-actions, .fm-group-rename, .fm-group-delete-confirm, .fm-group-member-actions) > button:not(.fm-primary-button):not(.fm-secondary-button) { border: 0; padding: 4px 0; min-height: 32px; background: transparent; color: #3d1560; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
 .fm-config-group-manager :is(.fm-group-name-actions, .fm-group-delete-confirm) > .fm-config-danger { color: #b42318; }
 .fm-config-group-manager .fm-group-rename { display: flex; align-items: center; gap: 10px; }
 .fm-config-group-manager .fm-group-delete-confirm { border: 1px solid #f2c9c4; border-radius: 7px; padding: 10px; background: #fff8f7; font-size: 13px; line-height: 1.7; }
 .fm-config-group-manager .fm-group-delete-confirm p { margin: 0 0 6px; }
 .fm-config-group-manager .fm-group-delete-confirm button + button { margin-left: 16px; }
-.fm-config-group-manager .fm-group-member-tabs { display: flex; gap: 5px; padding: 4px; background: #f4f0f7; border-radius: 8px; }
-.fm-config-group-manager .fm-group-member-tabs > button { flex: 1; padding: 8px; border: 0; border-radius: 5px; background: transparent; color: #716a80; font: inherit; font-size: 13px; cursor: pointer; }
-.fm-config-group-manager .fm-group-member-tabs > button[aria-pressed="true"] { background: #fff; color: #3d1560; font-weight: 600; box-shadow: 0 1px 4px #3d156015; }
 .fm-config-group-manager .fm-group-member-filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .fm-config-group-manager .fm-group-member-filters > label { flex: 1 1 150px; }
 .fm-config-group-manager .fm-group-member-filters select { max-width: 100%; border: 1px solid #ded5e6; border-radius: 7px; background: #fff; padding: 7px 8px; font: inherit; font-size: 13px; }
 .fm-config-group-manager .fm-group-member-hint { margin: 0; color: #756b7e; font-size: 14px; line-height: 1.6; }
-.fm-config-group-manager .fm-group-member-list { display: grid; gap: 8px; }
-.fm-config-group-manager .fm-group-member-list > label { display: flex; align-items: start; gap: 10px; margin: 0; padding: 12px; border: 1px solid #e8e1ee; border-radius: 8px; cursor: pointer; }
-.fm-config-group-manager .fm-group-member-list > label:has(input:checked) { border-color: #c4a8d8; background: #faf7fc; }
+.fm-config-group-manager .fm-group-member-list { display: grid; flex: 1 1 0; align-content: start; gap: 8px; min-height: 0; overflow-y: auto; padding: 2px; scrollbar-gutter: stable; }
+.fm-config-group-manager .fm-group-member-list:has(> .fm-group-empty-members) { align-content: safe center; }
+.fm-config-group-manager .fm-group-member-list > :is(label, .fm-group-member-row) { display: flex; align-items: start; gap: 10px; margin: 0; padding: 12px; border: 1px solid #e8e1ee; border-radius: 8px; }
+.fm-config-group-manager .fm-group-member-list > :is(label, .fm-group-member-row):has(input:checked) { border-color: #c4a8d8; background: #faf7fc; }
+.fm-config-group-manager .fm-group-member-row > label { display: flex; flex: 1; align-items: start; gap: 10px; min-width: 0; margin: 0; cursor: pointer; }
+.fm-config-group-manager .fm-group-member-row > :is(button, select) { flex: none; max-width: 140px; }
+.fm-config-group-manager :is(.fm-group-member-row, .fm-group-member-actions) > select { min-width: 0; min-height: 32px; padding: 5px 6px; border: 1px solid #d7dbe2; border-radius: 6px; color: #4e4657; background: #fff; font: inherit; font-size: 12px; }
 .fm-config-group-manager .fm-group-member-list input[type="checkbox"] { flex: none; width: 16px; min-height: 16px; height: 16px; margin: 3px 0 0; padding: 0; accent-color: #3d1560; }
 .fm-config-group-manager .fm-group-member-list label > span { display: grid; gap: 4px; min-width: 0; }
 .fm-config-group-manager .fm-group-member-list strong { font-size: 13px; color: #292333; overflow-wrap: anywhere; }
 .fm-config-group-manager .fm-group-member-list small { font-size: 13px; color: #756b7e; line-height: 1.6; }
 .fm-config-group-manager .fm-group-member-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1px solid #e8e1ee; font-size: 13px; }
 .fm-config-group-manager .fm-group-member-actions > .fm-primary-button { margin-left: auto; }
+.fm-config-group-manager .fm-group-member-actions > .fm-secondary-button { margin-left: auto; min-height: 34px; padding: 6px 10px; border: 1px solid #d9cce3; border-radius: 7px; background: #fff; color: #3d1560; font-size: 13px; }
+.fm-config-group-manager .fm-group-member-actions > small { flex-basis: 100%; color: #756b7e; font-size: 12px; }
 .fm-config-group-manager .fm-group-empty { margin: 0; padding: 20px 10px; color: #756b7e; background: #faf8fc; border-radius: 7px; font-size: 13px; line-height: 1.7; text-align: center; }
+.fm-config-group-manager .fm-group-empty-members { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 16px; border: 1px dashed #dfd3e8; background: #fcfaff; }
+.fm-config-group-manager .fm-group-empty-members > svg { color: #8b6b9e; }
+.fm-config-group-manager .fm-group-empty-members > strong { font-size: 15px; color: #302238; }
+.fm-config-group-manager .fm-group-empty-members > p { margin: 0; }
+.fm-config-group-manager .fm-group-empty-members > button { margin-top: 6px; }
+.fm-config-group-manager.fm-group-task-picker { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.fm-config-group-manager .fm-group-picker-back { display: inline-flex; align-items: center; align-self: flex-start; gap: 6px; min-height: 30px; padding: 0; border: 0; background: transparent; color: #3d1560; font: inherit; font-size: 13px; cursor: pointer; }
+.fm-config-group-manager .fm-group-picker-back:hover:not(:disabled) { text-decoration: underline; }
+.fm-config-group-manager .fm-group-picker-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: #655b70; font-size: 13px; }
+.fm-config-group-manager .fm-group-picker-list { min-height: 0; max-height: none; }
+.fm-config-group-manager .fm-group-picker-list > label:hover { border-color: #c4a8d8; }
+.fm-config-group-manager .fm-group-current-membership { justify-self: start; padding: 2px 7px; border-radius: 5px; color: #603784; background: #f3edf8; }
+.fm-config-group-manager.fm-group-task-picker > footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 0; }
 .fm-config-group-manager .fm-group-notice { margin: 0 0 14px; padding: 10px 12px; background: #f1eaf7; border-radius: 7px; color: #3d1560; font-size: 14px; line-height: 1.6; }
 .fm-config-group-manager > footer { justify-content: space-between; }
 .fm-config-group-manager > footer > span { font-size: 13px; color: #756b7e; }
@@ -154,6 +182,42 @@
 @media (max-width: 760px) {
   .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons > .fm-config-create { grid-column: 1 / -1; }
-  .fm-config-group-manager .fm-group-manager-layout { grid-template-columns: minmax(0, 1fr); }
-  .fm-config-group-manager .fm-group-directory { padding: 0 0 14px; border-right: 0; border-bottom: 1px solid #e8e1ee; }
+  .fm-config-group-manager:not(.fm-group-task-picker) { overflow-y: auto; scrollbar-gutter: stable; }
+  .fm-config-group-manager .fm-group-manager-layout { flex: none; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; }
+  .fm-config-group-manager .fm-group-directory { height: 250px; padding: 0 0 14px; border-right: 0; border-bottom: 1px solid #e8e1ee; }
+  .fm-config-group-manager .fm-group-members { height: 380px; }
 }
+
+/* A compact, independently collapsible task rail; the detail scroll container is unchanged. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel) { grid-template-columns: 300px minmax(0, 1fr); }
+@media (max-width: 1279px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel) { grid-template-columns: 280px minmax(0, 1fr); } }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel[data-collapsed="true"]) { grid-template-columns: 48px minmax(0, 1fr); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-config-panel { padding: 12px; gap: 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-collapse { align-self: center; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin: 0; border: 1px solid transparent; border-radius: 7px; color: #655b70; background: transparent; cursor: pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-collapse:hover { border-color: #d9c7e7; background: #f6f1fa; color: #3d1560; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-config-panel[data-collapsed="true"] { padding-inline: 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame > .fm-monitor-config-panel[data-collapsed="true"] > :not(.fm-config-context-row) { display: none; }
+.monitoring-module .fm-monitor-config-panel .fm-config-context-row { display: flex; flex: none; align-items: center; gap: 8px; min-width: 0; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e8e1ee; }
+.monitoring-module .fm-monitor-config-panel[data-collapsed="true"] .fm-config-context-row { justify-content: center; margin: 0; padding: 0; border: 0; }
+.monitoring-module .fm-monitor-config-panel[data-collapsed="true"] .fm-config-project-context { display: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel > header { padding-bottom: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel h3 { font-size: 16px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item { padding: 10px 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item strong { font-size: 13px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-item span { margin-top: 3px; font-size: 12px; }
+.monitoring-module .fm-config-project-picker .module-project-picker select { height: 34px; font-size: 13px; }
+.monitoring-module .fm-config-project-picker > button { min-height: 26px; font-size: 12px; }
+.monitoring-module .fm-config-group-manager .fm-group-search:focus-within { border-color: #a8afb9; box-shadow: none; }
+.monitoring-module .fm-config-group-manager .fm-group-search input:is(:focus, :focus-visible) { border: 0; outline: none; box-shadow: none; background: transparent; }
+.monitoring-module .fm-config-group-manager .fm-group-search:has(input:focus-visible) { border-color: #8c96a6; outline: none; }
+.fm-group-create-popover { z-index: 140; width: min(270px, calc(100vw - 40px)); padding: 16px; border: 1px solid #d7dbe2; border-radius: 10px; background: #fff; color: #302638; box-shadow: 0 8px 24px #30263818; font-family: inherit; font-size: 13px; line-height: 1.5; }
+.fm-group-create-popover fieldset { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.fm-group-create-popover label { font-weight: 600; }
+.fm-group-create-popover input { width: 100%; min-width: 0; height: 36px; padding: 7px 9px; border: 1px solid #cdd2da; border-radius: 7px; background: #fff; font: inherit; }
+.fm-group-create-popover input:focus { border-color: #9099a7; outline: none; box-shadow: none; }
+.fm-group-create-popover p { margin: 0; color: #b42318; }
+.fm-group-create-popover footer { display: flex; justify-content: flex-end; gap: 10px; }
+.fm-group-create-popover button { min-height: 32px; padding: 5px 10px; border: 1px solid #d7dbe2; border-radius: 6px; background: #fff; font: inherit; cursor: pointer; }
+.fm-group-create-popover button[type="submit"] { color: #fff; border-color: #3d1560; background: #3d1560; }
+.fm-group-create-popover button:disabled { opacity: .5; cursor: not-allowed; }
+.monitoring-module .fm-monitor-config-panel .resource-outcomes-field input:is(:focus, :focus-visible) { border-color: #a8afb9; outline: none; box-shadow: none; }
