@@ -210,14 +210,17 @@
 .monitoring-module .fm-config-group-manager .fm-group-search:focus-within { border-color: #a8afb9; box-shadow: none; }
 .monitoring-module .fm-config-group-manager .fm-group-search input:is(:focus, :focus-visible) { border: 0; outline: none; box-shadow: none; background: transparent; }
 .monitoring-module .fm-config-group-manager .fm-group-search:has(input:focus-visible) { border-color: #8c96a6; outline: none; }
-.fm-group-create-popover { z-index: 140; width: min(270px, calc(100vw - 40px)); padding: 16px; border: 1px solid #d7dbe2; border-radius: 10px; background: #fff; color: #302638; box-shadow: 0 8px 24px #30263818; font-family: inherit; font-size: 13px; line-height: 1.5; }
-.fm-group-create-popover fieldset { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 0; border: 0; }
-.fm-group-create-popover label { font-weight: 600; }
-.fm-group-create-popover input { width: 100%; min-width: 0; height: 36px; padding: 7px 9px; border: 1px solid #cdd2da; border-radius: 7px; background: #fff; font: inherit; }
-.fm-group-create-popover input:focus { border-color: #9099a7; outline: none; box-shadow: none; }
-.fm-group-create-popover p { margin: 0; color: #b42318; }
-.fm-group-create-popover footer { display: flex; justify-content: flex-end; gap: 10px; }
-.fm-group-create-popover button { min-height: 32px; padding: 5px 10px; border: 1px solid #d7dbe2; border-radius: 6px; background: #fff; font: inherit; cursor: pointer; }
-.fm-group-create-popover button[type="submit"] { color: #fff; border-color: #3d1560; background: #3d1560; }
-.fm-group-create-popover button:disabled { opacity: .5; cursor: not-allowed; }
+/* Creation stays inside the module's Dialog portal and nested focus stack. */
+.monitoring-module .fm-group-create-dialog { width: min(420px, calc(100vw - 32px)); }
+.monitoring-module .fm-group-create-form { padding: 20px 24px; }
+.monitoring-module .fm-group-create-form fieldset { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.monitoring-module .fm-group-create-form label { color: #302638; font-size: 14px; font-weight: 600; }
+.monitoring-module .fm-group-create-form input { width: 100%; min-width: 0; height: 40px; padding: 8px 10px; border: 1px solid #cdd2da; border-radius: 7px; background: #fff; color: #302638; font: inherit; }
+.monitoring-module .fm-group-create-form input:focus { border-color: #9099a7; outline: none; box-shadow: none; }
+.monitoring-module .fm-group-create-form p { margin: 0; color: #b42318; font-size: 13px; overflow-wrap: anywhere; }
+.monitoring-module .fm-group-create-form footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 12px; }
+.monitoring-module .fm-group-create-form button { min-height: 36px; padding: 6px 14px; border: 1px solid #d7dbe2; border-radius: 7px; background: #fff; color: #51445e; font: inherit; cursor: pointer; }
+.monitoring-module .fm-group-create-form button[type="submit"] { color: #fff; border-color: #3d1560; background: #3d1560; }
+.monitoring-module .fm-group-create-form button:disabled { opacity: .5; cursor: not-allowed; }
+.monitoring-module .fm-group-create-form button:focus-visible { outline: 2px solid #6e4293; outline-offset: 2px; }
 .monitoring-module .fm-monitor-config-panel .resource-outcomes-field input:is(:focus, :focus-visible) { border-color: #a8afb9; outline: none; box-shadow: none; }

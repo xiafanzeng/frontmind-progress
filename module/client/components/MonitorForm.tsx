@@ -292,9 +292,10 @@ function MonitorFormFields({
   const [brandName, setBrandName] = useState(initial ? initial.mainBrand || "" : project.brandName);
   const [brandAliasText, setBrandAliasText] = useState((initial?.brandAliases ?? project.brandAliases).join("、"));
   const [questionMode, setQuestionMode] = useState<"list" | "batch">("list");
-  const [questionImportOpen, setQuestionImportOpen] = useState(false);
-  const [questionImportDraft, setQuestionImportDraft] = useState("");
   const [questionImportError, setQuestionImportError] = useState("");
+  const [questionFileLoading, setQuestionFileLoading] = useState(false);
+  const questionFileRequest = useRef(0);
+  useEffect(() => () => { questionFileRequest.current += 1; }, []);
   const [optimizedImportOpen, setOptimizedImportOpen] = useState(false);
   const [optimizedSearch, setOptimizedSearch] = useState("");
   const [optimizedSelected, setOptimizedSelected] = useState<string[]>([]);
@@ -305,9 +306,6 @@ function MonitorFormFields({
   >(null);
   const [editingQuestionDraft, setEditingQuestionDraft] = useState("");
   const questionFileInput = useRef<HTMLInputElement>(null);
-  const questionImportControl = useRef<HTMLDivElement>(null);
-  const questionImportButton = useRef<HTMLButtonElement>(null);
-  const questionImportTextarea = useRef<HTMLTextAreaElement>(null);
   const editingQuestionInput = useRef<HTMLInputElement>(null);
   const defaultModels = defaultSelectedModels(models);
   const [selected, setSelected] = useState<Record<string, boolean>>(() =>
@@ -365,8 +363,6 @@ function MonitorFormFields({
   const [weekday, setWeekday] = useState(initial?.schedule.weekday || 1);
   const [error, setError] = useState("");
   const errorId = useId();
-  const questionImportTitleId = useId();
-  const questionImportHelpId = useId();
 
   const normalized = useMemo(
     () => dedupeQuestions(questionText),
@@ -584,34 +580,6 @@ function MonitorFormFields({
   }, [quoteEligible, quoteFingerprint, quoteRunCost]);
 
   useEffect(() => {
-    if (!questionImportOpen) return;
-    questionImportTextarea.current?.focus();
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !questionImportControl.current?.contains(event.target)
-      ) {
-        setQuestionImportOpen(false);
-        setQuestionImportError("");
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setQuestionImportOpen(false);
-      setQuestionImportError("");
-      questionImportButton.current?.focus();
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsidePointer);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsidePointer);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [questionImportOpen]);
-
-  useEffect(() => {
     if (!optimizedImportOpen) return;
     const closeOnOutsidePointer = (event: PointerEvent) => {
       if (
@@ -750,7 +718,11 @@ function MonitorFormFields({
   const importQuestions = (content: string) => {
     const imported = dedupeQuestions(content);
     if (!imported.questions.length) {
-      setQuestionImportError("请粘贴问题，或先选择一个 TXT 文件。");
+      setQuestionImportError("没有可导入的问题，请检查文件或所选内容。");
+      return false;
+    }
+    if (imported.questions.some(question => question.length > 4_000)) {
+      setQuestionImportError("单个问题最多 4000 个字符，请修改后重新导入。");
       return false;
     }
     const combined = dedupeQuestions(
@@ -808,14 +780,26 @@ function MonitorFormFields({
     setOptimizedVisibleCount(30);
   };
 
+  // File reading must append to the latest list, including edits made while reading.
+  const latestImportQuestions = useRef(importQuestions);
+  latestImportQuestions.current = importQuestions;
   const importQuestionFile = async (file?: File) => {
     if (!file) return;
+    const request = ++questionFileRequest.current;
+    setQuestionImportError("");
+    if (!/\.txt$/i.test(file.name)) {
+      setQuestionFileLoading(false);
+      setQuestionImportError("请选择 TXT 格式的问题文件。");
+      return;
+    }
+    setQuestionFileLoading(true);
     try {
       const content = await readQuestionFile(file);
-      setQuestionImportDraft(content);
-      setQuestionImportError("");
+      if (request === questionFileRequest.current) latestImportQuestions.current(content);
     } catch {
-      setQuestionImportError("TXT 文件读取失败，请重试或直接粘贴问题。");
+      if (request === questionFileRequest.current) setQuestionImportError("TXT 文件读取失败，请重新选择文件。");
+    } finally {
+      if (request === questionFileRequest.current) setQuestionFileLoading(false);
     }
   };
 
@@ -900,7 +884,7 @@ function MonitorFormFields({
   }, [draftFingerprint]);
 
   const validateAndSubmit = async (runNow: boolean) => {
-    if (submitting || submitInFlight.current) return;
+    if (submitting || submitInFlight.current || questionFileLoading) return;
     if (!name.trim()) return setError("请填写监控名称。");
     if (!brandName.trim()) return setError("请填写监控品牌。");
     if (brandName.trim().length > 120) return setError("监控品牌最多 120 个字符。");
@@ -1242,108 +1226,17 @@ function MonitorFormFields({
                       )}
                     </div>
                   )}
-                  <div
-                    className="question-import-control"
-                    ref={questionImportControl}
-                  >
-                    <input
-                      ref={questionFileInput}
-                      type="file"
-                      accept=".txt,text/plain"
-                      aria-label="选择 TXT 问题文件"
-                      hidden
-                      tabIndex={-1}
-                      onChange={(event) => {
-                        void importQuestionFile(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                    <button
-                      ref={questionImportButton}
-                      type="button"
-                      aria-haspopup="dialog"
-                      aria-expanded={questionImportOpen}
-                      aria-controls={
-                        questionImportOpen
-                          ? "monitor-question-import"
-                          : undefined
-                      }
-                      onClick={() => {
-                        setQuestionImportOpen((open) => !open);
-                        setQuestionImportError("");
-                      }}
-                    >
-                      <FileUp size={12} />
-                      文件导入
+                  <div className="question-import-control">
+                    <input ref={questionFileInput} type="file" accept=".txt,text/plain"
+                      aria-label="选择 TXT 问题文件" hidden tabIndex={-1}
+                      onChange={event => { void importQuestionFile(event.target.files?.[0]); event.target.value = ""; }} />
+                    <button type="button" disabled={questionFileLoading} aria-busy={questionFileLoading}
+                      title="选择 TXT 文件，每行一个问题，去重后追加至当前列表"
+                      onClick={() => questionFileInput.current?.click()}>
+                      <FileUp size={12} />{questionFileLoading ? "正在导入…" : "文件导入"}
                     </button>
-                    {questionImportOpen && (
-                      <div
-                        className="question-import-popover"
-                        id="monitor-question-import"
-                        role="dialog"
-                        aria-labelledby={questionImportTitleId}
-                        aria-describedby={questionImportHelpId}
-                      >
-                        <div className="question-import-heading">
-                          <strong id={questionImportTitleId}>文件导入</strong>
-                          <span id={questionImportHelpId}>
-                            选择 TXT 文件，预览并确认后追加到当前列表
-                          </span>
-                        </div>
-                        <textarea
-                          ref={questionImportTextarea}
-                          aria-label="粘贴问题，每行一个"
-                          value={questionImportDraft}
-                          onChange={(event) => {
-                            setQuestionImportDraft(event.target.value);
-                            setQuestionImportError("");
-                          }}
-                          rows={7}
-                          maxLength={200_000}
-                          placeholder={"问题一\n问题二\n问题三"}
-                        />
-                        {questionImportError && (
-                          <small className="question-import-error" role="alert">
-                            {questionImportError}
-                          </small>
-                        )}
-                        <div className="question-import-footer">
-                          <button
-                            type="button"
-                            className="question-import-file-button"
-                            onClick={() => questionFileInput.current?.click()}
-                          >
-                            <FileUp size={12} />
-                            选择 TXT
-                          </button>
-                          <span />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setQuestionImportOpen(false);
-                              setQuestionImportError("");
-                              questionImportButton.current?.focus();
-                            }}
-                          >
-                            取消
-                          </button>
-                          <button
-                            type="button"
-                            className="question-import-confirm"
-                            onClick={() => {
-                              if (!importQuestions(questionImportDraft)) return;
-                              setQuestionImportOpen(false);
-                              setQuestionImportDraft("");
-                              questionImportButton.current?.focus();
-                            }}
-                          >
-                            确认导入
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                  {([['list', '单条输入'], ['batch', '批量输入']] as const).map(([mode, label]) => <button type="button" key={mode} className={questionMode === mode ? "active" : ""} aria-pressed={questionMode === mode} onClick={() => { setQuestionMode(mode); setQuestionImportOpen(false); }}>{label}</button>)}
+                  {([['list', '单条输入'], ['batch', '批量输入']] as const).map(([mode, label]) => <button type="button" key={mode} className={questionMode === mode ? "active" : ""} aria-pressed={questionMode === mode} onClick={() => { setQuestionMode(mode); }}>{label}</button>)}
                   <span
                     className={
                       normalized.questions.length > 50
@@ -1355,6 +1248,8 @@ function MonitorFormFields({
                   </span>
                 </div>
               </div>
+              {questionImportError && <p className="question-import-error" role="alert">{questionImportError}</p>}
+              {questionFileLoading && <p role="status">正在读取 TXT 文件…</p>}
               {questionMode === "batch" ? (
                 <>
                   <textarea
@@ -1665,6 +1560,7 @@ function MonitorFormFields({
                 </div>
               </div>
             </div>
+            <p className="model-verification-help">平台及验证状态来自服务端目录；验证记录不代表实时可用，思考能力单独标注。</p>
             <div className="model-grid">
               {models.length === 0 && (
                 <div className="compact-empty">
@@ -1714,6 +1610,10 @@ function MonitorFormFields({
                         {active ? <Check size={12} /> : null}
                       </i>
                     </button>
+                    <p className={`model-verification-status ${model.verified ? "verified" : "pending"}`}>
+                      <span title="由服务端返回的平台验证记录，不代表实时可用性或深度思考能力。">{model.verified ? "平台已有验证记录" : "平台待验证"}</span>
+                      {!model.enabled && <span title="目录标记未启用；当前仍保留选择，提交时由服务端校验。">目录未启用</span>}
+                    </p>
                     <div className="model-platform-settings">
                       <div className="model-capability">
                         <span>思考</span>
@@ -1866,17 +1766,14 @@ function MonitorFormFields({
                 </button>
               </div>
             </div>
-            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>设置频次</button></div>
-            <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title="监控频次设置" description="设置执行时间和每个平台的提问次数。">
-            <div className="monitor-frequency-dialog"><div className="frequency-grid">
-              <label className="field">
+            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>{scheduleType === "none" ? "设置提问次数" : "设置频次"}</button></div>
+            <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title={scheduleType === "none" ? "提问次数设置" : "监控频次设置"} description={scheduleType === "none" ? "设置手动执行时每个平台的提问次数。" : "设置执行时间和每个平台的提问次数。"}>
+            <div className="monitor-frequency-dialog"><div className={`frequency-grid${scheduleType === "none" ? " manual" : ""}`}>
+              {scheduleType !== "none" && <label className="field">
                 <span className="field-label">自动监控</span>
                 <select
                   aria-label="执行频率"
-                  value={
-                    scheduleType === "none" ? scheduleFrequency : scheduleType
-                  }
-                  disabled={scheduleType === "none"}
+                  value={scheduleType}
                   onChange={(event) => {
                     const value = event.target.value as Exclude<
                       ScheduleType,
@@ -1890,7 +1787,7 @@ function MonitorFormFields({
                   <option value="weekly">每周</option>
                 </select>
                 <ChevronDown size={14} aria-hidden="true" />
-              </label>
+              </label>}
               {scheduleType === "weekly" && (
                 <label className="field">
                   <span className="field-label">星期</span>
@@ -2092,14 +1989,14 @@ function MonitorFormFields({
           <button
             type="submit"
             className="secondary-strong-button"
-            disabled={submitting}
+            disabled={submitting || questionFileLoading}
           >
             保存监控
           </button>
           <button
             type="button"
             className="primary-button"
-            disabled={submitting || !canRun}
+            disabled={submitting || questionFileLoading || !canRun}
             aria-label={submitting ? "正在保存…" : "保存并立即执行"}
             onClick={() => void validateAndSubmit(true)}
           >
