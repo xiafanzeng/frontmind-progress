@@ -839,8 +839,6 @@ function MonitoringWorkspaceController({
                   </span>
                 </div>
                 <p>
-                  <span>{visibleSelectedMonitor.mainBrand || "监控品牌待读取"}</span>
-                  <i />
                   <span>{visibleSelectedMonitor.scheduleLabel}</span>
                   <i />
                   <span>每平台 {visibleSelectedMonitor.repetitions} 次</span>

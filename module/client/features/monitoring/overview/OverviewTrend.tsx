@@ -16,7 +16,6 @@ export default function OverviewTrend({ runs, query, competitors, currentBrand, 
   const ordered = runs.filter((run) => scopedAttempts(run, query).length).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const points = ordered.filter(run => Number.isFinite(Date.parse(run.createdAt)));
   const signatures = new Map(points.map((run) => [run.id, runSignature(run, query)]));
-  const comparable = points.length > 1 && new Set(signatures.values()).size === 1;
   const series = [
     { name: query.subject === "self" ? currentBrand || "监控品牌待读取" : query.subject.slice(11), subject: query.subject },
     ...(query.subject === "self" ? [] : [{ name: currentBrand || "监控品牌待读取", subject: "self" as const }]),
@@ -53,7 +52,6 @@ export default function OverviewTrend({ runs, query, competitors, currentBrand, 
       {complete && <button type="button" className="fm-primary-button" onClick={onConfigure}>设置执行计划</button>}
     </div> : <>
       {effectivePoints.length === 1 && <p className="fm-ov-notice pending">当前仅有一个有效采集点，展示真实值，暂不连线。</p>}
-      <p className={`fm-ov-notice ${comparable ? "verified" : "pending"}`}>{comparable ? "已核对：所示运行配置及计划采集次数一致。" : "存在配置或采集次数差异：不同口径的运行不连线，周期变化暂不作改善结论。"} {complete ? "已读取当前筛选的完整历史目录与批次证据。" : "当前展示已读取批次，继续加载可补全范围。"}</p>
       <div className="fm-ov-legend" role="group" aria-label="显示或隐藏品牌曲线">{series.map((item, index) => <button type="button" key={item.subject} aria-pressed={!hidden.includes(item.subject)} onClick={() => setHidden(value => value.includes(item.subject) ? value.filter(subject => subject !== item.subject) : [...value, item.subject])}><i style={{ background: colors[index % colors.length] }} />{item.name}</button>)}</div>
       <div className="fm-ov-chart"><svg viewBox="0 0 780 255" role="img" aria-label={`${overviewMetrics.find((item) => item.key === metric)?.label}按运行对比曲线；聚焦采集点可查看真实值`}>
         {[0, .5, 1].map((fraction) => <g key={fraction}><line x1="48" y1={y(max * fraction)} x2="742" y2={y(max * fraction)} stroke="#e9e7ef" /><text x="4" y={y(max * fraction) + 4} fontSize="11" fill="#667085">{metricText(metric, max * fraction)}</text></g>)}
@@ -65,7 +63,7 @@ export default function OverviewTrend({ runs, query, competitors, currentBrand, 
           </g>)}
         </g>)}
         {points.map((run, index) => (index === 0 || (index === points.length - 1 && endTime > startTime)) && <text key={run.id} x={x(index)} y="239" textAnchor="middle" fontSize="10" fill="#667085">{formatDateTime(run.createdAt)}</text>)}
-      </svg></div><p className="fm-ov-chart-readout" role="status">{activePoint || "悬停或聚焦采集点，查看真实值与有效回答数"}</p><p className="fm-ov-note">横轴按实际采集时间。三个及以上可比点平滑连线，两个点直线连接；缺失值、不同配置和未完成批次断开。曲线仅辅助阅读，不产生额外数据。</p>
+      </svg></div><p className="fm-ov-chart-readout" role="status">{activePoint || "悬停或聚焦采集点，查看真实值与有效回答数"}</p>
       {series.every(item => hidden.includes(item.subject)) && <p role="status" className="fm-ov-note">曲线已全部隐藏，点击上方品牌名称重新显示。</p>}
       <div className="fm-ov-periods">{series.map((item) => {
         const values = item.values.filter((value): value is number => value !== undefined);

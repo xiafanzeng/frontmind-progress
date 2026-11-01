@@ -1,7 +1,6 @@
 import { taskGroup, visibleTaskGroups, UNGROUPED_GROUP_ID, executionModes, monitorExecutionMode, type ExecutionMode } from "./monitorGroups";
 import { useEffect, useId, useRef, useState } from "react";
 import { Folder, Plus, Search } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@frontmind/module-ui/components/ui/popover";
 import Modal from "../../components/Modal";
 import MonitorGroupTaskPicker from "./MonitorGroupTaskPicker";
 import { monitorStatusLabel, type MonitorSummary } from "../../domain";
@@ -33,7 +32,8 @@ export default function MonitorGroupManager({ organization, monitors, ready, bus
   const [pickerGroupId, setPickerGroupId] = useState<string>();
   const pickerSaving = useRef(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
-  const createInputRef = useRef<HTMLInputElement>(null);
+  const createButtonRef = useRef<HTMLButtonElement>(null);
+  const createSaving = useRef(false);
   const createNameId = useId();
   const groups = visibleTaskGroups(monitors, organization);
   const current = groups.find(group => group.id === selectedGroup) ?? groups[0]!;
@@ -60,13 +60,22 @@ export default function MonitorGroupManager({ organization, monitors, ready, bus
     return "";
   };
   const addGroup = async () => {
-    if (!ready || busy) return;
+    if (!ready || busy || createSaving.current) return;
     if (organization.groups.length >= 200) { setCreateError("每个项目最多支持 200 个分组。"); return; }
     const problem = validateName(newName); if (problem) { setCreateError(problem); return; }
-    const group = { id: crypto.randomUUID(), name: normalizeName(newName) };
-    if (!await onSave({ ...organization, groups: [...organization.groups, group] })) return;
-    setCreateOpen(false); setNewName(""); setGroupSearch(""); selectGroup(group.id);
-    setNotice(`已创建“${group.name}”，可点击右上方“添加监控”选择未分组任务。`);
+    createSaving.current = true;
+    setCreateError("");
+    try {
+      const group = { id: crypto.randomUUID(), name: normalizeName(newName) };
+      if (!await onSave({ ...organization, groups: [...organization.groups, group] })) {
+        setCreateError("创建未成功，请查看保存错误，确认后重试。名称已保留。");
+        return;
+      }
+      setCreateOpen(false); setNewName(""); setGroupSearch(""); selectGroup(group.id);
+      setNotice(`已创建“${group.name}”，可点击右上方“添加监控”选择未分组任务。`);
+    } catch (cause) {
+      setCreateError(cause instanceof Error ? cause.message : "创建失败，请稍后重试。名称已保留。");
+    } finally { createSaving.current = false; }
   };
   const rename = async () => {
     if (!ready || busy || currentUnavailable || ungrouped) return;
@@ -116,16 +125,7 @@ export default function MonitorGroupManager({ organization, monitors, ready, bus
         <section className="fm-group-directory" aria-label="分组列表">
           <div className="fm-group-directory-tools">
             <label className="fm-group-search"><Search size={16} aria-hidden="true" /><input type="search" aria-label="搜索分组" placeholder="搜索分组" value={groupSearch} onChange={event => setGroupSearch(event.target.value)} /></label>
-            <Popover open={createOpen} modal onOpenChange={next => { if (!busy) { setCreateOpen(next); setNewName(""); setCreateError(""); } }}>
-              <PopoverTrigger asChild><button type="button" className="fm-group-create-trigger" aria-label="创建分组" title="创建分组" disabled={!ready}><Plus size={18} aria-hidden="true" /></button></PopoverTrigger>
-              <PopoverContent className="fm-group-create-popover" align="start" sideOffset={8} onOpenAutoFocus={event => { event.preventDefault(); createInputRef.current?.focus(); }}>
-                <form onSubmit={event => { event.preventDefault(); void addGroup(); }}><fieldset disabled={busy}>
-                  <label htmlFor={createNameId}>新建分组</label><input ref={createInputRef} id={createNameId} maxLength={40} placeholder="输入分组名称" value={newName} onChange={event => { setNewName(event.target.value); setCreateError(""); }} />
-                  {(createError || error) && <p role="alert">{createError || error}</p>}
-                  <footer><button type="button" onClick={() => setCreateOpen(false)}>取消</button><button type="submit" disabled={!newName.trim() || !ready}>{busy ? "正在创建…" : "创建分组"}</button></footer>
-                </fieldset></form>
-              </PopoverContent>
-            </Popover>
+            <button ref={createButtonRef} type="button" className="fm-group-create-trigger" aria-label="创建分组" title="创建分组" disabled={!ready || busy} onClick={() => { setNewName(""); setCreateError(""); setCreateOpen(true); }}><Plus size={18} aria-hidden="true" /></button>
           </div>
           <div className="fm-group-list">{visibleGroups.map(group => <button type="button" key={group.id} aria-pressed={current.id === group.id} onClick={() => selectGroup(group.id)}><Folder size={16} aria-hidden="true" /><span>{group.name}</span><small>{monitors.filter(monitor => groupOf(monitor) === group.id).length}</small></button>)}{!visibleGroups.length && <p className="fm-group-empty">没有匹配的分组。</p>}</div>
         </section>
@@ -156,6 +156,22 @@ export default function MonitorGroupManager({ organization, monitors, ready, bus
       </div>
       <footer><span>{busy ? "正在保存…" : ""}</span><button type="button" className="fm-secondary-button" onClick={onClose}>关闭</button></footer>
     </fieldset>
+    {createOpen && <Modal open layer="nested" className="fm-group-create-dialog" title="创建分组" description="创建后可添加已有的未分组监控任务。"
+      onClose={() => { if (!busy && !createSaving.current) setCreateOpen(false); }}
+      onCloseAutoFocus={event => { event.preventDefault(); createButtonRef.current?.focus({ preventScroll: true }); }}>
+      <form className="fm-group-create-form" onSubmit={event => { event.preventDefault(); event.stopPropagation(); void addGroup(); }}>
+        <fieldset disabled={busy} aria-busy={busy}>
+          <label htmlFor={createNameId}>分组名称</label>
+          <input id={createNameId} maxLength={40} placeholder="输入分组名称" value={newName}
+            aria-invalid={Boolean(createError || error)} aria-describedby={createError || error ? `${createNameId}-error` : undefined}
+            onChange={event => { setNewName(event.target.value); setCreateError(""); }}
+            onKeyDown={event => { if (event.key === "Enter" && event.nativeEvent.isComposing) event.preventDefault(); }} />
+          {(createError || error) && <p id={`${createNameId}-error`} role="alert">{error || createError}</p>}
+          {!ready && <p role="status">分组数据暂不可用，请返回管理窗口重新读取。</p>}
+          <footer><button type="button" onClick={() => { if (!createSaving.current) setCreateOpen(false); }}>取消</button><button type="submit" disabled={!newName.trim() || !ready}>{busy ? "正在创建…" : "创建分组"}</button></footer>
+        </fieldset>
+      </form>
+    </Modal>}
     {pickerGroupId && <Modal open layer="nested" className="fm-group-picker-dialog" size="medium" title="添加监控" description={`从未分组任务中选择，添加到“${pickerGroup?.name || "原分组"}”。`} onClose={closePicker} onCloseAutoFocus={event => { event.preventDefault(); addButtonRef.current?.focus({ preventScroll: true }); }}>
       <MonitorGroupTaskPicker groupId={pickerGroupId} organization={organization} monitors={monitors} ready={ready && !currentUnavailable} busy={busy} error={error} message={message} onRetry={onRetry} onBack={closePicker} onAdd={addMembers} />
     </Modal>}

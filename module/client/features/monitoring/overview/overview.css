@@ -206,7 +206,7 @@
 .monitoring-module .fm-overview-workspace .fm-ov-context-panel > * + * { margin-top: 12px; }
 .monitoring-module .fm-overview-workspace .fm-ov-context-panel blockquote { max-height: 240px; overflow-y: auto; overflow-wrap: anywhere; font-size: 13px; }
 .monitoring-module .fm-overview-workspace .fm-ov-context-panel > button { display: block; }
-.monitoring-module .fm-overview-workspace .fm-ov-source-grid { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 24px; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-grid { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 24px; }
 .monitoring-module .fm-overview-workspace .fm-ov-domain-list { display: flex; flex-direction: column; align-items: stretch; gap: 7px; border-right: 1px solid var(--ov-border); padding-right: 20px; }
 .monitoring-module .fm-overview-workspace .fm-ov-domain-list h3 { margin-bottom: 10px; }
 .monitoring-module .fm-overview-workspace .fm-ov-domain-heading h3 { margin-bottom: 4px; }
@@ -373,3 +373,18 @@
 .monitoring-module .fm-overview-workspace .fm-ov-site-label { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
 .monitoring-module .fm-overview-workspace .fm-ov-site-label b { font-size: 13px; font-weight: 600; }
 .monitoring-module .fm-overview-workspace .fm-ov-site-label:has(b) > span { color: #756b7e; font-size: 12px; }
+
+/* Source pagination keeps range, navigation and jump controls on separate rows. */
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; gap: 10px; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination .fm-ov-page-controls { flex-wrap: wrap; gap: 6px; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination :is(.fm-ov-page-controls, .fm-ov-page-jump) button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 36px; min-height: 36px; padding: 6px 8px; border: 1px solid var(--ov-border); border-radius: 8px; background: #fff; color: #51445e; font: inherit; cursor: pointer; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination button:hover:not(:disabled) { color: #3d1560; background: #f6f1fa; border-color: #b899cd; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination button[aria-current="page"] { color: #fff; border-color: #3d1560; background: #3d1560; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination button:disabled { color: #85808c; background: #f6f5f7; opacity: .65; cursor: not-allowed; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination :is(button, input):focus-visible { outline: 2px solid #6e4293; outline-offset: 2px; }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination .fm-ov-page-jump input { width: 56px; height: 36px; border-color: var(--ov-border); }
+.monitoring-module .fm-overview-workspace .fm-ov-source-pagination.compact .fm-ov-page-controls { width: 100%; justify-content: space-between; }
+@container overview (max-width: 900px) {
+  .monitoring-module .fm-overview-workspace .fm-ov-source-grid { grid-template-columns: minmax(0, 1fr); }
+  .monitoring-module .fm-overview-workspace .fm-ov-domain-list { border-right: 0; border-bottom: 1px solid var(--ov-border); padding: 0 0 20px; }
+}
