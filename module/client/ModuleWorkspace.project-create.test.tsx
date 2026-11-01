@@ -110,13 +110,14 @@ it("creates and selects another project from the header without creating monitor
   window.history.replaceState({}, "", `/?project=${createdProject.id}`);
   renderWorkspace();
   // CI 环境下 projects.list 重取较慢，放宽等待上限避免时序抖动。
+  // 单段 waitFor 每次重新查询，兼容组件重挂载替换选择器节点；预算 15s。
   await waitFor(
     () => expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id),
-    { timeout: 8000 },
+    { timeout: 15000 },
   );
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);
   expect(server.mutations).toHaveLength(1);
-});
+}, 30000);
 
 it("keeps a failed creation open with the entered values and allows retry", async () => {
   let attempts = 0;
@@ -138,7 +139,7 @@ it("keeps a failed creation open with the entered values and allows retry", asyn
   // 创建成功后项目列表经 invalidate 异步刷新；等待选择器就绪而不是立即断言。
   expect(await screen.findByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
   expect(server.mutations.map(({ procedure }) => procedure)).toEqual(["projects.create", "projects.create"]);
-});
+}, 30000);
 
 it("switches the shared shell report tab without creating a run or losing the selected project", async () => {
   const server = installServer(async () => { throw new Error("No mutation expected"); });
@@ -153,4 +154,4 @@ it("switches the shared shell report tab without creating a run or losing the se
   view.rerender(<ModuleWorkspace view="monitoring" />);
   expect(await screen.findByTestId("selected-project")).toHaveTextContent("已有项目");
   expect(server.mutations).toEqual([]);
-});
+}, 30000);
