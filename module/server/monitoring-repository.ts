@@ -2758,6 +2758,11 @@ async cancelRun(ownerId: string, runId: string, audit: RequestAudit) {
         )
       )
         return run;
+      // A queued retry can still carry an ambiguous POST. Preserve its funds
+      // and resolve/stop the original consumer ID instead of releasing it.
+      await tx.update(attempts).set({ status: "submission_unknown" }).where(and(
+        eq(attempts.runId, runId), eq(attempts.status, "queued"), eq(attempts.errorCode, "SUBMISSION_UNKNOWN"),
+      ));
       const queued = await tx
         .select({ id: attempts.id })
         .from(attempts)
@@ -2840,8 +2845,7 @@ async cancelRun(ownerId: string, runId: string, audit: RequestAudit) {
           attempt.status === "cancelled_before_submit",
       ).length;
       if (
-        completed + failed + stopped === attemptStates.length &&
-        attemptStates.length > 0
+        completed + failed + stopped === attemptStates.length
       ) {
         await tx
           .update(runs)

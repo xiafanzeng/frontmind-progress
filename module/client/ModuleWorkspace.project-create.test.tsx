@@ -36,7 +36,7 @@ const response = (values: unknown[]) => new Response(
   { headers: { "content-type": "application/json" } },
 );
 
-function installServer(create: (input: unknown) => Promise<Response>) {
+function installServer(create: (input: unknown) => Promise<Response>, beforeProjectsRead?: () => Promise<void>) {
   const projects = [existingProject];
   const mutations: Array<{ procedure: string; input: unknown }> = [];
   const reads: Record<string, unknown> = {
@@ -55,6 +55,7 @@ function installServer(create: (input: unknown) => Promise<Response>) {
       }
       return create(inputs[0]);
     }
+    if (procedures.includes("projects.list")) await beforeProjectsRead?.();
     return response(procedures.map(procedure => {
       if (procedure === "projects.list") return projects;
       if (!(procedure in reads)) throw new Error(`Unexpected RPC: ${procedure}`);
@@ -88,7 +89,12 @@ async function openCreateForm(latest: () => { open: () => void } | undefined) {
 
 it("creates and selects another project from the header without creating monitors or runs", async () => {
   let finishCreate!: (value: Response) => void;
-  const server = installServer(() => new Promise(resolve => { finishCreate = resolve; }));
+  let releaseProjectsRead!: () => void;
+  let projectsReadPending: Promise<void> | undefined;
+  const server = installServer(
+    () => new Promise(resolve => { finishCreate = resolve; }),
+    () => projectsReadPending ?? Promise.resolve(),
+  );
   const handle = renderWorkspace();
   const dialog = await openCreateForm(handle.latest);
   fireEvent.click(within(dialog).getByRole("button", { name: "保存项目" }));
@@ -100,7 +106,15 @@ it("creates and selects another project from the header without creating monitor
   const { id: _id, ...input } = createdProject;
   expect(server.mutations).toEqual([{ procedure: "projects.create", input }]);
   server.projects.push(createdProject as typeof existingProject);
+  projectsReadPending = new Promise(resolve => { releaseProjectsRead = resolve; });
   finishCreate(response([createdProject]));
+  // The creation response is authoritative while list revalidation is delayed.
+  // Switching the URL must not temporarily deny access or unmount the form.
+  await waitFor(() => expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name));
+  expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
+  expect(screen.getByRole("dialog", { name: "创建项目" })).toBeVisible();
+  expect(screen.queryByText("当前项目不存在或无权访问。")).not.toBeInTheDocument();
+  releaseProjectsRead();
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   expect(screen.getByRole("combobox", { name: "当前项目" })).toHaveValue(createdProject.id);
   expect(screen.getByTestId("selected-project")).toHaveTextContent(createdProject.name);

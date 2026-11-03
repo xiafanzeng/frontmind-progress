@@ -203,6 +203,7 @@ export default function MonitoringPage({
   }>();
   const quoteRequestId = useRef(0);
   const editorRequestId = useRef(0);
+  const projectCreatePending = useRef(false);
   const hasCompletedInitialLoadRef = useRef(!loading || monitors.length > 0);
 
   useEffect(() => {
@@ -210,7 +211,6 @@ export default function MonitoringPage({
     if (
       !loading &&
       project &&
-      seedQuestions &&
       url.searchParams.get("newMonitor") === "1"
     ) {
       setMonitorEditor({ kind: "create" });
@@ -229,8 +229,7 @@ export default function MonitoringPage({
       !createMonitorRequest ||
       openedCreateRequest.current === createMonitorRequest ||
       loading ||
-      !project ||
-      !seedQuestions
+      !project
     )
       return;
     openedCreateRequest.current = createMonitorRequest;
@@ -558,16 +557,21 @@ export default function MonitoringPage({
   };
 
   const createProject = async (value: Omit<ProjectSummary, "id">) => {
+    if (projectCreatePending.current) return;
+    projectCreatePending.current = true;
+    const creating = !project;
     setSubmitting(true);
     setSubmitError("");
     try {
       await (project ? onUpdateProject?.(value) : onCreateProject(value));
       setProjectModal(false);
+      if (creating && serverData) openCreateMonitor();
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : "保存项目失败，请稍后重试。",
       );
     } finally {
+      projectCreatePending.current = false;
       setSubmitting(false);
     }
   };
@@ -658,14 +662,14 @@ export default function MonitoringPage({
       ) : (
         <section className="panel-state" aria-label="监控项目空态">
           <strong>尚未创建监控项目</strong>
-          <span>{serverData ? "请通过左侧全局项目入口的加号创建监控项目。" : "创建项目后，可配置问题、模型与监控计划。"}</span>
-          {!serverData && <button
+          <span>{serverData ? "在当前企业内设置监控品牌，再添加问题、平台与监控计划。" : "创建项目后，可配置问题、模型与监控计划。"}</span>
+          <button
             type="button"
             className="primary-button"
             onClick={() => setProjectModal(true)}
           >
-            创建项目
-          </button>}
+            {serverData ? "设置监控并添加问题" : "创建项目"}
+          </button>
         </section>
       )}
 
@@ -689,8 +693,8 @@ export default function MonitoringPage({
         inline={isWorkbench}
         open={projectModal}
         onClose={() => !submitting && setProjectModal(false)}
-        title={project ? "编辑项目" : "创建第一个项目"}
-        description="一个项目可包含多个品牌的监控任务；此处设置新任务的默认品牌，已有任务及历史运行保留各自的品牌配置。"
+        title={project ? "编辑项目" : serverData ? "设置监控范围" : "创建第一个项目"}
+        description={serverData ? "设置当前企业的监控范围和默认品牌，保存后即可添加问题。已有监控与历史回答保留各自的配置。" : "一个项目可包含多个品牌的监控任务；此处设置新任务的默认品牌，已有任务及历史运行保留各自的品牌配置。"}
         size="large"
       >
         {submitError && (

@@ -210,7 +210,7 @@ function SidebarView({
     <label className="resource-outcomes-field"><input type="search" aria-label="搜索监控配置" placeholder="搜索监控名称" value={search} onChange={(event) => { setSearch(event.target.value); setSelection(new Set()); }} /></label>
     <div className="fm-monitor-config-tools" aria-label="监控配置工具">
       <div className="fm-config-tool-buttons">
-        <Tooltip><TooltipTrigger asChild><button type="button" className="fm-config-create" aria-label="新建监控任务" onClick={onAdd}><Plus size={16} aria-hidden="true" />新建监控任务</button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>新建监控任务</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><button type="button" className="fm-config-create" aria-label="添加监控问题" onClick={onAdd}><Plus size={16} aria-hidden="true" />添加监控问题</button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>添加监控问题</TooltipContent></Tooltip>
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <Tooltip><TooltipTrigger asChild><PopoverTrigger asChild><button type="button" aria-label={`筛选监控${activeFilterCount ? `，${activeFilterCount} 个条件` : ""}`} className={activeFilterCount ? "is-active" : ""}><SlidersHorizontal size={16} aria-hidden="true" />{activeFilterCount > 0 && <small>{activeFilterCount}</small>}</button></PopoverTrigger></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>筛选监控</TooltipContent></Tooltip>
           <PopoverContent className="fm-monitor-config-popover" align="start" sideOffset={8} collisionPadding={12} aria-label="筛选监控配置">

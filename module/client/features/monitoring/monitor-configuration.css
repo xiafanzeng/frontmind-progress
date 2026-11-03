@@ -224,3 +224,30 @@
 .monitoring-module .fm-group-create-form button:disabled { opacity: .5; cursor: not-allowed; }
 .monitoring-module .fm-group-create-form button:focus-visible { outline: 2px solid #6e4293; outline-offset: 2px; }
 .monitoring-module .fm-monitor-config-panel .resource-outcomes-field input:is(:focus, :focus-visible) { border-color: #a8afb9; outline: none; box-shadow: none; }
+
+/* The task rail becomes a bounded picker above the report on narrow screens. */
+@media (max-width: 760px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel),
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel[data-collapsed="true"]) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: start;
+    overflow-y: auto;
+  }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame > .fm-monitor-config-panel {
+    grid-column: 1;
+    grid-row: 1;
+    height: auto;
+    max-height: 340px;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--fm-border, #e7ebef);
+  }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame > .fm-monitor-detail {
+    grid-column: 1;
+    grid-row: 2;
+    height: auto;
+    min-height: 70dvh;
+    overflow: visible;
+  }
+}
