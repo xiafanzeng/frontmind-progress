@@ -402,13 +402,18 @@ class DrizzleWorkerRepository {
     | { status: "terminal" }
   > {
     const [locatedAttempt] = await this.db
-      .select({ runId: attempts.runId })
+      .select({ runId: attempts.runId, enterpriseProjectId: projects.enterpriseProjectId, ownerId: runs.ownerId })
       .from(attempts)
+      .innerJoin(runs, eq(runs.id, attempts.runId))
+      .innerJoin(projects, eq(projects.id, runs.projectId))
       .where(eq(attempts.id, input.attemptId))
       .limit(1);
     if (!locatedAttempt) return { status: "terminal" as const };
 
     return this.db.transaction(async (tx) => {
+      let archived = false;
+      try { await core.assertMonitoringEnterpriseProjectActive(tx, locatedAttempt.enterpriseProjectId, locatedAttempt.ownerId); }
+      catch (error) { if ((error as { code?: string }).code === "NOT_FOUND") archived = true; else throw error; }
       // Progress snapshots and terminal transitions serialize by run. Keep the
       // same run -> attempt order here so permit acquisition cannot deadlock
       // with cancellation, acceptance, polling, or terminal settlement.
@@ -431,7 +436,7 @@ class DrizzleWorkerRepository {
         return { status: "terminal" as const };
       if (attempt.providerTaskId) return { status: "terminal" as const };
       if (
-        run.cancelRequestedAt &&
+        (archived || run.cancelRequestedAt) &&
         attempt.status === "queued" &&
         attempt.errorCode !== "SUBMISSION_UNKNOWN"
       ) {
@@ -450,6 +455,16 @@ class DrizzleWorkerRepository {
           })
           .where(eq(attempts.id, attempt.id));
         await refreshRunState(tx, run, input.now);
+        return { status: "terminal" as const };
+      }
+      if (archived || run.cancelRequestedAt) {
+        // A possibly accepted request keeps its reservation and original
+        // consumer ID. Only the stop/query path may resolve it after archive.
+        if (attempt.status === "queued" && attempt.errorCode === "SUBMISSION_UNKNOWN")
+          await tx.update(attempts).set({ status: "submission_unknown" }).where(eq(attempts.id, attempt.id));
+        await tx.insert(jobs).values({ id: randomUUID(), type: "stop_attempt", dedupeKey: `stop:${attempt.id}`,
+          payload: { attemptId: attempt.id }, availableAt: input.now })
+          .onDuplicateKeyUpdate({ set: { dedupeKey: sql`${jobs.dedupeKey}` } });
         return { status: "terminal" as const };
       }
       if (

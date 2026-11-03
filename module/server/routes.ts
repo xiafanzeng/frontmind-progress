@@ -138,11 +138,13 @@ import type {ProgressRouteCore} from './route-core.js';
 import {translateRepositoryErrors} from './route-errors.js';
 import {z} from 'zod';
 import {TRPCError} from '@trpc/server';
+import { assertProgressStartAllowed } from './start-admission.js';
 import { checkMoliConnection } from './providers/moli/connection.js';
 import { monitorOrganizationInputSchema, monitorOrganizationSchema, saveMonitorOrganizationInputSchema } from '../contracts/monitor-organization.js';
 export function createProgressRoutes<Context extends object>(core:ProgressRouteCore<Context>) {
  const t=initTRPC.context<Context>().create();
  const customerProcedure=t.procedure.use(async({ctx,next})=>next({ctx:{...ctx,...await core.authorize(ctx as unknown as Context,'customer')}}));
+ const startProcedure=customerProcedure.use(async({next})=>{await assertProgressStartAllowed();return next();});
  const adminProcedure=t.procedure.use(async({ctx,next})=>next({ctx:{...ctx,...await core.authorize(ctx as unknown as Context,'admin')}}));
  return {customer:{
  costs:t.router({
@@ -173,7 +175,7 @@ projects: t.router({
       .query(({ ctx, input }) =>
         ctx.repository.getProject(ctx.user.id, input.projectId),
       ),
-    create: customerProcedure
+    create: startProcedure
       .input(projectCreateInputSchema)
       .output(projectOutputSchema)
       .mutation(({ ctx, input }) =>
@@ -181,7 +183,7 @@ projects: t.router({
           ctx.repository.createProject(ctx.user.id, input, ctx.audit),
         ),
       ),
-    updateBrand: customerProcedure
+    updateBrand: startProcedure
       .input(projectBrandUpdateInputSchema)
       .output(projectOutputSchema)
       .mutation(({ ctx, input }) =>
@@ -189,7 +191,7 @@ projects: t.router({
           ctx.repository.updateProjectBrand(ctx.user.id, input, ctx.audit),
         ),
       ),
-    update: customerProcedure
+    update: startProcedure
       .input(projectUpdateInputSchema)
       .output(projectOutputSchema)
       .mutation(({ ctx, input }) =>
@@ -257,7 +259,7 @@ monitors: t.router({
           ctx.repository.getMonitor(ctx.user.id, input.monitorId),
         ),
       ),
-    create: customerProcedure
+    create: startProcedure
       .input(taskCreateInputSchema)
       .output(monitorMutationOutputSchema)
       .mutation(async ({ ctx, input }) => {
@@ -285,7 +287,7 @@ monitors: t.router({
           return { ...monitor, run: null };
         });
       }),
-    update: customerProcedure
+    update: startProcedure
       .input(taskUpdateInputSchema)
       .output(monitorMutationOutputSchema)
       .mutation(async ({ ctx, input }) => {
@@ -327,7 +329,7 @@ monitors: t.router({
         );
         return { paused: true };
       }),
-    resume: customerProcedure
+    resume: startProcedure
       .input(z.object({ monitorId: idSchema }))
       .output(booleanResultOutputSchemas.monitorPaused)
       .mutation(async ({ ctx, input }) => {
@@ -367,7 +369,7 @@ monitors: t.router({
         );
         return { restored: true, schedulePaused: true };
       }),
-    runNow: customerProcedure
+    runNow: startProcedure
       .input(runNowInputSchema)
       .output(runCreationResultOutputSchema)
       .mutation(({ ctx, input }) =>

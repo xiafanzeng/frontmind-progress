@@ -1201,7 +1201,7 @@ function MonitoringWorkspaceController({
         </>}
         {!analysisOnly && (
           <footer>
-            <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 新建监控配置</button>
+            <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 添加监控问题</button>
             {configurationTools}
             <button
               type="button"
