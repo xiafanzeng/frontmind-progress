@@ -298,7 +298,7 @@ export default function MonitorListPanel({
             type="button"
             className="fm-add-button"
             onClick={onAdd}
-            aria-label="批量添加问题"
+            aria-label="新建监控任务"
           >
             <Plus size={14} /> 添加
           </button>
@@ -317,7 +317,7 @@ export default function MonitorListPanel({
           <Search size={14} />
           <input
             aria-label="搜索监控"
-            placeholder="搜索监控名称"
+            placeholder="搜索任务名称"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />

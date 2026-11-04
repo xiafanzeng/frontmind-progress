@@ -31,10 +31,10 @@ function Distribution({ title, rows, note, pending = false }: { title: string; r
   </div></section>;
 }
 
-export default function OverviewSources({ attempts, citations, sources, to, canReport, onReport, onAnswer, scope }: {
+export default function OverviewSources({ attempts, citations, sources, to, refreshing, onRefresh, onAnswer, scope }: {
   scope?: MonitoringScope; attempts: RunAttempt[]; citations?: Extract<MonitoringAnalysisData, { kind: "citations" }>;
   sources?: Extract<MonitoringAnalysisData, { kind: "sources" }>;
-  to: string; canReport: boolean; onReport: () => void; onAnswer: (attempt: RunAttempt) => void;
+  to: string; refreshing: boolean; onRefresh: () => Promise<void>; onAnswer: (attempt: RunAttempt) => void;
 }) {
   const rankingRef = useRef<HTMLElement>(null);
   const [loadingHeight, setLoadingHeight] = useState(360);
@@ -75,7 +75,7 @@ export default function OverviewSources({ attempts, citations, sources, to, canR
   const sourceTotal = sources ? sources.total : all.length;
   return <section className="fm-ov-section" aria-labelledby="overview-source-title">
     <header className="fm-ov-heading fm-ov-source-heading"><div><h2 id="overview-source-title">信源分析</h2><p className="fm-ov-note">从引用域名追溯到内容，再查看关联回答。</p></div><div className="fm-ov-view-switch" role="group" aria-label="切换信源排行或信源分布">{[{ id: "ranking", label: "信源排行" }, { id: "distribution", label: "信源分布" }].map(item => <button type="button" key={item.id} className={view === item.id ? "active" : ""} aria-pressed={view === item.id} onClick={() => setView(item.id)}>{item.label}</button>)}</div></header>
-    <div className="fm-ov-heading"><span>{total} 次明确引用 · {sourceTotal} 条来源记录{view === "distribution" ? " · 类型与发布时间" : ""}</span><button type="button" className="fm-text-button" disabled={!canReport} onClick={onReport}>下载监控报告 →</button></div>
+    <div className="fm-ov-heading"><span>{total} 次明确引用 · {sourceTotal} 条来源记录{view === "distribution" ? " · 类型与发布时间" : ""}</span><button type="button" className="fm-text-button" disabled={refreshing || live.isFetching} onClick={() => void onRefresh()}>{refreshing || live.isFetching ? "正在刷新…" : "刷新数据"}</button></div>
     {view === "ranking" ? scope && live.error ? <p role="alert" className="fm-ov-notice pending">信源读取失败：{live.error.message}<button type="button" className="fm-text-button" onClick={() => void live.refetch()}>重试</button></p> : scope && !live.data ? <section className="fm-ov-card fm-ov-ranking-loading" style={{ minHeight: loadingHeight }} aria-busy="true"><p role="status">正在读取引用域名和内容分页…</p></section> : <section className="fm-ov-card" ref={rankingRef}>{total > 0 ? <div className="fm-ov-source-grid"><aside className="fm-ov-domain-list" aria-label="按引用域名筛选">
       <header className="fm-ov-domain-heading"><h3>引用域名</h3><p className="fm-ov-note">共 {domainCount} 个域名 · 每页最多 10 个</p></header>
       <div className="fm-ov-domain-filter"><button type="button" aria-pressed={domain === null} className="fm-ov-all-sources" onClick={() => chooseDomain(null)}><span>全部信源</span><strong>{total} 次引用</strong></button></div>

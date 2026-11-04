@@ -1575,3 +1575,7 @@
 .monitoring-module .model-verification-status.verified { color: #376a58; }
 .monitoring-module .model-verification-status span + span { color: #697386; }
 .monitoring-module .monitor-frequency-dialog .frequency-grid.manual { grid-template-columns: minmax(0, 1fr); }
+
+.monitoring-module .monitor-form-v2 .monitor-basic-column {
+  display: flex; flex-direction: column; gap: 16px; min-width: 0;
+}

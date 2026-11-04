@@ -113,7 +113,7 @@ export default function RunConfirmationDialog({
         aria-busy={loading || quoteLoading}
       >
         <section className="run-confirmation-monitor" aria-label="执行对象">
-          <span>监控名称</span>
+          <span>任务名称</span>
           <strong>{monitorName}</strong>
         </section>
 
