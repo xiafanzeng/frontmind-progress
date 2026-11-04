@@ -22,10 +22,10 @@ type Props = {
   project: ProjectSummary; monitor: MonitorSummary; query: MonitoringQueryState;
   summary?: MonitoringSummaryData; catalog?: MonitoringSummaryData; runs: MonitorRun[];
   serverData: boolean; onChange: (patch: Partial<MonitoringQueryState>) => void;
-  onConfigure: () => void; onReport: () => void;
+  onConfigure: () => void;
 };
 
-function OverviewContent({ project, monitor, query, summary, serverData, onChange, onConfigure, onReport, data, tab, setTab }: Props & { data: OverviewData; tab: OverviewTab; setTab: (tab: OverviewTab) => void }) {
+function OverviewContent({ project, monitor, query, summary, serverData, onChange, onConfigure, data, tab, setTab }: Props & { data: OverviewData; tab: OverviewTab; setTab: (tab: OverviewTab) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     scrollRef.current?.closest<HTMLElement>(".fm-monitor-detail")?.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -78,11 +78,10 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
         })}</div>
         <article className="fm-ov-highlight"><div className="fm-ov-highlight-main"><header><Lightbulb size={20} /><h3>AI 建议重点</h3><span className="fm-ov-tag">待核查</span></header><h4>{evidenceCount ? "从回答证据出发，确认下一步优化方向" : "等待可核查证据"}</h4><p>{evidenceCount ? "优先核对资料与实际回答是否一致，再准备知识库、FAQ 或公开信源的行动草稿。" : "当前证据不足，先核对采集结果与关联资料。"}</p><button type="button" onClick={() => setTab("suggestions")}>查看建议与依据 <span aria-hidden="true">→</span></button></div><aside className="fm-ov-highlight-aside"><span>已读取的核查线索</span><div><strong>{evidenceCount}</strong> 条回答证据</div><div><strong>{questionCount}</strong> 个关联问题</div><small>证据数量不等于已确认问题数量</small></aside></article>
         <div className="fm-ov-two-columns"><section className="fm-ov-card"><h3>监控范围与采集质量</h3><dl className="fm-ov-quality"><div><dt>有效回答</dt><dd>{metrics?.effective ?? "—"}</dd></div><div><dt>采集次数</dt><dd>{summary?.metrics.attempts ?? "—"}</dd></div><div><dt>已读取批次</dt><dd>{current.length}</dd></div></dl><p className="fm-ov-note">有效回答排除失败或空回答。具体判定可进入原回答核查。</p></section><section className="fm-ov-card"><h3>从指标进入分析</h3><div className="fm-ov-analysis-links">{tabs.filter(item => ["trends", "sentiment", "sources"].includes(item.id)).map(item => <button type="button" key={item.id} onClick={() => setTab(item.id)}><span>{item.label}</span><span aria-hidden="true">→</span></button>)}</div></section></div>
-        <section className="fm-ov-card"><header className="fm-ov-heading"><h3>从竞品进入分析</h3><span>沿用监控配置</span></header>{data.competitors.length ? <div className="fm-ov-competitors">{data.competitors.map((competitor) => <button type="button" key={competitor.name} className="fm-secondary-button" onClick={() => { onChange({ subject: `competitor:${competitor.name}` }); setTab("trends"); }}>{competitor.name} <span>查看趋势 →</span></button>)}</div> : <p className="fm-ov-note">当前监控尚未配置竞品。<button type="button" className="fm-text-button" onClick={onConfigure}>编辑监控配置</button></p>}</section>
       </section>}
       {tab === "trends" && <OverviewTrend key={scopeKey} runs={current} query={query} currentBrand={currentBrand} competitors={data.competitors} loading={data.loading} complete={data.complete} onConfigure={onConfigure} />}
       {tab === "sentiment" && (serverData ? data.scope ? <OverviewSentimentLive key={scopeKey} scope={data.scope} draftNamespace={draftNamespace} onAnswer={openAnswer} /> : <p role="status">等待当前筛选范围…</p> : <OverviewSentiment key={scopeKey} draftNamespace={draftNamespace} attempts={attempts} summary={summary} self={query.subject === "self"} onAnswer={openAnswer} />)}
-      {tab === "sources" && (serverData && (!data.scope || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的信源分布…"}</p> : <OverviewSources key={scopeKey} scope={data.scope} attempts={attempts} sources={data.sources} to={query.to} canReport={serverData && Boolean(summary?.metrics.answers)} onReport={onReport} onAnswer={openAnswer} />)}
+      {tab === "sources" && (serverData && (!data.scope || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的信源分布…"}</p> : <OverviewSources key={scopeKey} scope={data.scope} attempts={attempts} sources={data.sources} to={query.to} refreshing={data.loading} onRefresh={data.refresh} onAnswer={openAnswer} />)}
       {tab === "suggestions" && <>{query.subject !== "self" && <p className="fm-ov-notice pending">竞品的资料缺口与情感证据未单独提供。以下保留核查入口，切回当前品牌可查看关联证据。</p>}<OverviewSuggestions key={scopeKey} draftNamespace={draftNamespace} suggestions={suggestions} monitorId={monitor.id} query={query} onAnswer={openAnswer} /></>}
     </div>
   </div>;

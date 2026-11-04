@@ -919,7 +919,7 @@ function MonitoringWorkspaceController({
                 </button>
               </div>
             </header>
-            {!analysisOnly && <MonitoringRunStatus monitor={visibleSelectedMonitor} runs={monitorRuns} onView={(runId) => updateQuery({ tab: "answers", runId, answerQuestion: undefined, answerId: undefined, fullscreen: false })} />}
+            {!analysisOnly && <MonitoringRunStatus monitor={visibleSelectedMonitor} runs={monitorRuns} onView={detailActive ? undefined : (runId) => updateQuery({ tab: "answers", runId, answerQuestion: undefined, answerId: undefined, fullscreen: false })} />}
             <div className="fm-monitor-body">
               {serverData && !detailActive && live.error && (
                 <div className="fm-data-notice" role="alert">
@@ -975,7 +975,6 @@ function MonitoringWorkspaceController({
                 serverData={serverData}
                 onChange={updateQuery}
                 onConfigure={() => onOpenDetails(visibleSelectedMonitor)}
-                onReport={() => setReportDialogOpen(true)}
               />}
               {analysisOnly && <>
               {showIndustryMetrics && (
@@ -1073,7 +1072,7 @@ function MonitoringWorkspaceController({
                 className="fm-primary-button"
                 onClick={onAdd}
               >
-                <Plus size={16} /> 批量添加问题
+                <Plus size={16} /> 新建监控任务
               </button>
             )}
           </div>
@@ -1201,7 +1200,7 @@ function MonitoringWorkspaceController({
         </>}
         {!analysisOnly && (
           <footer>
-            <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 添加监控问题</button>
+            <button type="button" className="fm-secondary-button fm-config-add" onClick={onAdd}><Plus size={14} /> 添加监控任务</button>
             {configurationTools}
             <button
               type="button"

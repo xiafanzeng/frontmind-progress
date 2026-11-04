@@ -6,7 +6,7 @@ import { formatDateTime, runStatusLabel, type MonitorRun, type MonitorSummary } 
 export default function MonitoringRunStatus({ monitor, runs, onView }: {
   monitor: MonitorSummary;
   runs: MonitorRun[];
-  onView: (runId: string) => void;
+  onView?: (runId: string) => void;
 }) {
   const active = runs.find(run => ["running", "queued", "waiting_quota"].includes(run.status));
   const last = monitor.lastRun;
@@ -24,7 +24,7 @@ export default function MonitoringRunStatus({ monitor, runs, onView }: {
       {!collapsed && <small>{detail ? `${detail.trigger === "manual" ? "手动触发" : "计划触发"} · ${formatDateTime(detail.createdAt)}` : "执行进度"} · 结果持续更新</small>}
     </div>
     {!collapsed && <div className="fm-qa-running-progress"><span>已完成 {current.completed} / {current.expected}<b>{progress}%</b></span><progress max={100} value={progress} aria-label="当前运行完成比例" /></div>}
-    <button type="button" className="fm-secondary-button" onClick={() => onView(current.id)}><ChevronRight size={14} />查看进度</button>
+    {onView && <button type="button" className="fm-secondary-button" onClick={() => onView(current.id)}><ChevronRight size={14} />查看进度</button>}
     <button type="button" className="fm-text-button" aria-expanded={!collapsed} onClick={() => setCollapsed(!collapsed)}><ChevronDown size={14} />{collapsed ? "展开" : "收起"}</button>
   </section>;
 }

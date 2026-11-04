@@ -716,7 +716,7 @@ export default function MonitoringPage({
             open
             onClose={closeMonitorEditor}
             title={
-              monitorEditor.kind === "edit" ? "编辑问题监控" : "批量添加问题"
+              monitorEditor.kind === "edit" ? "编辑问题监控" : "新建监控任务"
             }
             description={
               monitorEditor.kind === "edit"

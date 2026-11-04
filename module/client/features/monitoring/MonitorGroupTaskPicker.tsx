@@ -42,7 +42,7 @@ export default function MonitorGroupTaskPicker({ groupId, organization, monitors
     {message && <p className="fm-config-warning" role="status">{message}{onRetry && <button type="button" className="fm-text-button" onClick={onRetry}>重试读取</button>}</p>}
     {!group && <p className="fm-config-warning" role="alert">原分组已被移除，请返回后重新选择分组。</p>}
     <div className="fm-group-member-filters">
-      <label className="fm-group-search"><Search size={16} aria-hidden="true" /><input ref={searchRef} type="search" aria-label="搜索可添加的监控" placeholder="搜索监控名称" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <label className="fm-group-search"><Search size={16} aria-hidden="true" /><input ref={searchRef} type="search" aria-label="搜索可添加的监控" placeholder="搜索任务名称" value={search} onChange={event => setSearch(event.target.value)} /></label>
       <select aria-label="筛选可添加监控的状态" value={status} onChange={event => setStatus(event.target.value as typeof status)}>{([["all", "全部状态"], ["active", "已启用"], ["paused", "已暂停"], ["draft", "待启动"]] as const).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
       <select aria-label="筛选可添加监控的执行方式" value={execution} onChange={event => setExecution(event.target.value as ExecutionMode)}>{executionModes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
     </div>

@@ -45,8 +45,8 @@ export default function OverviewTrend({ runs, query, competitors, currentBrand, 
   };
   return <section className="fm-ov-section" aria-labelledby="overview-trend-title">
     <header className="fm-ov-heading"><h2 id="overview-trend-title">趋势分析</h2><span>按采集运行计算 · {metric === "averagePosition" ? "排名越小越靠前" : "有效回答作为统计基础"}</span></header>
-    <section className="fm-ov-card fm-ov-trend-card"><header className="fm-ov-heading"><h3>品牌与竞品趋势</h3><div className="fm-segmented" role="group" aria-label="趋势指标">{overviewMetrics.map((item) => <button type="button" key={item.key} aria-pressed={metric === item.key} className={metric === item.key ? "active" : ""} onClick={() => { setMetric(item.key); setActivePoint(""); }}>{item.label}</button>)}</div></header>
-    {loading ? <p role="status">正在读取运行快照，暂不判断趋势是否充足…</p> : effectivePoints.length === 0 ? <div className="fm-empty">
+    <section className="fm-ov-card fm-ov-trend-card" aria-busy={loading}><header className="fm-ov-heading"><h3>品牌与竞品趋势</h3><div className="fm-segmented" role="group" aria-label="趋势指标">{overviewMetrics.map((item) => <button type="button" key={item.key} aria-pressed={metric === item.key} className={metric === item.key ? "active" : ""} onClick={() => { setMetric(item.key); setActivePoint(""); }}>{item.label}</button>)}</div></header>
+    {loading && !points.length ? <p role="status">正在读取运行快照，暂不判断趋势是否充足…</p> : effectivePoints.length === 0 ? <div className="fm-empty">
       <strong>{complete ? "当前筛选暂无有效采集点" : "已读取批次中暂无有效采集点"}</strong>
       <span>{complete ? "单个有效采集点显示真实值，两个及以上可比点才连线。" : "请继续加载批次后再确认趋势，尚未读取的运行不视为无数据。"}</span>
       {complete && <button type="button" className="fm-primary-button" onClick={onConfigure}>设置执行计划</button>}
