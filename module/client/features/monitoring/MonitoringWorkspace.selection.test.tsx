@@ -90,6 +90,26 @@ function renderWorkspace(ui: ReactElement) {
             observer.complete();
             return;
           }
+          if (op.path === "monitors.get") {
+            // 逐题改版：问题目录由每项配置的 monitors.get 聚合；
+            // 这里直接从当前运行的问题派生，保持原 ID。
+            const seen = new Set<string>();
+            const questions = liveDetail.runs
+              .flatMap((item) => item.attempts)
+              .filter((attempt) => {
+                if (seen.has(attempt.questionId)) return false;
+                seen.add(attempt.questionId);
+                return true;
+              })
+              .map((attempt) => ({
+                questionId: attempt.questionId,
+                questionSnapshot: attempt.question,
+                categorySnapshot: attempt.questionCategory ?? null,
+              }));
+            observer.next({ result: { data: { questions } } });
+            observer.complete();
+            return;
+          }
           observer.error(
             TRPCClientError.from(
               new Error(`Unexpected tRPC read in selection tests: ${op.path}`),
@@ -185,6 +205,10 @@ describe("submitted monitoring run selection", () => {
       onRefresh: vi.fn(async () => {}),
     };
     const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
+    // 问题目录经 monitors.get 异步聚合：等待首个问题自动选中后筛选区才出现。
+    await waitFor(() =>
+      expect(new URLSearchParams(window.location.search).get("question")).toBeTruthy(),
+    );
     // 日期筛选改为弹层日历；自定义范围直接展示具体起止日期（含结束当天）。
     expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2020-01-01 至 2020-01-31");
     // 概览标签由五个子模块承载；回答视图（含复制）位于「问答明细」标签。
@@ -207,9 +231,12 @@ describe("submitted monitoring run selection", () => {
   });
 });
 
-it("labels enabled configuration independently of a finished run and only toggles real schedules", () => {
-  const [monitorId, config] = Object.entries(demoConfigurations)[0]!;
+it("labels enabled configuration independently of a finished run and only toggles real schedules", async () => {
+  const [monitorId, baseConfig] = Object.entries(demoConfigurations)[0]!;
+  // 逐题改版：多问题旧配置受迁移保护（不可独立启停）；改用单问题配置验证真实调度切换。
+  const config = { ...baseConfig, questions: [baseConfig.questions[0]!] };
   const run = makeDemoRun(monitorId, config);
+  liveDetail.runs = [run];
   const monitor = {
     ...makeDemoMonitor(monitorId, config, run),
     scheduleType: "none" as const,
@@ -232,18 +259,25 @@ it("labels enabled configuration independently of a finished run and only toggle
     onRefresh: vi.fn(async () => {}),
   };
   const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
-  expect(screen.getAllByText("已启用").length).toBeGreaterThan(0);
+  // 问题目录异步聚合；等待自动选中后才能看到问题状态与操作区。
+  await waitFor(() =>
+    expect(screen.getAllByText("开启").length).toBeGreaterThan(0),
+  );
   expect(screen.queryByText("运行中")).not.toBeInTheDocument();
-  // 标题操作区改为固定六按钮：手动任务不隐藏暂停/恢复，而是禁用并说明原因。
-  expect(screen.getByRole("button", { name: "暂停" })).toBeDisabled();
-  const daily = { ...monitor, scheduleType: "daily" as const };
-  rerender(<MonitoringWorkspace {...props} monitors={[daily]} />);
+  // 逐题改版：问题状态为“开启/未开启”，对应暂停/恢复；手动任务也可切换状态
+  //（仅改状态不触发采集）。逐题工作台把所选问题信息并入 monitor 对象传入 onToggle。
   fireEvent.click(screen.getByRole("button", { name: "暂停" }));
-  expect(props.onToggle).toHaveBeenCalledWith(daily);
-  const paused = { ...daily, status: "paused" as const };
+  expect(props.onToggle).toHaveBeenCalledWith(expect.objectContaining({ id: monitor.id, scheduleType: "none" }));
+  const paused = { ...monitor, status: "paused" as const };
   rerender(<MonitoringWorkspace {...props} monitors={[paused]} />);
   fireEvent.click(screen.getByRole("button", { name: "恢复" }));
-  expect(props.onToggle).toHaveBeenLastCalledWith(paused);
+  expect(props.onToggle).toHaveBeenLastCalledWith(expect.objectContaining({ id: paused.id, scheduleType: "none", status: "paused" }));
+  // 迁移保护：多问题旧配置在正式逐题迁移完成前不可独立启停。
+  const legacy = { ...monitor, scheduleType: "daily" as const, questionsCount: 2 };
+  rerender(<MonitoringWorkspace {...props} monitors={[legacy]} />);
+  const protectedButton = screen.getByRole("button", { name: "暂停" });
+  expect(protectedButton).toBeDisabled();
+  expect(protectedButton.getAttribute("title")).toContain("迁移");
 });
 
 it("preserves a deep-linked answer while its detail is pending and after it arrives outside the loaded page", async () => {

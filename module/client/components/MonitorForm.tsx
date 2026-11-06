@@ -64,6 +64,7 @@ import { DemoBrandPicker, DemoKeywordPanel } from "./DemoMonitorFields";
 import "./MonitorForm.css";
 
 type MonitorFormProps = {
+  questionOnly?: boolean;
   project: ProjectSummary;
   serverData?: boolean;
   monitorId?: string;
@@ -220,7 +221,7 @@ const readQuestionFile = (file: File) => {
 };
 
 export default function MonitorForm(props: MonitorFormProps) {
-  return props.serverData ? <LiveMonitorForm {...props} /> : <MonitorFormFields {...props} />;
+  return props.serverData && !props.questionOnly ? <LiveMonitorForm {...props} /> : <MonitorFormFields {...props} />;
 }
 
 function LiveMonitorForm(props: MonitorFormProps) {
@@ -242,6 +243,7 @@ function LiveMonitorForm(props: MonitorFormProps) {
 }
 
 function MonitorFormFields({
+  questionOnly = false,
   project,
   serverData, monitorId, organization, organizationError, reloadOrganization,
   models,
@@ -273,7 +275,7 @@ function MonitorFormFields({
       seedQuestions?.map((item) =>
         typeof item === "string" ? item : item.question,
       )
-    )?.join("\n") || "",
+    )?.slice(0, questionOnly ? 1 : undefined).join("\n") || "",
   );
   const [questionCategories, setQuestionCategories] = useState<
     Record<string, KeywordCategoryKey>
@@ -365,8 +367,8 @@ function MonitorFormFields({
   const errorId = useId();
 
   const normalized = useMemo(
-    () => dedupeQuestions(questionText),
-    [questionText],
+    () => questionOnly ? { questions: questionText.trim() ? [questionText.trim()] : [], removed: 0 } : dedupeQuestions(questionText),
+    [questionText, questionOnly],
   );
   const selectedModels = useMemo(
     () => models.filter((model) => selected[model.id]),
@@ -847,9 +849,9 @@ function MonitorFormFields({
   ];
 
   const buildValue = (): MonitorInput => ({
-    name: name.trim(),
+    name: questionOnly ? questionText.trim().slice(0, 80) : name.trim(),
     mainBrand: brandName.trim(),
-    ...(organization ? { groupAssignment: {
+    ...(!questionOnly && organization ? { groupAssignment: {
       groupId: groupChoice === undefined ? (monitorId ? organization.membership[monitorId] ?? null : null) : groupChoice,
       revision: organization.revision,
     } } : {}),
@@ -885,11 +887,13 @@ function MonitorFormFields({
 
   const validateAndSubmit = async (runNow: boolean) => {
     if (submitting || submitInFlight.current || questionFileLoading) return;
-    if (!name.trim()) return setError("请填写任务名称。");
+    if (!questionOnly && !name.trim()) return setError("请填写任务名称。");
+    if (questionOnly && !questionText.trim()) return setError("请填写监控问题。");
+    if (questionOnly && !questionCategories[questionText.trim()]) return setError("请选择四个问题类别之一。");
     if (!brandName.trim()) return setError("请填写监控品牌。");
     if (brandName.trim().length > 120) return setError("监控品牌最多 120 个字符。");
-    if (groupChoice && !organization) return setError("请先重新读取分组，再保存所选分组。");
-    if (groupChoice && !organization?.groups.some(group => group.id === groupChoice)) return setError("所选分组已不存在，请重新选择分组。");
+    if (!questionOnly && groupChoice && !organization) return setError("请先重新读取分组，再保存所选分组。");
+    if (!questionOnly && groupChoice && !organization?.groups.some(group => group.id === groupChoice)) return setError("所选分组已不存在，请重新选择分组。");
     if (!normalized.questions.length)
       return setError("请至少添加一个监控问题。");
     if (normalized.questions.length > 50)
@@ -969,7 +973,7 @@ function MonitorFormFields({
 
   return (
     <form
-      className="monitor-form monitor-form-v2"
+      className={`monitor-form monitor-form-v2${questionOnly ? " fm-single-question-form" : ""}`}
       noValidate
       aria-busy={submitting || undefined}
       onSubmit={(event) => {
@@ -978,6 +982,20 @@ function MonitorFormFields({
       }}
     >
       <div className="monitor-form-body">
+        {questionOnly ? <div className="monitor-form-left fm-single-question-definition">
+          <label className="field"><span className="field-label">监控问题 <b aria-hidden="true">*</b></span><textarea aria-label="监控问题" required aria-required="true" rows={4} maxLength={4000} placeholder="输入你希望持续关注的一个问题" value={questionText} onChange={event => {
+            const next = event.target.value;
+            const category = questionCategories[questionText.trim()];
+            setQuestionText(next);
+            setQuestionCategories(category ? { [next.trim()]: category } : {});
+          }} aria-invalid={questionsInvalid || undefined} /></label>
+          <fieldset className="fm-question-category-picker" role="radiogroup" aria-label="问题类别" aria-required="true"><legend>问题类别 <b aria-hidden="true">*</b></legend>
+            {KEYWORD_CATEGORY_OPTIONS.map(category => <label key={category.key} className={questionCategories[questionText.trim()] === category.key ? "is-selected" : ""}>
+              <input type="radio" required name={`${errorId}-category`} value={category.key} checked={questionCategories[questionText.trim()] === category.key} onChange={() => setQuestionCategories({ [questionText.trim()]: category.key })} />
+              <span><strong>{category.label.replace(/词$/, "问题")}</strong><small>{{ industry: "关注行业推荐与品牌排名", competitor_comparison: "比较品牌与竞品的表现", reputation: "关注口碑与情感倾向", product_scenario: "关注产品在具体场景中的推荐" }[category.key]}</small></span>
+            </label>)}
+          </fieldset>
+        </div> : <>
         <div className="monitor-form-left">
           <div className="monitor-basic-grid">
             <div className="monitor-basic-column">
@@ -1491,7 +1509,8 @@ function MonitorFormFields({
               )}
             </section>
           </div>
-        </div>
+        </div></>}
+
 
         <div className="monitor-form-right">
           <section className="form-section monitor-frequency-section">
@@ -1950,13 +1969,15 @@ function MonitorFormFields({
             <small>
               {normalized.questions.length} 个问题 × {selectedModels.length}{" "}
               个平台 × {repetitions} 次 = {attemptCount.toLocaleString("zh-CN")}{" "}
-              个采集任务
+              次采集
             </small>
           </div>
           <div className="monitor-save-consequence">
             <span>
-              {scheduleType === "none"
-                ? "仅保存配置，不自动执行"
+              {questionOnly && monitorId
+                ? "保存配置后保持当前开启状态；可通过立即运行手动采集"
+                : scheduleType === "none"
+                ? (questionOnly ? "保存后保持开启，点击立即运行开始采集" : "仅保存配置，不自动执行")
                 : scheduleType === "weekly"
                   ? `保存后每周${weekdays[weekday - 1]} ${localTime} 自动执行`
                   : `保存后每日 ${localTime} 自动执行`}
@@ -1965,7 +1986,7 @@ function MonitorFormFields({
               {attemptCount <= 0
                 ? "完善问题和模型后估算费用"
                 : attemptCount > 500
-                  ? "超过单次 500 个任务上限，请减少问题、模型或次数"
+                  ? "超过单次 500 次采集上限，请减少问题、模型或次数"
                   : invalidReasoningModels.length
                     ? "请关闭不可用平台的深度思考或取消选择"
                     : quoteLoading
@@ -1974,7 +1995,7 @@ function MonitorFormFields({
                         ? "费用暂无法估算，仍可保存配置"
                         : balanceShortfall
                           ? `余额不足，还差 ${formatRunMoney(balanceShortfall)}，仍可保存配置`
-                          : "按实际成功任务结算"}
+                          : "按实际成功采集结算"}
             </small>
           </div>
         </div>
@@ -1987,9 +2008,9 @@ function MonitorFormFields({
             className="secondary-strong-button"
             disabled={submitting || questionFileLoading}
           >
-            保存监控
+            {questionOnly ? "保存问题" : "保存监控"}
           </button>
-          <button
+          {!questionOnly && <button
             type="button"
             className="primary-button"
             disabled={submitting || questionFileLoading || !canRun}
@@ -2008,7 +2029,7 @@ function MonitorFormFields({
                 </span>
               </>
             )}
-          </button>
+          </button>}
         </div>
       </footer>
     </form>

@@ -94,7 +94,10 @@ function mountWorkspace(options: {
   ) => MonitoringSummaryData["filters"]["questions"];
 } = {}) {
   const read = vi.fn((path: string, input: any) => {
-    if (path === "monitors.get") return { version: { competitors: [] } };
+    if (path === "monitors.get") {
+      // 逐题改版：目录聚合读取每项配置的问题清单（保留原 ID）。
+      return { version: { competitors: [] }, questions: questions.map((question) => ({ questionId: question.id, questionSnapshot: question.label, categorySnapshot: question.category ?? null })) };
+    }
     if (path === "runs.list") return [];
     const scope: MonitoringScope = input.scope || input;
     const availableQuestions = options.questionsForScope?.(scope) || questions;
@@ -262,9 +265,10 @@ function mountWorkspace(options: {
 
 afterEach(() => { window.history.replaceState({}, "", "/"); vi.unstubAllGlobals(); });
 async function openReportDialog() {
-  vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(JSON.stringify({ questions, platforms: platforms.map((item) => ({ ...item, label: item.displayName })) }))));
+  // 逐题改版：弹窗锁定当前问题/模型/日期，范围可用性经 tRPC monitoring.summary 读取。
   fireEvent.click(screen.getByRole("button", { name: "下载报告" }));
-  await screen.findByRole("checkbox", { name: /台心医美有哪些医生/ });
+  await screen.findByText("合并为一个 Excel 文件");
+  await waitFor(() => expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled());
 }
 
 async function expectOverviewEffective(value: number) {
@@ -284,24 +288,23 @@ async function applyDateRange(start: string, end: string) {
 
 it("uses the selected UUID v8 question for the answer list, denominator, sentiment and export", async () => {
   const read = mountWorkspace();
-  // 普通概览默认“全部问题”，显式选择医生问题后进入问题范围。
-  await screen.findByRole("option", { name: "台心医美有哪些医生" });
-  await waitFor(() =>
-    expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(""),
-  );
-  fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
-    target: { value: doctorId },
-  });
-
-  await waitFor(() =>
-    expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId),
-  );
+  // 逐题改版：问题经左侧问题列表选择（目录来自 monitors.get 聚合，保留原 ID）。
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  const fs = await import("node:fs");
+  fs.writeFileSync("/tmp/scope-probe.json", JSON.stringify({
+    paths: [...new Set(read.mock.calls.map(([path]) => path))],
+    url: window.location.search,
+    asides: Array.from(document.querySelectorAll("aside")).map((a) => a.className.slice(0, 80)),
+    sidebarText: document.querySelector(".fm-question-sidebar")?.textContent?.replace(/\s+/g, " ").slice(0, 200) ?? null,
+  }, null, 1));
+  const doctorCard = await screen.findByRole("button", { name: /台心医美有哪些医生/ });
+  fireEvent.click(doctorCard);
+  await waitFor(() => expect(doctorCard.getAttribute("aria-pressed")).toBe("true"));
   await expectOverviewEffective(13);
   const navigation = screen.getByRole("tablist", { name: "概览分析子模块" });
   expect(within(navigation).getAllByRole("tab")).toHaveLength(5);
   for (const label of ["趋势分析", "情感分析", "信源分析", "AI 优化建议", "指标看板"]) {
     fireEvent.click(within(navigation).getByRole("tab", { name: label }));
-    expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId);
     expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-01 至 2026-09-14");
   }
   await expectOverviewEffective(13);
@@ -319,8 +322,10 @@ it("uses the selected UUID v8 question for the answer list, denominator, sentime
     ),
   ).toBe(true);
   await openReportDialog();
-  expect(screen.getByRole("checkbox", { name: /台心医美有哪些医生/ })).toBeChecked();
-  expect(screen.getByRole("checkbox", { name: /台心医美口碑怎么样/ })).not.toBeChecked();
+  // 弹窗锁定当前问题：范围展示与页面筛选一致，不再提供可勾选的问题清单。
+  const dialog = screen.getByRole("dialog");
+  expect(within(dialog).getByText("台心医美有哪些医生")).toBeVisible();
+  expect(within(dialog).getByText("2026-09-01 至 2026-09-14")).toBeVisible();
 });
 
 it("starts an embedded report in trends and preserves the host report route while selecting a question", async () => {
@@ -349,20 +354,16 @@ it("starts an embedded report in trends and preserves the host report route whil
 
 it("keeps UUID v8 question, platform and date filters together when switching the visible question", async () => {
   const read = mountWorkspace();
-  await screen.findByRole("option", { name: "台心医美有哪些医生" });
-  fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
-    target: { value: doctorId },
-  });
+  fireEvent.click(await screen.findByRole("button", { name: /台心医美有哪些医生/ }));
   await expectOverviewEffective(13);
-  fireEvent.change(screen.getByLabelText("按模型筛选回答"), {
-    target: { value: platforms[0].id },
-  });
+  // 逐题改版：模型筛选改为 MonitoringSelect 弹层菜单（原生 select 的 change 事件不再适用）。
+  fireEvent.click(screen.getByRole("button", { name: "按模型筛选回答" }));
+  fireEvent.click(await screen.findByRole("option", { name: /豆包（网页版）/ }));
   await expectOverviewEffective(7);
   await applyDateRange("2026-09-13", "2026-09-14");
   await expectOverviewEffective(4);
-  fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
-    target: { value: reputationId },
-  });
+  // 逐题改版：切换问题经左侧问题列表。
+  fireEvent.click(screen.getByRole("button", { name: /台心医美口碑怎么样/ }));
   await expectOverviewEffective(3);
   fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
   // v3 概览情感分析改由服务端 overview.sentiment 驱动（OverviewSentimentLive），
@@ -395,10 +396,9 @@ it("keeps UUID v8 question, platform and date filters together when switching th
     ]),
   );
   await openReportDialog();
-  expect(screen.getByRole("checkbox", { name: /台心医美口碑怎么样/ })).toBeChecked();
-  expect(screen.getByRole("checkbox", { name: /豆包/ })).toBeChecked();
-  expect(screen.getByRole("checkbox", { name: /DeepSeek/ })).not.toBeChecked();
-  expect(within(screen.getByRole("dialog")).getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-13 至 2026-09-14");
+  // 弹窗锁定当前问题/模型/日期：仅展示范围，不再提供可勾选清单。
+  expect(within(screen.getByRole("dialog")).getByText("台心医美口碑怎么样")).toBeVisible();
+  expect(within(screen.getByRole("dialog")).getByText("2026-09-13 至 2026-09-14")).toBeVisible();
   // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
 }, 60000);
 
@@ -432,7 +432,10 @@ it("accepts valid UUID v8 deep links and retains strict identifier validation", 
 it.each([true, false])("clears retired answer references when the category has no candidates (question reference: %s)", async (includeQuestion) => {
   const retiredQuestionId = "30000000-0000-4000-8000-000000000099";
   const retiredAnswerId = "40000000-0000-4000-8000-000000000099";
+  // 逐题改版：live 模式问题目录来自 monitors.get（与日期无关）且有意保留历史读取；
+  // 范围目录驱动的退役清理保留在 analysisOnly（嵌入式报告）模式，在此验证同一保护意图。
   const read = mountWorkspace({
+    report: true,
     search: `/monitoring-system?range=custom&from=2026-09-01&to=2026-09-15&questionCategory=industry&question=${includeQuestion ? retiredQuestionId : ""}&answerQuestion=${retiredQuestionId}&answer=${retiredAnswerId}&fullscreen=1`,
     questionsForScope: (scope) => scope.questionCategory ? [] : questions,
   });
@@ -445,9 +448,7 @@ it.each([true, false])("clears retired answer references when the category has n
     expect(params.has("fullscreen")).toBe(false);
     expect(params.get("questionCategory")).toBe("industry");
   });
-  expect(screen.getByLabelText("按问题筛选回答")).toHaveValue("");
-  expect(screen.getByRole("option", { name: "全部问题（0）" })).toBeInTheDocument();
-  await waitFor(() => expect(read.mock.calls.some(([path]) => path === "monitoring.answers.list")).toBe(true));
+  await waitFor(() => expect(read.mock.calls.some(([path]) => path === "monitoring.summary")).toBe(true));
   expect(read.mock.calls.some(([, input]) =>
     (input.scope || input).questionId === retiredQuestionId,
   )).toBe(false);
@@ -458,6 +459,7 @@ it.each([true, false])("clears retired answer references when the category has n
 it("clears a retired category question from an independent catalog despite rejected filtered reads", async () => {
   const retiredQuestionId = "30000000-0000-4000-8000-000000000099";
   const read = mountWorkspace({
+    report: true,
     search: `/monitoring-system?range=custom&from=2026-09-01&to=2026-09-15&questionCategory=industry&question=${retiredQuestionId}`,
     questionsForScope: (scope) => scope.questionCategory
       ? [{ ...questions[0]!, category: "industry" }]
@@ -465,9 +467,12 @@ it("clears a retired category question from an independent catalog despite rejec
   });
 
   await waitFor(() =>
-    expect(new URLSearchParams(window.location.search).get("question")).toBe(""),
+    expect(new URLSearchParams(window.location.search).get("question")).toBe(doctorId),
   );
-  await expectOverviewEffective(13);
+  // 逐题改版：目录可用时自动修复为可用的同类问题（不再是清空后等待手选）。
+  await waitFor(() =>
+    expect(read.mock.calls.some(([path]) => path === "monitoring.summary")).toBe(true),
+  );
   expect(read.mock.calls.some(([, input]) =>
     (input.scope || input).questionId === retiredQuestionId,
   )).toBe(false);
@@ -476,6 +481,7 @@ it("clears a retired category question from an independent catalog despite rejec
 
 it("clears a historical question after its date window no longer contains any category candidates", async () => {
   const read = mountWorkspace({
+    report: true,
     search: `/monitoring-system?range=custom&from=2026-09-01&to=2026-09-15&questionCategory=industry&question=${doctorId}`,
     questionsForScope: (scope) => !scope.questionCategory
       ? questions
@@ -483,7 +489,10 @@ it("clears a historical question after its date window no longer contains any ca
         ? [{ ...questions[0]!, category: "industry" }]
         : [],
   });
-  await expectOverviewEffective(13);
+  // analysisOnly 模式渲染嵌入式报告视图，无概览指标卡；以日期筛选就绪为初始状态信号。
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "选择日期范围" })).toBeVisible(),
+  );
   const previousReadCount = read.mock.calls.length;
   await applyDateRange("2026-09-14", "2026-09-14");
 
@@ -493,7 +502,6 @@ it("clears a historical question after its date window no longer contains any ca
     expect(params.get("answerQuestion")).toBe("");
     expect(params.get("answer")).toBe("");
   });
-  expect(screen.getByRole("option", { name: "全部问题（0）" })).toBeInTheDocument();
   expect(read.mock.calls.slice(previousReadCount).some(([, input]) =>
     (input.scope || input).questionId === doctorId,
   )).toBe(false);

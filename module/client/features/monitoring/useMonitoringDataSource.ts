@@ -265,11 +265,13 @@ export function useMonitoringDataSource({
   query,
   timezone,
   summaryOnly = false,
+  strictQuestionScope = false,
 }: {
   enabled: boolean;
   query: MonitoringQueryState;
   timezone: string;
   summaryOnly?: boolean;
+  strictQuestionScope?: boolean;
 }) {
   // Overview owns its bounded evidence cursor; do not keep a second answer
   // observer polling every page that it has read. Other views retain live reads.
@@ -309,16 +311,16 @@ export function useMonitoringDataSource({
   const validQuestion = Boolean(
     query.question &&
       isMonitoringUuid(query.question) &&
-      questionCatalog.data?.filters.questions.some(
+      (strictQuestionScope || questionCatalog.data?.filters.questions.some(
         (item) => item.id === query.question,
-      ),
+      )),
   );
   // Global catalog category=null can represent the same historical question
   // under several categories. Membership in the scoped catalog is authoritative.
   const scopeReady = questionCatalogReady && (!query.question || validQuestion);
   const validModel = Boolean(
     query.model &&
-      catalog.data?.filters.platforms.some((item) => item.id === query.model),
+      (strictQuestionScope || catalog.data?.filters.platforms.some((item) => item.id === query.model)),
   );
   const competitorName = query.subject.startsWith("competitor:")
     ? query.subject.slice("competitor:".length)

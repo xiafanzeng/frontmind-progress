@@ -109,6 +109,7 @@ type MonitorEditorState =
       kind: "edit";
       monitorId: string;
       loading: boolean;
+      requiresSplit?: boolean;
       initial?: MonitorInput;
     };
 
@@ -385,6 +386,10 @@ export default function MonitoringPage({
     idempotencyKey?: string,
     quote?: RunCostQuoteView,
   ) => {
+    if (monitorEditor?.kind === "edit" && monitorEditor.requiresSplit) {
+      setSubmitError("此问题仍共用旧配置，需先完成逐题迁移才能独立保存，以免影响其他问题。");
+      return;
+    }
     const monitorId =
       monitorEditor?.kind === "edit" ? monitorEditor.monitorId : undefined;
     if (runNow) {
@@ -433,12 +438,16 @@ export default function MonitoringPage({
     setSubmitError("");
     setMonitorEditor({ kind: "edit", monitorId: monitor.id, loading: true });
     try {
-      const initial = await onLoadMonitor(monitor.id);
+      const source = await onLoadMonitor(monitor.id);
+      const selectedQuestion = monitor.question?.label || source.questions[0];
+      if (!selectedQuestion) throw new Error("当前配置中没有可编辑的问题。");
+      const initial = analysisOnly ? source : { ...source, name: selectedQuestion, questions: [selectedQuestion], questionCategories: source.questionCategories?.[selectedQuestion] ? { [selectedQuestion]: source.questionCategories[selectedQuestion] } : {} };
       if (editorRequestId.current !== requestId) return;
       setMonitorEditor({
         kind: "edit",
         monitorId: monitor.id,
         loading: false,
+        requiresSplit: !analysisOnly && source.questions.length > 1,
         initial,
       });
     } catch (error) {
@@ -640,7 +649,7 @@ export default function MonitoringPage({
             onRun={prepareExistingRun}
             onToggle={(monitor) =>
               void runAction(() =>
-                onToggleMonitor(monitor.id, monitor.status !== "paused"),
+                onToggleMonitor(monitor.id, monitor.status === "active"),
               )
             }
             onDelete={setPendingDelete}
@@ -694,7 +703,7 @@ export default function MonitoringPage({
         open={projectModal}
         onClose={() => !submitting && setProjectModal(false)}
         title={project ? "编辑项目" : serverData ? "设置监控范围" : "创建第一个项目"}
-        description={serverData ? "设置当前企业的监控范围和默认品牌，保存后即可添加问题。已有监控与历史回答保留各自的配置。" : "一个项目可包含多个品牌的监控任务；此处设置新任务的默认品牌，已有任务及历史运行保留各自的品牌配置。"}
+        description={serverData ? "设置当前企业的监控范围和默认品牌，保存后即可添加问题。已有监控与历史回答保留各自的配置。" : "一个项目可包含多个品牌的监控问题；此处设置新任务的默认品牌，已有任务及历史运行保留各自的品牌配置。"}
         size="large"
       >
         {submitError && (
@@ -716,14 +725,15 @@ export default function MonitoringPage({
             open
             onClose={closeMonitorEditor}
             title={
-              monitorEditor.kind === "edit" ? "编辑问题监控" : "新建监控任务"
+              monitorEditor.kind === "edit" ? "编辑监控问题" : "添加监控问题"
             }
             description={
               monitorEditor.kind === "edit"
-                ? "保存会创建新的不可变配置版本，历史运行保持原样。"
+                ? "调整这个问题的模型与执行方式。"
                 : undefined
             }
             size="wide"
+            className={!analysisOnly ? "fm-question-editor" : undefined}
           >
             {submitError && (
               <p className="form-error modal-error" role="alert">
@@ -743,6 +753,7 @@ export default function MonitoringPage({
               )
             ) : (
               <MonitorForm
+                questionOnly={!analysisOnly}
                 serverData={serverData}
                 monitorId={monitorEditor.kind === "edit" ? monitorEditor.monitorId : undefined}
                 key={
@@ -848,7 +859,7 @@ export default function MonitoringPage({
           if (!deleting) setPendingDelete(undefined);
         }}
         title="删除问题监控"
-        description="删除后保留 30 天，可从回收站恢复；恢复后自动计划保持暂停。"
+        description="删除后保留 30 天，可从回收站恢复；恢复后保持未开启。"
       >
         <div className="fm-delete-confirmation" aria-busy={deleting}>
           <span>即将删除</span>
@@ -880,7 +891,7 @@ export default function MonitoringPage({
         open={recycleModal}
         onClose={() => setRecycleModal(false)}
         title="问题监控回收站"
-        description="删除后保留 30 天；恢复后的自动计划保持暂停。"
+        description="删除后保留 30 天；恢复后保持未开启。"
       >
         <div className="recycle-list">
           {deletedMonitors.length ? (
@@ -909,7 +920,7 @@ export default function MonitoringPage({
                     })
                   }
                 >
-                  <ArchiveRestore size={14} /> 恢复并保持暂停
+                  <ArchiveRestore size={14} /> 恢复并保持未开启
                 </button>
               </article>
             ))

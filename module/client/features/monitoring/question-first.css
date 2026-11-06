@@ -1,0 +1,214 @@
+/* Question-first navigation: keep the existing application palette and typography. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar { width: 268px; min-width: 268px; padding-top: 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar .fm-config-list-heading { display:flex; align-items:center; gap:8px; padding:8px 14px 14px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar .fm-config-list-heading h3 { flex:1; font-size:14px; white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar .fm-config-create { white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar .fm-config-collapse { position:static; width:24px; height:28px; padding:3px; border:0; background:transparent; color:#827a91; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools { display:grid; grid-template-columns:minmax(0,1fr) 30px; align-items:center; gap:6px; margin:0 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools .fm-config-search { min-width:0; display:flex; align-items:center; gap:7px; height:34px; padding:0 9px; border:1px solid #cdd2da; border-radius:6px; background:white; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools .fm-config-search input { width:100%; min-width:0; padding:0!important; background:transparent!important; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools .fm-config-search svg { flex-shrink:0; color:#9a94a4; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools .fm-icon-button { position:relative; border:0; background:transparent; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools .fm-icon-button sup { position:absolute; top:-3px; right:-2px; color:#7858ba; font-size:10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-list-count { display:flex; align-items:center; justify-content:space-between; padding:12px 15px 8px; font-size:11px; color:#8a8297; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list { padding:0 8px 12px; gap:5px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list .fm-project-question { width:100%; display:flex; flex-direction:column; gap:12px; padding:13px 11px; border:1px solid transparent; border-radius:6px; background:transparent; text-align:left; box-shadow:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list .fm-project-question:hover { background:#f2f1f8; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list .fm-project-question[aria-pressed="true"] { background:#eeeaf7; border-color:#ded5ef; box-shadow:inset 2px 0 #9981c2; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question strong { color:#51475e; font-size:13px; line-height:1.6; font-weight:500; white-space:normal; overflow-wrap:anywhere; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; font-size:10px; color:#8d829c; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar[data-collapsed="true"] { width:48px; min-width:48px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar[data-collapsed="true"] .fm-config-list-heading { padding:6px 9px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar[data-collapsed="true"] :is(.fm-question-tools,.fm-question-list-count,.fm-project-question-list,.fm-config-list-heading h3,.fm-config-create) { display:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-title-row h2 { font-size:18px; line-height:1.55; overflow-wrap:anywhere; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-hero { align-items:flex-start; gap:16px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-hero > div:first-child { min-width:0; flex:1; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-actions { flex-shrink:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-filters { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar { display:flex; align-items:flex-end; gap:12px; padding:0; border:0; background:transparent; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar > label { width:200px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-reset { height:34px; align-self:flex-end; margin:0 0 2px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-content { display:block; min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-answer { min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-selection { padding:16px 20px 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-bottom:10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history > strong { font-size:14px; color:#51475e; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history label { display:flex; align-items:center; gap:7px; color:#8a8295; font-size:12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history select { max-width:310px; min-width:230px; font-size:12px!important; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-question-heading { padding:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-question-heading p { margin:0 0 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-models { padding:0 0 10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-repetitions { padding:8px 0 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading .fm-qa-source-cards article { padding:12px 13px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article > p { margin:6px 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article > footer { margin-top:6px; }
+/* Single-column question editor; shared form fields keep their existing behavior. */
+.monitoring-module .modal-wide .monitor-form-v2.fm-single-question-form .monitor-form-body { grid-template-columns:minmax(0,1fr); }
+.monitoring-module .modal-wide .fm-single-question-form .fm-single-question-definition { padding:0; background:#fff; border-right:0; }
+.monitoring-module .modal-wide .fm-single-question-form .monitor-form-right { padding:0; }
+.fm-single-question-definition textarea { resize:vertical; min-height:120px; padding:11px 12px!important; line-height:1.7; background:white!important; }
+.fm-question-category-picker { border:0; padding:0; margin:22px 0 0; display:grid; gap:8px; }
+.fm-question-category-picker legend { color:#716a80; font-size:12px; padding:0 0 10px; }
+.fm-single-question-form :is(.field-label,.fm-question-category-picker legend) b { color:#d92d20!important; }
+.fm-question-category-picker label { display:flex; align-items:center; gap:10px; padding:11px 12px; border:1px solid #e2dfe8; border-radius:6px; cursor:pointer; background:white; }
+.fm-question-category-picker label.is-selected { border-color:#bba7d5; background:#f3eff9; }
+.fm-question-category-picker input { accent-color:#9171b8; }
+.fm-question-category-picker label span { display:flex; flex-direction:column; gap:4px; }
+.fm-question-category-picker strong { font-size:12px; font-weight:500; color:#5b506b; }
+.fm-question-category-picker small { font-size:11px; color:#968c9e; }
+.monitoring-module .modal-wide .fm-single-question-form .monitor-save-summary { flex:1; }
+.fm-report-current-scope { padding:16px; background:#f8f7fa; border:1px solid #e5e1ea; border-radius:6px; display:grid; gap:16px; margin:0; }
+.fm-report-current-scope > div { display:grid; grid-template-columns:72px minmax(0,1fr); gap:14px; font-size:13px; line-height:1.65; }
+.fm-report-current-scope dt { color:#92879b; }
+.fm-report-current-scope dd { margin:0; color:#53495d; overflow-wrap:anywhere; }
+@media(max-width:1200px) { .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-hero { flex-wrap:wrap; } .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-hero > div:first-child { flex-basis:100%; } }
+@media(max-width:900px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar { width:100%; min-width:0; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list { max-height:260px; }
+  .monitoring-module .modal-wide .monitor-form-v2.fm-single-question-form .monitor-form-body { grid-template-columns:1fr; }
+  .fm-single-question-form .fm-single-question-definition { border-right:0; border-bottom:1px solid #e7e3ed; }
+  .fm-qa-inline-history { flex-wrap:wrap; }
+  .fm-qa-inline-history label { flex-wrap:wrap; }
+  .fm-qa-inline-history select { min-width:0; max-width:100%; }
+}
+
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question { min-height: 0; gap: 8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question span { margin: 0; line-height: 1.5; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-meta { min-height: 0; }
+
+
+.monitoring-module .fm-question-first .fm-monitor-actions button:disabled { opacity: .45; cursor: not-allowed; }
+
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar[data-collapsed="true"] > .fm-config-list-heading { display: flex; }
+@media (max-width: 760px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first.resource-reading-layout:has(> .fm-question-sidebar) { grid-template-columns: minmax(0,1fr); grid-template-rows: 340px max-content; align-content:start; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first.resource-reading-layout:has(> .fm-question-sidebar[data-collapsed="true"]) { grid-template-rows: 48px max-content; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { height:340px; max-height:340px; width:100%; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar[data-collapsed="true"] { height:48px; width:100%; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history { flex-wrap:wrap; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history label { flex-wrap:wrap; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar { flex-wrap:wrap; }
+}
+
+/* Reading and selection refinements, scoped to the question workspace. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-tools { grid-template-columns:minmax(0,1fr) 28px 28px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row { display:flex; align-items:center; gap:7px; min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row > input { flex:none; margin:0; accent-color:#9072ad; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row .fm-project-question { flex:1; min-width:0; border:1px solid #e0e2e7; background:#fff; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question strong { width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled { font-size:10px; color:#9b94a3; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled.is-enabled { color:#518b7f; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer { flex:none; padding:12px; border-top:1px solid #eceaf0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer button { display:flex; align-items:center; gap:6px; border:0; background:transparent; color:#82788c; font-size:12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px 0; color:#82788c; font-size:11px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar label, .fm-question-batch-bar button { display:flex; align-items:center; gap:5px; font-size:11px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar input { accent-color:#9072ad; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar button { border:0; background:transparent; color:#996a79; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar[data-collapsed="true"] :is(.fm-question-sidebar-footer,.fm-question-batch-bar) { display:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-title-row { min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-title-row h2 { min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-monitor-title-row .fm-status-chip { flex:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-filters { align-items:center; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar { align-items:center; min-height:0; height:auto; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-model-filter,.fm-date-filter) { display:flex; align-items:center; gap:10px; min-width:0; margin:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar .fm-model-filter { width:230px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar .fm-date-filter { width:auto; min-width:190px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-model-filter,.fm-date-filter) > span { flex:none; margin:0; color:#716a80; font-family:inherit; font-size:12px; font-weight:400; font-style:normal; line-height:20px!important; letter-spacing:normal; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-reset { font-size:12px; font-weight:400; margin:0; padding:6px 8px; align-self:center; line-height:20px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history > strong { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-history-picker { display:flex; align-items:center; flex:none; gap:7px; color:#8a8295; font-size:12px; min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-history-picker > span, .fm-history-picker > svg { flex:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-history-picker .fm-select-trigger { width:235px; font-size:12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-evidence-column { grid-template-rows:minmax(0,1.1fr) minmax(0,1fr); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article[tabindex="0"] { cursor:pointer; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article:focus-visible { outline:2px solid #b5a0cb; outline-offset:-2px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article strong a { color:inherit; text-decoration:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article strong a:hover { color:#78579b; text-decoration:underline; }
+.fm-question-filter-popover.fm-monitor-config-popover[data-slot="popover-content"] { width:240px; max-width:calc(100vw - 24px); padding:14px; }
+.fm-question-filter-popover .fm-config-radio-options { gap:8px; }
+.fm-question-delete-list { max-height:240px; overflow-y:auto; padding-left:20px; font-size:13px; line-height:1.8; }
+@media (max-width: 760px) {
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-history-picker { flex:1; flex-wrap:wrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-inline-history > strong { flex-basis:100%; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-history-picker .fm-select-trigger { flex:1; min-width:160px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading:not(.fm-reading-fullscreen) .fm-answer-layout { grid-template-columns:minmax(0,1fr); }
+}
+
+.fm-question-filter-popover fieldset:nth-of-type(2) .fm-config-radio-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.fm-question-filter-popover .fm-config-radio-options label { white-space:nowrap; }
+
+/* Shared sticky heading: scope stays beside the metadata in both views. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-monitor-detail { padding-top:0; scroll-padding-top:180px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto auto; align-items:center; gap:12px 18px; position:sticky; top:0; z-index:25; padding:24px 0 0; background:#f6f8fc; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-hero { display:contents; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-hero > div:first-child { display:contents; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-title-row { grid-column:1; grid-row:1; flex-wrap:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-hero p { grid-column:1; grid-row:2; margin:0; gap:6px 10px; font-size:11px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-actions { grid-column:2; grid-row:1; justify-content:flex-end; gap:6px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-sticky-scope { display:contents; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-scope { grid-column:2; grid-row:2; min-width:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-filters { padding:0; border:0; border-radius:0; background:transparent; gap:8px; justify-content:flex-end; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-filter-bar { gap:10px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-filter-bar .fm-model-filter { width:174px; gap:7px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-filter-bar .fm-date-filter { min-width:160px; max-width:260px; gap:7px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-navigation { grid-column:1/-1; grid-row:3; margin:4px 0 0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading .fm-qa-source-cards article { padding:9px 10px; min-height:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading .fm-qa-source-cards article + article { margin-top:5px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article > header { display:flex; align-items:baseline; justify-content:flex-start; gap:8px; min-width:0; flex-wrap:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article strong { display:block; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:20px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article strong a { white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards .fm-citation-site { display:block; flex:0 0 auto; max-width:36%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#92939d; font-size:10px; line-height:18px; }
+
+.monitoring-module .modal-card.modal-wide.fm-question-editor:has(.fm-single-question-form) { width:min(760px,calc(100vw - 40px)); height:min(900px,calc(100dvh - 48px)); max-height:calc(100dvh - 48px); display:flex; flex-direction:column; overflow:clip; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form { display:flex; flex-direction:column; flex:1; min-height:0; overflow:clip; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { display:flex; flex-direction:column; gap:24px; min-height:0; padding:20px 24px; overflow-y:auto; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form :is(.monitor-form-left,.monitor-form-right) { width:100%; flex:none; padding:0; border:0; background:white; overflow:visible; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .fm-question-category-picker { width:100%; margin:4px 0 0; gap:6px; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .fm-question-category-picker label { padding:9px 12px; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .model-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-footer { padding:14px 24px; gap:12px; flex:none; }
+@media (max-width:1200px) {
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar { grid-template-columns:minmax(0,1fr); }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-title-row { grid-column:1; grid-row:1; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-actions { grid-column:1; grid-row:2; justify-content:flex-start; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-hero p { grid-column:1; grid-row:3; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-scope { grid-column:1; grid-row:4; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-filters { justify-content:flex-start; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-navigation { grid-row:5; }
+}
+@media(max-width:760px) {
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar { top:0; padding-top:16px; gap:8px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-monitor-hero p { display:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-scope { grid-row:3; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar .fm-qa-navigation { grid-row:4; }
+.monitoring-module .modal-card.modal-wide.fm-question-editor:has(.fm-single-question-form) { width:calc(100vw - 24px); height:calc(100dvh - 24px); max-height:calc(100dvh - 24px); }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { padding:16px; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .model-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-footer { padding:12px 16px; flex-wrap:wrap; }
+}
+
+/* Normal reading grows with its content; fullscreen keeps its viewport layout. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-topbar :is(.fm-qa-scope,.fm-qa-filters,.fm-filter-bar) { background:transparent; box-shadow:none; border:0; border-radius:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-content, .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-answer { height:auto; min-height:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading:not(.fm-reading-fullscreen) { height:auto; min-height:0; overflow:visible; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading:not(.fm-reading-fullscreen) .fm-qa-reading-card { flex:none; height:auto; min-height:0; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading:not(.fm-reading-fullscreen) .fm-answer-layout { flex:none; height:max(920px,calc(100dvh - 100px)); min-height:920px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading .fm-answer-toolbar { display:flex; flex-wrap:nowrap; align-items:center; gap:12px; overflow-x:auto; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-answer-toolbar .fm-qa-repetitions { display:flex; flex:1 0 auto; align-items:center; flex-wrap:nowrap; gap:14px; padding:0; border:0; white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-answer-toolbar .fm-qa-repetitions > div { flex-wrap:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-answer-toolbar .fm-qa-repetitions > small { margin-left:auto; white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-answer-toolbar .fm-answer-tools { flex:none; flex-wrap:nowrap; white-space:nowrap; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-answer-toolbar .fm-copy-feedback:empty { display:none; }
+@media(max-width:760px) {
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading:not(.fm-reading-fullscreen) .fm-answer-layout { height:auto; min-height:0; grid-template-rows:720px 920px; }
+}
+
+/* Model and date values use the same typography in overview and answer detail. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-select-trigger,.fm-date-picker-trigger) { font-family:inherit; font-size:13px!important; font-weight:400!important; font-style:normal; line-height:20px!important; letter-spacing:normal; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-select-trigger,.fm-date-picker-trigger) > span { font-family:inherit; font-size:inherit; font-weight:inherit; font-style:inherit; line-height:inherit; letter-spacing:inherit; }
+
+/* The new baseline constrains the old two-column model pane. Single-question
+   forms scroll as one column, so the model section must size to its content. */
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-right { contain:none; scrollbar-gutter:auto; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:none; min-height:0; overflow:visible; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:none; overflow:visible; scrollbar-gutter:auto; }

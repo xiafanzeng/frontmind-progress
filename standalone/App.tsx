@@ -1,13 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { progressRunRoute, progressViewForPath } from "../module/client/features/monitoring/reportNavigation";
-import { ModuleShell } from "@frontmind/module-ui/dashboard/ModuleShell";
+import { ModuleShell } from "./LocalModuleShell";
 import MonitoringDemo from "./MonitoringDemo";
 import ModuleWorkspace, { ProgressClientProvider, type ModuleContext, type ProgressWorkspaceView, type ProgressProjectCreationAction } from "../module/client/ModuleWorkspace";
 import { PROGRESS_MODULE_LABEL } from "../module/client/module-label";
 import "./standalone.css";
 
 const moduleDefinition = { id: "progress", label: PROGRESS_MODULE_LABEL, color: "#3d1560" };
+const navigationModules = [
+  { id: "brand", label: "品牌建设", color: "#16794f", views: [{ id: "knowledge", label: "智能知识库" }] },
+  { id: "intent", label: "意图优化", color: "#7545a0", views: [{ id: "questions", label: "优化问题" }] },
+  { id: "progress", label: "进度监控", color: "#2867a5", views: [{ id: "monitoring", label: "问题监控" }, { id: "reports", label: "进度报告" }] },
+  { id: "content", label: "内容制作", color: "#8a6100", views: [{ id: "content", label: "内容工作台" }] },
+  { id: "publishing", label: "媒体发布", color: "#b33467", views: [{ id: "publishing", label: "发布工作台" }] },
+  { id: "extensions", label: "AI专用官网", color: "#5e6174", views: [{ id: "enterprise-qa", label: "企业问答" }] },
+];
 const views = [{ id: "monitoring", label: "问题监控" }, { id: "reports", label: "进度报告" }];
 
 export default function App({ preview = false }: { preview?: boolean }) {
@@ -47,7 +55,15 @@ export default function App({ preview = false }: { preview?: boolean }) {
   // child's vendor projection yet; spread the extra prop so the wiring compiles and
   // activates once the main repo projects the patched shell. Current vendor ignores it.
   const projectCreationProp = { projectCreation: projectCreation ? { label: projectCreation.label, onCreate: projectCreation.open, disabled: projectCreation.disabled } : undefined };
-  return <ModuleShell module={moduleDefinition} navigationModules={[{ ...moduleDefinition, label: "进度监控", views }]} views={views} activeView={view} onSelectView={id => navigateView(id as ProgressWorkspaceView)} {...projectCreationProp}>
+  return <ModuleShell module={moduleDefinition} navigationModules={navigationModules} views={views} activeView={view} onSelectView={id => {
+    if (id === "monitoring" || id === "reports") navigateView(id);
+    else {
+      const routes: Record<string, string> = { content: "/content-production", publishing: "/publishing", "enterprise-qa": "/enterprise-qa" };
+      const url = new URL(routes[id] || `/?view=${encodeURIComponent(id)}`, "https://dashboard.frontmind.cn");
+      // Other modules remain owned by the Dashboard, never rendered as this module.
+      window.open(url.href, "_blank", "noopener,noreferrer");
+    }
+  }} {...projectCreationProp}>
     <div className="dashboard-module-content">
       {error ? <><p role="alert">{error}</p><button className="operator-control-secondary" onClick={() => location.reload()}>重新加载</button></>
         : !preview && !context ? <p role="status">正在进入问题监控…</p>

@@ -1,0 +1,14 @@
+.monitoring-module .fm-select-trigger { display:flex; align-items:center; gap:10px; width:100%; min-width:0; height:34px; padding:6px 10px; border:1px solid #cdd2da; border-radius:7px; background:#fff; color:#48404c; font:inherit; font-size:13px; font-weight:400; cursor:pointer; }
+.monitoring-module .fm-select-trigger > span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+.monitoring-module .fm-select-trigger > svg { flex:none; color:#716a80; }
+.monitoring-module .fm-select-trigger:disabled { opacity:.5; cursor:not-allowed; }
+.monitoring-module .fm-select-trigger:focus-visible { outline:2px solid #a99ab9; outline-offset:2px; }
+.fm-select-popover[data-slot="popover-content"] { z-index:170; width:max(var(--radix-popover-trigger-width),220px); max-width:calc(100vw - 24px); padding:5px; border:1px solid #e8e1ee; border-radius:8px; background:#fff; color:#51475e; box-shadow:0 12px 36px #21133a21; }
+.fm-select-popover [role="listbox"] { max-height:min(300px,var(--radix-popover-content-available-height)); overflow-y:auto; scrollbar-width:thin; }
+.fm-select-popover [role="option"] { display:flex; align-items:center; gap:10px; width:100%; border:0; border-radius:5px; padding:9px 10px; background:transparent; color:inherit; font:inherit; font-size:12px; text-align:left; cursor:pointer; }
+.fm-select-popover [role="option"] > span { flex:1; }
+.fm-select-popover [role="option"] > svg { flex:none; }
+.fm-select-popover [role="option"]:is(:hover,:focus-visible),.fm-select-popover [aria-selected="true"] { background:#f2edf8; color:#684483; outline:none; }
+
+.fm-select-popover[data-slot="popover-content"] { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; font-size:12px; line-height:20px; }
+.fm-select-popover[data-slot="popover-content"] [role="option"] { font-size:12px!important; line-height:20px; }

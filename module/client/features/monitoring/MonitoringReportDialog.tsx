@@ -1,4 +1,3 @@
-import MonitoringDatePicker from "../../components/MonitoringDatePicker";
 import {
   useEffect,
   useMemo,
@@ -6,7 +5,8 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { Download, FileSpreadsheet, Loader2, Search } from "lucide-react";
+import { trpc } from "../../trpc";
+import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,105 +31,19 @@ type Option = {
   clientType?: "web" | "mobile";
 };
 type Catalog = { questions: Option[]; platforms: Option[] };
-const categories: Record<string, string> = {
-  industry: "行业排名问题",
-  competitor_comparison: "竞品对比问题",
-  reputation: "美誉舆情问题",
-  product_scenario: "产品场景问题",
-};
 
-function Selection({
-  title,
-  options,
-  selected,
-  onChange,
-  disabled,
-}: {
-  title: string;
-  options: Option[];
-  selected: string[] | undefined;
-  onChange: (ids: string[] | undefined) => void;
-  disabled: boolean;
-}) {
-  const [search, setSearch] = useState("");
-  const matches = options.filter((option) =>
-    option.label
-      .toLocaleLowerCase()
-      .includes(search.trim().toLocaleLowerCase()),
-  );
-  const selectedIds = selected ?? options.map((option) => option.id);
-  const toggle = (id: string) =>
-    onChange(
-      selectedIds.includes(id)
-        ? selectedIds.filter((item) => item !== id)
-        : [...selectedIds, id],
-    );
-  return (
-    <section className="fm-report-selection">
-      <div className="fm-report-selection-heading">
-        <h3>{title}</h3>
-        <span>
-          已选 {selectedIds.length} / {options.length}
-        </span>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(undefined)}
-        >
-          全选
-        </button>
-        <button type="button" disabled={disabled} onClick={() => onChange([])}>
-          清空
-        </button>
-      </div>
-      <label className="fm-report-search">
-        <Search size={16} />
-        <input
-          aria-label={`搜索${title}`}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={`搜索${title}`}
-        />
-      </label>
-      <div className="fm-report-options">
-        {matches.map((option) => (
-          <label
-            key={option.id}
-            className={`fm-report-option${selectedIds.includes(option.id) ? " is-selected" : ""}`}
-          >
-            <input
-              type="checkbox"
-              checked={selectedIds.includes(option.id)}
-              disabled={disabled}
-              onChange={() => toggle(option.id)}
-            />
-            <span>
-              {option.label}
-              <small>
-                {option.clientType
-                  ? option.clientType === "web"
-                    ? "网页版"
-                    : "手机版"
-                  : (categories[option.category ?? ""] ?? "未分类")}
-              </small>
-            </span>
-          </label>
-        ))}
-        {!matches.length && <p className="fm-report-empty">暂无匹配{title}</p>}
-      </div>
-    </section>
-  );
-}
 
 export default function MonitoringReportDialog({
   query,
   timezone,
   monitorName,
+  modelLabel,
   onClose,
 }: {
   query: MonitoringQueryState;
   timezone: string;
   monitorName: string;
+  modelLabel?: string;
   onClose: () => void;
 }) {
   // Mounted once per dialog: freeze identity and headers so late requests cannot cross projects.
@@ -144,18 +58,15 @@ export default function MonitoringReportDialog({
     url.pathname += suffix;
     return `${url.pathname}${url.search}`;
   };
-  const [from, setFrom] = useState(query.from);
-  const [to, setTo] = useState(() => shiftCalendarDate(query.to, -1));
-  const [questionIds, setQuestionIds] = useState<string[] | undefined>(
+  const [from] = useState(query.from);
+  const [to] = useState(() => shiftCalendarDate(query.to, -1));
+  const [questionIds] = useState<string[] | undefined>(
     query.question ? [query.question] : undefined,
   );
-  const [platformIds, setPlatformIds] = useState<string[] | undefined>(
+  const [platformIds] = useState<string[] | undefined>(
     query.model ? [query.model] : undefined,
   );
-  const [catalog, setCatalog] = useState<Catalog>();
-  const [catalogLoading, setCatalogLoading] = useState(false);
   const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const downloadRef = useRef<AbortController | null>(null);
   const lockedRef = useRef(false);
@@ -181,60 +92,40 @@ export default function MonitoringReportDialog({
   }, [from, to, timezone]);
   const subject =
     query.subject === "self"
-      ? { kind: "self" }
-      : { kind: "competitor", name: query.subject.slice("competitor:".length) };
+      ? { kind: "self" as const }
+      : { kind: "competitor" as const, name: query.subject.slice("competitor:".length) };
   useEffect(() => () => downloadRef.current?.abort(), []);
-  useEffect(() => {
-    const abort = new AbortController();
-    if (!bounds) {
-      setCatalog(undefined);
-      return;
-    }
-    setCatalogLoading(true);
-    setError("");
-    fetch(endpoint("/report-options"), {
-      method: "POST",
-      credentials: "same-origin",
-      headers: transport.headers,
-      signal: abort.signal,
-      body: JSON.stringify({ ...bounds, subject }),
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("暂时无法读取筛选项，请重试");
-        return response.json() as Promise<Catalog>;
-      })
-      .then((value) => {
-        if (!abort.signal.aborted) setCatalog(value);
-      })
-      .catch((reason) => {
-        if (!abort.signal.aborted) {
-          setCatalog(undefined);
-          setError(
-            reason instanceof Error ? reason.message : "读取失败，请重试",
-          );
-        }
-      })
-      .finally(() => {
-        if (!abort.signal.aborted) setCatalogLoading(false);
-      });
-    return () => abort.abort();
-  }, [bounds, retry]);
+  // Export is now fixed to the current question/model/date, so the existing
+  // scoped GET summary supplies availability without a second editable catalog.
+  const availability = trpc.monitoring.summary.useQuery({
+    monitorId: query.monitorId || "00000000-0000-0000-0000-000000000000",
+    from: new Date(bounds?.from || 0), to: new Date(bounds?.to || 0), subject,
+    questionId: query.question, platformId: query.model,
+  }, { enabled: Boolean(bounds && query.monitorId && query.question), refetchOnWindowFocus: false });
+  const catalog: Catalog | undefined = availability.data ? {
+    questions: availability.data.filters.questions,
+    platforms: availability.data.filters.platforms.map(item => ({ ...item, label: item.displayName })),
+  } : undefined;
+  const catalogLoading = availability.isLoading;
+  const readError = availability.error ? "暂时无法读取当前范围，请重试。" : "";
   const visibleQuestions =
     catalog?.questions.filter(
       (option) =>
-        !query.questionCategory || option.category === query.questionCategory,
+        (!query.question || option.id === query.question) && (!query.questionCategory || option.category === query.questionCategory),
     ) ?? [];
-  const invalidSelection =
+  const invalidSelection = Boolean(catalog) && (
     questionIds?.some((id) => !visibleQuestions.some((q) => q.id === id)) ||
-    platformIds?.some((id) => !catalog?.platforms.some((p) => p.id === id));
+    platformIds?.some((id) => !catalog?.platforms.some((p) => p.id === id)));
   const canDownload = Boolean(
-    bounds &&
+    query.question &&
+      bounds &&
       catalog &&
       !catalogLoading &&
       !downloading &&
       questionIds?.length !== 0 &&
       platformIds?.length !== 0 &&
       !invalidSelection &&
+      (availability.data?.metrics.answers || 0) > 0 &&
       visibleQuestions.length &&
       catalog.platforms.length,
   );
@@ -310,21 +201,16 @@ export default function MonitoringReportDialog({
             下载监控报告
           </DialogTitle>
           <DialogDescription>
-            {monitorName} · 选择需要整理的问题、模型和日期范围
+            导出当前问题在所选模型和日期范围内的已有结果
           </DialogDescription>
         </DialogHeader>
         <div className="fm-report-download-body">
-          <div className="fm-report-date-fields">
-            <label>日期范围
-              <MonitoringDatePicker from={from} to={to} timezone={timezone} maxDays={366} disabled={downloading}
-                onApply={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo); }} />
-            </label>
-          </div>
-          <p className="fm-report-note">
-            包含起止日期，最多 366 天。按 {timezone} 统计。
-            {query.questionCategory &&
-              ` 当前类型：${categories[query.questionCategory]}。`}
-          </p>
+          <dl className="fm-report-current-scope">
+            <div><dt>监控问题</dt><dd>{monitorName}</dd></div>
+            <div><dt>模型</dt><dd>{query.model ? (modelLabel || catalog?.platforms.find(item => item.id === query.model)?.label || "当前所选模型") : "全部模型"}</dd></div>
+            <div><dt>日期</dt><dd>{from} 至 {to}</dd></div>
+          </dl>
+          <p className="fm-report-note">范围与页面筛选一致。如需调整，请返回页面修改模型或日期。</p>
           {!bounds && (
             <p role="alert" className="fm-report-error">
               请选择有效日期范围，最长 366 天。
@@ -335,36 +221,19 @@ export default function MonitoringReportDialog({
               正在读取问题和模型…
             </p>
           )}
-          {catalog && (
-            <div className="fm-report-selections">
-              <Selection
-                title="监控问题"
-                options={visibleQuestions}
-                selected={questionIds}
-                onChange={setQuestionIds}
-                disabled={downloading || catalogLoading}
-              />
-              <Selection
-                title="AI模型"
-                options={catalog.platforms}
-                selected={platformIds}
-                onChange={setPlatformIds}
-                disabled={downloading || catalogLoading}
-              />
-            </div>
-          )}
+          {catalog && !availability.data?.metrics.answers && <p className="fm-report-note">当前筛选范围没有回答数据。</p>}
           {invalidSelection && (
             <p role="alert" className="fm-report-error">
-              部分选择不在当前日期范围内，请重新选择或点击全选。
+              当前筛选范围没有可导出的匹配数据，请返回页面调整筛选。
             </p>
           )}
-          {error && (
+          {(error || readError) && (
             <div role="alert" className="fm-report-error">
-              {error}
+              {error || readError}
               {!catalog && (
                 <button
                   type="button"
-                  onClick={() => setRetry((value) => value + 1)}
+                  onClick={() => void availability.refetch()}
                 >
                   重试
                 </button>

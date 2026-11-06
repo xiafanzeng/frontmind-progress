@@ -108,7 +108,7 @@ it("quotes once across mutation and parent updates, then requotes when the input
 
   requests[0]!.resolve(response([{ totalAmountTenThousandths: "900" }]));
   await flushUpdates();
-  expect(screen.getByText("按实际成功任务结算")).toBeVisible();
+  expect(screen.getByText("按实际成功采集结算")).toBeVisible();
   expect(requests).toHaveLength(1);
 
   view.rerender(<ModuleWorkspace />);
@@ -121,6 +121,6 @@ it("quotes once across mutation and parent updates, then requotes when the input
   expect(requests[1]!.input.items[0]!.quantity).toBe(2);
   requests[1]!.resolve(response([{ totalAmountTenThousandths: "1800" }]));
   await flushUpdates();
-  expect(screen.getByText("按实际成功任务结算")).toBeVisible();
+  expect(screen.getByText("按实际成功采集结算")).toBeVisible();
   expect(requests).toHaveLength(2);
 });

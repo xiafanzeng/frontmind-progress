@@ -1,3 +1,4 @@
+import MonitoringSelect from "../../components/MonitoringSelect";
 import MonitoringDatePicker from "../../components/MonitoringDatePicker";
 import { shiftCalendarDate } from "./queryState";
 import type { MonitorRun, ProjectSummary } from "../../domain";
@@ -16,6 +17,7 @@ type MonitoringFilterBarProps = {
   summary?: MonitoringSummaryData;
   question?: string;
   hideQuestion?: boolean;
+  hideSubject?: boolean;
   model?: string;
   range: DateRange;
   from: string;
@@ -34,6 +36,7 @@ export default function MonitoringFilterBar({
   summary,
   question,
   hideQuestion = false,
+  hideSubject = false,
   model,
   range,
   from,
@@ -87,7 +90,7 @@ export default function MonitoringFilterBar({
 
   return (
     <section className="fm-filter-bar" aria-label="监控数据筛选">
-      <label>
+      {!hideSubject && <label>
         <span>品牌主体</span>
         <select
           aria-label="品牌主体"
@@ -102,7 +105,7 @@ export default function MonitoringFilterBar({
             </option>
           ))}
         </select>
-      </label>
+      </label>}
       {!hideQuestion && (
         <label>
           <span>问题</span>
@@ -123,22 +126,11 @@ export default function MonitoringFilterBar({
           </select>
         </label>
       )}
-      <label>
+      <div className="fm-model-filter" role="group" aria-label="模型筛选">
         <span>模型</span>
-        <select
-          aria-label="按模型筛选回答"
-          value={model || ""}
-          disabled={!models.length}
-          onChange={(event) => onModelChange(event.target.value || undefined)}
-        >
-          <option value="">全部模型</option>
-          {models.map((item) => (
-            <option key={item.key} value={item.key}>
-              {item.label}
-            </option>
-          ))}
-        </select>
-      </label>
+        <MonitoringSelect label="按模型筛选回答" value={model || ""} onChange={value => onModelChange(value || undefined)}
+          options={[{ value: "", label: "全部模型" }, ...(model && !models.some(item => item.key === model) ? [{ value: model, label: "所选模型（当前无记录）" }] : []), ...models.map(item => ({ value: item.key, label: item.label }))]} />
+      </div>
       <div className="fm-date-filter" role="group" aria-label="日期筛选">
         <span>日期</span>
         <MonitoringDatePicker from={from} to={shiftCalendarDate(to, -1)} range={range} timezone={project.timezone}
