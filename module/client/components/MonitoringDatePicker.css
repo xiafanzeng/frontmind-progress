@@ -27,3 +27,7 @@
 .fm-calendar-popover footer .fm-calendar-confirm { background: #5b2a86; border-color: #5b2a86; color: #fff; }
 .fm-calendar-popover footer .fm-calendar-clear { margin-right: auto; border-color: transparent; padding-inline: 0; }
 .fm-calendar-popover button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Keep primary actions and selected dates readable on hover. */
+.fm-calendar-popover footer .fm-calendar-confirm:not(:disabled):is(:hover,:focus-visible),
+.fm-calendar-popover .fm-calendar-days button[aria-pressed="true"]:not(:disabled):hover { background:#48206b; border-color:#48206b; color:#fff; }

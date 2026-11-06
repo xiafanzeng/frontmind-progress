@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { KEYWORD_CATEGORY_OPTIONS } from "@frontmind/module-ui/keyword-categories";
 import type { MonitorRun, ProjectSummary } from "../../domain";
 import MonitoringFilterBar from "./MonitoringFilterBar";
 import { monitoringDateWindow } from "./queryState";
@@ -18,27 +17,20 @@ type Props = {
 };
 
 /** Shared scope for overview and question detail; the answer selection stays local. */
-export default function MonitoringScopeFilters({ project, query, run, summary, questions, questionsCategoryScoped = false, onChange, navigation }: Props) {
+export default function MonitoringScopeFilters({ project, query, run, summary, onChange, navigation }: Props) {
   const changeFilter = (patch: Partial<MonitoringQueryState>) => onChange({ answerQuestion: undefined, answerId: undefined, fullscreen: false, ...patch });
   const changeDates = (patch: Partial<MonitoringQueryState>) => changeFilter({ runId: undefined, ...patch });
-  const categoryLabel = (key: string) => KEYWORD_CATEGORY_OPTIONS.find(item => item.key === key)?.label.replace(/词$/, "问题");
-  // The server's category-scoped catalog also includes historical questions
-  // whose category differs between versions. Do not filter those a second time.
-  const visibleQuestions = questionsCategoryScoped ? questions : questions.filter(item => !query.questionCategory || item.category === query.questionCategory);
   // Only the overview/detail view tabs opt in; report filters keep their existing layout.
   return <div className={`fm-qa-sticky-scope${navigation ? " fm-monitor-scope" : ""}`}><div className="fm-qa-scope">
     <div className="fm-qa-filters">
-      <MonitoringFilterBar project={project} run={run} summary={summary} hideQuestion question={query.question} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
+      <MonitoringFilterBar project={project} run={run} summary={summary} hideQuestion hideSubject question={query.question} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
         onQuestionChange={(value) => changeFilter({ question: value })}
         onModelChange={(model) => changeFilter({ model })}
         onSubjectChange={(subject) => changeFilter({ subject })}
         onRangeChange={(range) => changeDates(range === "custom" ? { range } : { range, ...monitoringDateWindow(range, project.timezone) })}
         onDateWindowChange={(from, to) => { if (from && to && from < to) changeDates({ range: "custom", from, to }); }} />
-      <div className="fm-qa-question-filters">
-        <label><span>问题分类</span><select aria-label="问题分类" value={query.questionCategory || ""} onChange={(event) => changeFilter({ questionCategory: KEYWORD_CATEGORY_OPTIONS.find((item) => item.key === event.target.value)?.key, question: undefined })}><option value="">全部分类</option>{KEYWORD_CATEGORY_OPTIONS.map((item) => <option key={item.key} value={item.key}>{categoryLabel(item.key)}</option>)}</select></label>
-        <label><span>监控问题</span><select aria-label="按问题筛选回答" value={query.question || ""} onChange={(event) => changeFilter({ question: event.target.value || undefined })}><option value="">全部问题（{visibleQuestions.length}）</option>{visibleQuestions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <button type="button" className="fm-text-button" onClick={() => changeDates({ question: undefined, questionCategory: undefined, model: undefined, subject: "self", range: "7d", ...monitoringDateWindow("7d", project.timezone) })}>重置</button>
-      </div>
+      <button type="button" className="fm-text-button fm-question-reset" onClick={() => changeDates({ model: undefined, subject: "self", range: "7d", ...monitoringDateWindow("7d", project.timezone) })}>重置</button>
+
     </div>
   </div>{navigation}</div>;
 }

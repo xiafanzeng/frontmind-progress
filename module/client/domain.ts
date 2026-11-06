@@ -105,6 +105,8 @@ export type MonitorInput = {
 };
 
 export type MonitorSummary = {
+  /** Selected question context; legacy transport IDs remain unchanged. */
+  question?: { id: string; label: string; category?: MonitoringQuestionCategory | null };
   mainBrand?: string;
   id: string;
   projectId: string;

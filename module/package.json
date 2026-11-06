@@ -23,6 +23,7 @@
     "@trpc/react-query": "11.14.1",
     "lucide-react": "^0.453.0",
     "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-popover": "1.1.15",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "wouter": "^3.3.5",

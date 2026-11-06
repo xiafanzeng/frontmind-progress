@@ -20,7 +20,7 @@ export default function MonitoringRunStatus({ monitor, runs, onView }: {
   const progress = current.expected ? Math.min(100, Math.round(current.completed / current.expected * 100)) : 0;
   return <section className="fm-qa-running" aria-label="当前运行状态" role="status">
     <LoaderCircle size={22} />
-    <div className="fm-qa-running-copy"><strong>{current.status === "running" ? "正在运行监控任务" : runStatusLabel(current.status)}</strong>
+    <div className="fm-qa-running-copy"><strong>{current.status === "running" ? "正在采集回答" : runStatusLabel(current.status)}</strong>
       {!collapsed && <small>{detail ? `${detail.trigger === "manual" ? "手动触发" : "计划触发"} · ${formatDateTime(detail.createdAt)}` : "执行进度"} · 结果持续更新</small>}
     </div>
     {!collapsed && <div className="fm-qa-running-progress"><span>已完成 {current.completed} / {current.expected}<b>{progress}%</b></span><progress max={100} value={progress} aria-label="当前运行完成比例" /></div>}

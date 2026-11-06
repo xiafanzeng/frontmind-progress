@@ -204,6 +204,7 @@ export default function AnswerWorkspace({
   showSentiment = true,
   detailLayout = false,
   selectionHeader,
+  answerControls,
 }: {
   attempts: RunAttempt[];
   selected?: RunAttempt;
@@ -226,6 +227,7 @@ export default function AnswerWorkspace({
   showSentiment?: boolean;
   detailLayout?: boolean;
   selectionHeader?: ReactNode;
+  answerControls?: ReactNode;
 }) {
   const demo = useMonitoringDemo();
   const [activeCitation, setActiveCitation] = useState<number>();
@@ -396,7 +398,7 @@ export default function AnswerWorkspace({
   };
   const toolbar = (insideFullscreen = false) => (
     <header className="fm-answer-toolbar">
-      {detailLayout ? <strong className="fm-qa-reading-title"><Link2 size={14} /> 回答正文与引用信源</strong> : <nav className="fm-answer-navigation" aria-label="回答内容切换">
+      {detailLayout ? (answerControls || <strong className="fm-qa-reading-title"><Link2 size={14} /> 回答正文与引用信源</strong>) : <nav className="fm-answer-navigation" aria-label="回答内容切换">
         <button
           type="button"
           className="fm-secondary-button"
@@ -508,7 +510,6 @@ export default function AnswerWorkspace({
     </header>
   );
   const insights = (<>
-    {selected.brandContext && !selected.brandContext.matchesCurrent && <p className="fm-ov-notice pending">本条回答属于历史品牌“{selected.brandContext.targetBrand || "未配置"}”，下方单条标签按历史对象展示；范围统计按当前品牌计算。</p>}
     <CompactAnswerInsights
       attempt={selected}
       sentiments={sentiments}
@@ -551,6 +552,7 @@ export default function AnswerWorkspace({
     scope={sourceScope}
     onScopeChange={onSourceScopeChange}
     cards={detailLayout || fullscreen}
+    compact
     activeCitation={activeCitation}
     onLocateCitation={locateCitation}
   />;

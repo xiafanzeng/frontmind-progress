@@ -1,4 +1,4 @@
-import { Link2, Check, Plus, ExternalLink, CornerUpLeft } from "lucide-react";
+import { Link2, Check, Plus } from "lucide-react";
 import { useState } from "react";
 import SourceEvidenceList from "@frontmind/module-ui/components/SourceEvidenceList";
 import type { RunAttempt } from "../../domain";
@@ -13,6 +13,7 @@ export default function CitationRail({
   scope,
   onScopeChange,
   cards = false,
+  compact = false,
   activeCitation,
   onLocateCitation,
 }: {
@@ -20,6 +21,7 @@ export default function CitationRail({
   scope: SourceScope;
   onScopeChange: (scope: SourceScope) => void;
   cards?: boolean;
+  compact?: boolean;
   activeCitation?: number;
   onLocateCitation?: (number: number) => void;
 }) {
@@ -111,14 +113,14 @@ export default function CitationRail({
         {rows.map((row) => {
           const url = safeExternalUrl(row.url || undefined);
           const number = typeof row.number === "number" ? row.number : undefined;
-          return <article key={row.id} tabIndex={-1} data-citation-source={number} className={number === activeCitation ? "is-active" : ""}>
-            <header><strong>{row.number}. {row.title}</strong><span>{row.type === "cited" ? "文内引用" : "答案参考"}</span></header>
-            <p>{row.site || "来源未提供"}{row.publishedAt ? ` · ${row.publishedAt}` : ""}</p>
-            {row.excerpt && <blockquote>{row.excerpt}</blockquote>}
-            <footer>{url ? <a href={url} target="_blank" rel="noopener noreferrer">查看来源 <ExternalLink size={12} /></a> : <span>未提供可访问链接</span>}
-              {row.type === "cited" && number !== undefined && <button type="button" onClick={() => onLocateCitation?.(number)}>定位原文 <CornerUpLeft size={12} /></button>}
-              {demo && <button type="button" aria-pressed={demo.trackedSources.has(row.id)} onClick={() => demo.toggleSource(row.id)}>{demo.trackedSources.has(row.id) ? "已追踪 · 演示" : "追踪引用 · 演示"}</button>}
-            </footer>
+          const canLocate = number !== undefined && Boolean(onLocateCitation);
+          return <article key={row.id} tabIndex={canLocate ? 0 : -1} aria-label={canLocate ? `定位引用 ${number}：${row.title}` : undefined}
+            onClick={() => { if (canLocate) onLocateCitation?.(number!); }}
+            onKeyDown={event => { if (event.target === event.currentTarget && canLocate && ["Enter", " "].includes(event.key)) { event.preventDefault(); onLocateCitation?.(number!); } }} data-citation-source={number} className={number === activeCitation ? "is-active" : ""}>
+            <header><strong title={row.title}>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{row.number}. {row.title}</a> : <>{row.number}. {row.title}</>}</strong>{compact && <small className="fm-citation-site" title={row.site || "来源未提供"}>{row.site || "来源未提供"}</small>}{!compact && <span>{row.type === "cited" ? "文内引用" : "答案参考"}</span>}</header>
+            {!compact && <p>{row.site || "来源未提供"}{row.publishedAt ? ` · ${row.publishedAt}` : ""}</p>}
+            {!compact && row.excerpt && <blockquote>{row.excerpt}</blockquote>}
+            {demo && <footer><button type="button" aria-pressed={demo.trackedSources.has(row.id)} onClick={event => { event.stopPropagation(); demo.toggleSource(row.id); }}>{demo.trackedSources.has(row.id) ? "已追踪 · 演示" : "追踪引用 · 演示"}</button></footer>}
           </article>;
         })}
         {!rows.length && <p className="fm-qa-notice">{scope === "cited" ? "本条回答暂无文内引用" : scope === "discovered" ? "本条回答暂无答案参考" : "本条回答暂无引用信源"}</p>}
