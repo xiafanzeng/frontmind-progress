@@ -62,7 +62,7 @@ it("plots no-record dates as labelled zero points and keeps metric switching and
   expect(screen.getByText("2026-11-04")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "有效回答数" }));
   expect(container.querySelector("circle")).toHaveAttribute("aria-label", expect.stringContaining("1 条有效回答"));
-  fireEvent.click(screen.getByRole("button", { name: "目标品牌", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: /^目标品牌$/ }));
   expect(screen.getByText("曲线已全部隐藏，点击上方品牌名称重新显示。")).toBeVisible();
   expect(container.querySelectorAll(".fm-ov-chart circle")).toHaveLength(0);
 });
