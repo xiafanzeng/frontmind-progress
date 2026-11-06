@@ -399,8 +399,8 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   expect(screen.getByRole("checkbox", { name: /豆包/ })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: /DeepSeek/ })).not.toBeChecked();
   expect(within(screen.getByRole("dialog")).getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-13 至 2026-09-14");
-  // jsdom 下 Radix 弹层与大型工作区渲染较慢，放宽本用例超时。
-}, 20000);
+  // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
+}, 60000);
 
 it("accepts valid UUID v8 deep links and retains strict identifier validation", () => {
   expect(answerDetailLoadDecision(doctorId, true, []).shouldFetch).toBe(true);
@@ -498,5 +498,5 @@ it("clears a historical question after its date window no longer contains any ca
     (input.scope || input).questionId === doctorId,
   )).toBe(false);
   expect(screen.queryByText(/实时监控数据读取失败/)).not.toBeInTheDocument();
-  // jsdom 下 Radix 弹层与大型工作区渲染较慢，放宽本用例超时。
-}, 20000);
+  // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
+}, 60000);
