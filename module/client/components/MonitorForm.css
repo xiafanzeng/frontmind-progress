@@ -1453,6 +1453,29 @@
 @container monitor-form (min-width: 1048px) {
   .monitoring-module .monitor-form-v2 .monitor-form-body {
     grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+    align-items: stretch;
+  }
+  /* Left-hand fields determine the row height; model inventory cannot grow it. */
+  .monitoring-module .monitor-form-v2 .monitor-form-right {
+    contain: size;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .monitoring-module .monitor-form-v2 .monitor-form-right > :not(.models-section) { flex: 0 0 auto; }
+  .monitoring-module .monitor-form-v2 .models-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 240px;
+    overflow: hidden;
+  }
+  .monitoring-module .monitor-form-v2 .models-section > :not(.model-grid) { flex-shrink: 0; }
+  .monitoring-module .monitor-form-v2 .models-section > .model-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: 2px;
   }
 }
 
