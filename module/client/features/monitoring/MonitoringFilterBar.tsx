@@ -1,3 +1,5 @@
+import MonitoringDatePicker from "../../components/MonitoringDatePicker";
+import { shiftCalendarDate } from "./queryState";
 import type { MonitorRun, ProjectSummary } from "../../domain";
 import type { MonitoringSummaryData } from "./useMonitoringDataSource";
 import {
@@ -139,36 +141,12 @@ export default function MonitoringFilterBar({
       </label>
       <div className="fm-date-filter" role="group" aria-label="日期筛选">
         <span>日期</span>
-        <select
-          aria-label="选择日期范围"
-          value={range}
-          onChange={(event) => onRangeChange(event.target.value as DateRange)}
-        >
-          <option value="7d">近 7 天</option>
-          <option value="30d">近 30 天</option>
-          <option value="90d">近 90 天</option>
-          <option value="custom">自定义</option>
-        </select>
+        <MonitoringDatePicker from={from} to={shiftCalendarDate(to, -1)} range={range} timezone={project.timezone}
+          onApply={(nextFrom, nextTo, nextRange) => {
+            if (nextRange === "custom") onDateWindowChange(nextFrom, shiftCalendarDate(nextTo, 1));
+            else onRangeChange(nextRange);
+          }} />
       </div>
-      {range === "custom" && (
-        <div className="fm-custom-date-range">
-          <input
-            type="date"
-            aria-label="开始日期"
-            value={from}
-            max={to}
-            onChange={(event) => onDateWindowChange(event.target.value, to)}
-          />
-          <span>至</span>
-          <input
-            type="date"
-            aria-label="结束日期（不含）"
-            value={to}
-            min={from}
-            onChange={(event) => onDateWindowChange(from, event.target.value)}
-          />
-        </div>
-      )}
     </section>
   );
 }

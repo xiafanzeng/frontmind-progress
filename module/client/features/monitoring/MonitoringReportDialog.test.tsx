@@ -57,7 +57,8 @@ it.each([
       />,
     );
     await screen.findByRole("checkbox", { name: /问题乙/ });
-    expect(screen.getByLabelText("结束日期")).toHaveValue(inclusiveTo);
+    // 日期改由弹层日历展示；触发框文案含结束当天，下方请求体断言保持不含当天的 UTC 边界。
+    expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent(`${from} 至 ${inclusiveTo}`);
     expect(JSON.parse(String(fetcher.mock.calls[0][1].body))).toMatchObject({
       from: `${utcFrom}T16:00:00.000Z`,
       to: `${utcTo}T16:00:00.000Z`,

@@ -336,17 +336,22 @@ describe("monitoring answer reading", () => {
     }
     render(<Reader />);
     fireEvent.click(screen.getByRole("button", { name: "全屏查看" }));
-    expect(screen.getByRole("dialog", { name: "全屏问答明细" })).toBeVisible();
+    // 全屏由 Dialog 改为原生 Fullscreen API 的 section 阅读区。
+    expect(screen.getByRole("region", { name: "全屏问答明细" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "下一条回答内容" }));
-    expect(screen.getByRole("dialog")).toHaveTextContent("下一条完整正文");
-    expect(screen.getByRole("dialog")).toHaveTextContent("回答 2 / 2");
+    expect(screen.getByRole("region", { name: "全屏问答明细" })).toHaveTextContent("下一条完整正文");
+    expect(screen.getByRole("region", { name: "全屏问答明细" })).toHaveTextContent("回答 2 / 2");
     fireEvent.click(screen.getByRole("button", { name: "退出全屏" }));
     await waitFor(() =>
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      expect(screen.queryByRole("region", { name: "全屏问答明细" })).not.toBeInTheDocument(),
     );
     expect(screen.getByText("下一条完整正文")).toBeVisible();
-    expect(screen.getByRole("button", { name: "全屏查看" })).toHaveFocus();
-  });
+    // 退出全屏后焦点经 requestAnimationFrame 归还触发按钮。
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "全屏查看" })).toHaveFocus(),
+    );
+    // jsdom 渲染较慢，放宽本用例超时。
+  }, 20000);
   it("crosses the 50-answer boundary exactly once when Next is clicked repeatedly", async () => {
     const all = Array.from({ length: 73 }, (_, index) => ({
       ...attempt,

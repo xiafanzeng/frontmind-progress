@@ -69,6 +69,7 @@ import ProgressReportWorkspace from "./reports/ProgressReportWorkspace";
 import "./monitoring.css";
 import "./reference-ui.css";
 import "@frontmind/module-ui/dashboard/resource-reading-layout.css";
+import "./ui-refinements.css";
 
 type MonitoringWorkspaceProps = {
   analysisOnly?: boolean;
@@ -852,71 +853,26 @@ function MonitoringWorkspaceController({
                 </p>
               </div>
               <div className="fm-monitor-actions" hidden={analysisOnly}>
-                <button
-                  type="button"
-                  className="fm-primary-button fm-report-button"
-                  disabled={!serverData || !query.monitorId}
-                  title={!serverData ? "演示数据不提供报告下载" : undefined}
-                  onClick={() => setReportDialogOpen(true)}
-                >
-                  <Download size={14} /> 下载报告
-                </button>
-                <details className="fm-monitor-more"><summary>更多</summary><div>                <span aria-live="polite">
-                  {refreshing ? "正在刷新" : refreshMessage}
-                </span>
-                <button
-                  type="button"
-                  className="fm-icon-button"
-                  disabled={!canRefresh || refreshing}
-                  onClick={() => void refresh()}
-                  aria-label={refreshing ? "正在刷新当前监控" : "刷新当前监控"}
-                >
-                  <RefreshCw
-                    size={15}
-                    className={refreshing ? "is-spinning" : ""}
-                  />
-                </button>
-                {visibleSelectedMonitor.status !== "draft" &&
-                  visibleSelectedMonitor.scheduleType !== "none" && (
-                    <button
-                      type="button"
-                      className="fm-secondary-button"
-                      onClick={() => onToggle(visibleSelectedMonitor)}
-                    >
-                      {visibleSelectedMonitor.status === "paused" ? (
-                        <Play size={14} />
-                      ) : (
-                        <Pause size={14} />
-                      )}
-                      {visibleSelectedMonitor.status === "paused"
-                        ? "恢复计划"
-                        : "暂停计划"}
-                    </button>
-                  )}
-                <button
-                  type="button"
-                  className="fm-icon-button"
-                  onClick={() => onDelete(visibleSelectedMonitor)}
-                  aria-label="删除当前监控"
-                >
-                  <Trash2 size={15} />
-                </button>
-</div></details>
-                <button
-                  type="button"
-                  className="fm-secondary-button"
-                  onClick={() => onOpenDetails(visibleSelectedMonitor)}
-                >
+                <button type="button" className="fm-secondary-button" onClick={() => onOpenDetails(visibleSelectedMonitor)}>
                   <Edit3 size={14} /> 编辑配置
                 </button>
-                <button
-                  type="button"
-                  className="fm-primary-button"
-                  disabled={visibleSelectedMonitor.lastRun?.status === "running"}
-                  onClick={() => onRun(visibleSelectedMonitor)}
-                >
-                  <Play size={15} /> {visibleSelectedMonitor.lastRun?.status === "running" ? "正在运行" : "立即运行"}
+                <button type="button" className="fm-primary-button fm-report-button" disabled={!serverData || !query.monitorId} title={!serverData ? "演示数据不提供报告下载" : undefined} onClick={() => setReportDialogOpen(true)}>
+                  <Download size={14} /> 下载报告
                 </button>
+                <button type="button" className="fm-primary-button" disabled={visibleSelectedMonitor.lastRun?.status === "running"} onClick={() => onRun(visibleSelectedMonitor)}>
+                  <Play size={14} /> {visibleSelectedMonitor.lastRun?.status === "running" ? "正在运行" : "立即运行"}
+                </button>
+                <button type="button" className="fm-secondary-button" disabled={visibleSelectedMonitor.status === "draft" || visibleSelectedMonitor.scheduleType === "none"} title={visibleSelectedMonitor.scheduleType === "none" ? "手动监控没有自动执行计划" : visibleSelectedMonitor.status === "draft" ? "请先配置执行计划" : undefined} onClick={() => onToggle(visibleSelectedMonitor)}>
+                  {visibleSelectedMonitor.status === "paused" ? <Play size={14} /> : <Pause size={14} />}
+                  {visibleSelectedMonitor.status === "paused" ? "恢复" : "暂停"}
+                </button>
+                <button type="button" className="fm-secondary-button" disabled={!canRefresh || refreshing} onClick={() => void refresh()} aria-label={refreshing ? "正在刷新当前监控" : "刷新当前监控"}>
+                  <RefreshCw size={14} className={refreshing ? "is-spinning" : ""} />刷新
+                </button>
+                <button type="button" className="fm-secondary-button fm-monitor-delete" onClick={() => onDelete(visibleSelectedMonitor)} aria-label="删除当前监控">
+                  <Trash2 size={14} />删除
+                </button>
+                <span className="fm-monitor-refresh-feedback" aria-live="polite">{refreshing ? "正在刷新" : refreshMessage}</span>
               </div>
             </header>
             {!analysisOnly && <MonitoringRunStatus monitor={visibleSelectedMonitor} runs={monitorRuns} onView={detailActive ? undefined : (runId) => updateQuery({ tab: "answers", runId, answerQuestion: undefined, answerId: undefined, fullscreen: false })} />}

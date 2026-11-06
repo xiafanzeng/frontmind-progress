@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 
 import type { ProjectSummary } from "../domain";
+import TimezoneSelect from "./TimezoneSelect";
 
 type ProjectFormProps = {
   initial?: ProjectSummary;
@@ -83,7 +84,7 @@ export default function ProjectForm({
     try {
       Intl.DateTimeFormat(undefined, { timeZone: timezone.trim() }).format();
     } catch {
-      setError("请输入有效的 IANA 时区，例如 Asia/Shanghai。");
+      setError("请选择有效的时区。");
       return;
     }
     await onSubmit({
@@ -124,23 +125,8 @@ export default function ProjectForm({
           <span>
             默认时区 <b>*</b>
           </span>
-          <input
-            list="project-timezones"
-            value={timezone}
-            onChange={(event) => setTimezone(event.target.value)}
-            maxLength={64}
-            required
-            placeholder="Asia/Shanghai"
-          />
-          <datalist id="project-timezones">
-            <option value="Asia/Shanghai" />
-            <option value="Asia/Hong_Kong" />
-            <option value="Asia/Singapore" />
-            <option value="Europe/London" />
-            <option value="America/New_York" />
-            <option value="UTC" />
-          </datalist>
-          <small>请输入标准 IANA 时区；新监控默认继承此值。</small>
+          <TimezoneSelect value={timezone} onChange={setTimezone} label="默认时区" />
+          <small>新监控默认继承此时区。</small>
         </label>
         <label className="field field-wide">
           <span>默认品牌别名</span>

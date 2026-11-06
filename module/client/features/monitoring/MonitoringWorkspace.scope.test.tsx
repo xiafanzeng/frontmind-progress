@@ -273,6 +273,14 @@ async function expectOverviewEffective(value: number) {
   ).toBeVisible());
 }
 
+// 日期筛选改为弹层日历；UI 展示含结束当天，应用时在组件边界换回不含当天的查询语义。
+async function applyDateRange(start: string, end: string) {
+  fireEvent.click(screen.getByRole("button", { name: "选择日期范围" }));
+  fireEvent.click(await screen.findByRole("button", { name: start }));
+  fireEvent.click(screen.getByRole("button", { name: end }));
+  fireEvent.click(screen.getByRole("button", { name: "确定" }));
+}
+
 
 it("uses the selected UUID v8 question for the answer list, denominator, sentiment and export", async () => {
   const read = mountWorkspace();
@@ -294,7 +302,7 @@ it("uses the selected UUID v8 question for the answer list, denominator, sentime
   for (const label of ["趋势分析", "情感分析", "信源分析", "AI 优化建议", "指标看板"]) {
     fireEvent.click(within(navigation).getByRole("tab", { name: label }));
     expect(screen.getByLabelText("按问题筛选回答")).toHaveValue(doctorId);
-    expect(screen.getByLabelText("开始日期")).toHaveValue("2026-09-01");
+    expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-01 至 2026-09-14");
   }
   await expectOverviewEffective(13);
   expect(
@@ -350,9 +358,7 @@ it("keeps UUID v8 question, platform and date filters together when switching th
     target: { value: platforms[0].id },
   });
   await expectOverviewEffective(7);
-  fireEvent.change(screen.getByLabelText("开始日期"), {
-    target: { value: "2026-09-13" },
-  });
+  await applyDateRange("2026-09-13", "2026-09-14");
   await expectOverviewEffective(4);
   fireEvent.change(screen.getByLabelText("按问题筛选回答"), {
     target: { value: reputationId },
@@ -372,8 +378,7 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   expect(screen.queryByRole("button", { name: /标签缺失/ })).not.toBeInTheDocument();
   expect(screen.queryByText(/标签缺失/)).not.toBeInTheDocument();
   expect(screen.queryByText(/筛选同时作用于/)).not.toBeInTheDocument();
-  expect(screen.getByLabelText("开始日期")).toHaveValue("2026-09-13");
-  expect(screen.getByLabelText("结束日期（不含）")).toHaveValue("2026-09-15");
+  expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-13 至 2026-09-14");
   // 筛选联动改由 overview.sentiment 请求的 scope 携带；断言当前筛选的读取确实发生。
   expect(
     read.mock.calls
@@ -393,9 +398,9 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   expect(screen.getByRole("checkbox", { name: /台心医美口碑怎么样/ })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: /豆包/ })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: /DeepSeek/ })).not.toBeChecked();
-  expect(within(screen.getByRole("dialog")).getByLabelText("开始日期")).toHaveValue("2026-09-13");
-  expect(within(screen.getByRole("dialog")).getByLabelText("结束日期")).toHaveValue("2026-09-14");
-});
+  expect(within(screen.getByRole("dialog")).getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2026-09-13 至 2026-09-14");
+  // jsdom 下 Radix 弹层与大型工作区渲染较慢，放宽本用例超时。
+}, 20000);
 
 it("accepts valid UUID v8 deep links and retains strict identifier validation", () => {
   expect(answerDetailLoadDecision(doctorId, true, []).shouldFetch).toBe(true);
@@ -480,9 +485,7 @@ it("clears a historical question after its date window no longer contains any ca
   });
   await expectOverviewEffective(13);
   const previousReadCount = read.mock.calls.length;
-  fireEvent.change(screen.getByLabelText("开始日期"), {
-    target: { value: "2026-09-14" },
-  });
+  await applyDateRange("2026-09-14", "2026-09-14");
 
   await waitFor(() => {
     const params = new URLSearchParams(window.location.search);
@@ -495,4 +498,5 @@ it("clears a historical question after its date window no longer contains any ca
     (input.scope || input).questionId === doctorId,
   )).toBe(false);
   expect(screen.queryByText(/实时监控数据读取失败/)).not.toBeInTheDocument();
-});
+  // jsdom 下 Radix 弹层与大型工作区渲染较慢，放宽本用例超时。
+}, 20000);

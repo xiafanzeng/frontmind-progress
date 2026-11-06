@@ -185,13 +185,14 @@ describe("submitted monitoring run selection", () => {
       onRefresh: vi.fn(async () => {}),
     };
     const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
-    expect(screen.getByLabelText("选择日期范围")).toHaveValue("custom");
+    // 日期筛选改为弹层日历；自定义范围直接展示具体起止日期（含结束当天）。
+    expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("2020-01-01 至 2020-01-31");
     // 概览标签由五个子模块承载；回答视图（含复制）位于「问答明细」标签。
     expect(screen.getByRole("button", { name: "问答明细" })).toBeInTheDocument();
 
     const request = { monitorId, runId: freshRun.id, nonce: 1 };
     rerender(<MonitoringWorkspace {...props} selectionRequest={request} />);
-    expect(screen.getByLabelText("选择日期范围")).toHaveValue("7d");
+    expect(screen.getByRole("button", { name: "选择日期范围" })).toHaveTextContent("近 7 天");
 
     liveState.attempts = [freshAttempt, priorAttempt];
     liveDetail.runAttempts = [freshAttempt];
@@ -233,19 +234,15 @@ it("labels enabled configuration independently of a finished run and only toggle
   const { rerender } = renderWorkspace(<MonitoringWorkspace {...props} />);
   expect(screen.getAllByText("已启用").length).toBeGreaterThan(0);
   expect(screen.queryByText("运行中")).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "暂停计划" }),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "恢复计划" }),
-  ).not.toBeInTheDocument();
+  // 标题操作区改为固定六按钮：手动任务不隐藏暂停/恢复，而是禁用并说明原因。
+  expect(screen.getByRole("button", { name: "暂停" })).toBeDisabled();
   const daily = { ...monitor, scheduleType: "daily" as const };
   rerender(<MonitoringWorkspace {...props} monitors={[daily]} />);
-  fireEvent.click(screen.getByRole("button", { name: "暂停计划" }));
+  fireEvent.click(screen.getByRole("button", { name: "暂停" }));
   expect(props.onToggle).toHaveBeenCalledWith(daily);
   const paused = { ...daily, status: "paused" as const };
   rerender(<MonitoringWorkspace {...props} monitors={[paused]} />);
-  fireEvent.click(screen.getByRole("button", { name: "恢复计划" }));
+  fireEvent.click(screen.getByRole("button", { name: "恢复" }));
   expect(props.onToggle).toHaveBeenLastCalledWith(paused);
 });
 

@@ -21,7 +21,6 @@ import {
   type RunAttempt,
 } from "../../domain";
 import CitationRail from "./CitationRail";
-import AnswerFullscreenDialog from "./AnswerFullscreenDialog";
 import ScreenshotViewerDialog from "./ScreenshotViewerDialog";
 import { clientTypeLabel, type SourceScope } from "./types";
 import { MonitoringMarkdown, MonitoringReasoning } from "./MonitoringMarkdown";
@@ -240,6 +239,48 @@ export default function AnswerWorkspace({
   const fullscreenTriggerRef = useRef<HTMLButtonElement>(null);
   const screenshotTriggerRef = useRef<HTMLButtonElement | null>(null);
   const readingRef = useRef<HTMLElement>(null);
+  const nativeFullscreenRef = useRef(false);
+  const fullscreenRequestRef = useRef(0);
+  const closeFullscreen = () => {
+    fullscreenRequestRef.current += 1;
+    if (readingRef.current && document.fullscreenElement === readingRef.current) void document.exitFullscreen().catch(() => undefined);
+    onFullscreenChange(false);
+    window.requestAnimationFrame(() => fullscreenTriggerRef.current?.focus({ preventScroll: true }));
+  };
+  const toggleFullscreen = () => {
+    if (fullscreen) { closeFullscreen(); return; }
+    const element = readingRef.current;
+    const request = ++fullscreenRequestRef.current;
+    onFullscreenChange(true);
+    // Called directly from the user gesture. Unsupported/denied fullscreen uses
+    // the same full-viewport reader, with an explicit exit control and Esc.
+    if (element?.requestFullscreen) void element.requestFullscreen().then(() => {
+      if (request !== fullscreenRequestRef.current && document.fullscreenElement === element) void document.exitFullscreen();
+    }).catch(() => undefined);
+  };
+  useEffect(() => {
+    const onNativeChange = () => {
+      const active = Boolean(readingRef.current && document.fullscreenElement === readingRef.current);
+      if (nativeFullscreenRef.current && !active) {
+        onFullscreenChange(false);
+        window.requestAnimationFrame(() => fullscreenTriggerRef.current?.focus({ preventScroll: true }));
+      }
+      nativeFullscreenRef.current = active;
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (fullscreen && event.key === "Escape" && !document.fullscreenElement && !event.defaultPrevented && !document.querySelector('[role="dialog"], [data-slot="popover-content"]')) {
+        event.preventDefault(); onFullscreenChange(false);
+        window.requestAnimationFrame(() => fullscreenTriggerRef.current?.focus({ preventScroll: true }));
+      }
+    };
+    document.addEventListener("fullscreenchange", onNativeChange);
+    document.addEventListener("keydown", onEscape);
+    return () => { document.removeEventListener("fullscreenchange", onNativeChange); document.removeEventListener("keydown", onEscape); };
+  }, [fullscreen, onFullscreenChange]);
+  useEffect(() => {
+    if (!fullscreen && readingRef.current && document.fullscreenElement === readingRef.current) void document.exitFullscreen().catch(() => undefined);
+  }, [fullscreen]);
+
   const navigationVersion = useRef(0);
   const requestRef = useRef(false);
   const selectionFence = `${scopeKey}:${selected?.questionId}:${selected?.id}`;
@@ -355,7 +396,7 @@ export default function AnswerWorkspace({
   };
   const toolbar = (insideFullscreen = false) => (
     <header className="fm-answer-toolbar">
-      {detailLayout && !insideFullscreen ? <strong className="fm-qa-reading-title"><Link2 size={14} /> 回答正文与引用信源</strong> : <nav className="fm-answer-navigation" aria-label="回答内容切换">
+      {detailLayout ? <strong className="fm-qa-reading-title"><Link2 size={14} /> 回答正文与引用信源</strong> : <nav className="fm-answer-navigation" aria-label="回答内容切换">
         <button
           type="button"
           className="fm-secondary-button"
@@ -426,6 +467,7 @@ export default function AnswerWorkspace({
             title={demo ? "查看本地演示截图" : tools.screenshotExplanation}
             onClick={(event) => {
               screenshotTriggerRef.current = event.currentTarget;
+              if (fullscreen) closeFullscreen();
               setScreenshotOpen(true);
             }}
           >
@@ -456,27 +498,12 @@ export default function AnswerWorkspace({
             </button>
           )}
         </AnswerToolHint>
-        <AnswerToolHint
-          explanation={
-            insideFullscreen ? "退出全屏阅读" : tools.fullscreenExplanation
-          }
-          disabled={!insideFullscreen && !tools.readable}
-        >
-          <button
-            ref={insideFullscreen ? undefined : fullscreenTriggerRef}
-            type="button"
-            className="fm-tool-button"
-            disabled={!insideFullscreen && !tools.readable}
-            title={
-              insideFullscreen ? "退出全屏阅读" : tools.fullscreenExplanation
-            }
-            aria-label={insideFullscreen ? "退出全屏" : "全屏查看"}
-            onClick={() => onFullscreenChange(!insideFullscreen)}
-          >
-            {insideFullscreen ? <Minimize2 size={14} /> : <Expand size={14} />}
-            {insideFullscreen ? "退出全屏" : "全屏"}
+        {!insideFullscreen && <AnswerToolHint explanation={tools.fullscreenExplanation} disabled={!tools.readable}>
+          <button ref={fullscreenTriggerRef} type="button" className="fm-tool-button"
+            disabled={!tools.readable} title={tools.fullscreenExplanation} aria-label="全屏查看" onClick={toggleFullscreen}>
+            <Expand size={14} />全屏
           </button>
-        </AnswerToolHint>
+        </AnswerToolHint>}
       </div>
     </header>
   );
@@ -523,19 +550,26 @@ export default function AnswerWorkspace({
     attempt={selected}
     scope={sourceScope}
     onScopeChange={onSourceScopeChange}
-    cards={detailLayout}
+    cards={detailLayout || fullscreen}
     activeCitation={activeCitation}
     onLocateCitation={locateCitation}
   />;
-  const ReadingCard = detailLayout ? "div" : Fragment;
+  const ReadingCard = detailLayout || fullscreen ? "div" : Fragment;
   return (
     <section
       ref={readingRef}
-      className={`fm-answer-workspace fm-reading-workspace${detailLayout ? " fm-qa-reading" : ""}`}
+      className={`fm-answer-workspace fm-reading-workspace${detailLayout ? " fm-qa-reading" : ""}${fullscreen ? " fm-reading-fullscreen" : ""}`}
+      aria-label={fullscreen ? "全屏问答明细" : undefined}
     >
-      <ReadingCard {...(detailLayout ? { className: "fm-qa-reading-card" } : {})}>
+      {fullscreen && <header className="fm-fullscreen-header">
+        <strong>问答明细</strong>
+        <button type="button" className="fm-fullscreen-exit" onClick={closeFullscreen} aria-label="退出全屏">
+          <Minimize2 size={16} aria-hidden="true" />退出全屏
+        </button>
+      </header>}
+      <ReadingCard {...(detailLayout || fullscreen ? { className: "fm-qa-reading-card" } : {})}>
       {detailLayout && selectionHeader}
-      {toolbar()}
+      {toolbar(fullscreen)}
       {navigationError && (
         <p className="fm-navigation-error" role="alert">
           {navigationError}
@@ -544,7 +578,7 @@ export default function AnswerWorkspace({
       {!detailLayout && <section className="fm-current-question" aria-label="当前回答问题">
         <strong>{selected.question}</strong>
       </section>}
-      <div className="fm-answer-layout" onClick={detailLayout ? (event) => {
+      <div className="fm-answer-layout" onClick={detailLayout || fullscreen ? (event) => {
         if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
         const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[data-citation-number]") : null;
         const number = Number(target?.dataset.citationNumber);
@@ -552,11 +586,11 @@ export default function AnswerWorkspace({
         event.preventDefault();
         focusSource(number);
       } : undefined}>
-        {detailLayout ? <div className="fm-qa-body-column">
+        {detailLayout || fullscreen ? <div className="fm-qa-body-column">
           <AnswerReader attempt={selected} loading={detailLoading} />
           <p className="fm-qa-citation-feedback" role="status">{citationMessage || "点击正文引用编号可定位信源；点击信源卡片可定位原文。"}</p>
         </div> : <AnswerReader attempt={selected} loading={detailLoading} />}
-        {detailLayout && <div className="fm-qa-evidence-column">
+        {(detailLayout || fullscreen) && <div className="fm-qa-evidence-column">
           {citations}
           <section className="fm-qa-sentiment-card" aria-label="当前回答情感分析">
             {insights}
@@ -565,25 +599,13 @@ export default function AnswerWorkspace({
       </div>
 
       </ReadingCard>
-      {!detailLayout && insights}
-      {!detailLayout && citations}
+      {!detailLayout && !fullscreen && insights}
+      {!detailLayout && !fullscreen && citations}
       <ScreenshotViewerDialog
         open={screenshotOpen}
         attempt={selected}
         onOpenChange={setScreenshotOpen}
         returnFocusRef={screenshotTriggerRef}
-      />
-      <AnswerFullscreenDialog
-        open={fullscreen}
-        attempt={selected}
-        returnFocusRef={fullscreenTriggerRef}
-        onOpenChange={onFullscreenChange}
-        sourceScope={sourceScope}
-        onSourceScopeChange={onSourceScopeChange}
-        toolbar={toolbar(true)}
-        insights={insights}
-        loading={detailLoading}
-        navigationError={navigationError}
       />
     </section>
   );
