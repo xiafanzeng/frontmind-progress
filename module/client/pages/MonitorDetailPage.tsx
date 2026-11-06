@@ -1,3 +1,4 @@
+import MonitoringDatePicker from "../components/MonitoringDatePicker";
 import {
   ArrowLeft,
   CalendarClock,
@@ -262,12 +263,8 @@ export default function MonitorDetailPage({
             </p>
           </div>
           <div className="history-filters">
-            <input
-              type="date"
-              aria-label="按日期筛选"
-              value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
-            />
+            <MonitoringDatePicker single label="按日期筛选" from={dateFilter} to={dateFilter}
+              onApply={(date) => setDateFilter(date)} />
             <select
               aria-label="按状态筛选"
               value={statusFilter}

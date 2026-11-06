@@ -1,6 +1,6 @@
 import { taskGroup, visibleTaskGroups } from "./monitorGroups";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { FolderCog, ListChecks, Plus, SlidersHorizontal, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { FolderCog, ListChecks, Plus, Search, SlidersHorizontal, X, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@frontmind/module-ui/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@frontmind/module-ui/components/ui/tooltip";
 import MonitorGroupManager from "./MonitorGroupManager";
@@ -206,18 +206,17 @@ function SidebarView({
       <button type="button" className="fm-config-collapse" aria-label={paneCollapsed ? "展开监控任务列表" : "折叠监控任务列表"} title={paneCollapsed ? "展开监控任务列表" : "折叠监控任务列表"} aria-expanded={!paneCollapsed} onClick={() => { setFilterOpen(false); setBatchMode(false); setSelection(new Set()); setPaneCollapsed(value => !value); }}>{paneCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}</button>
     </div>
     {outcomeControls}
-    <header><h3>监控任务列表</h3></header>
-    <label className="resource-outcomes-field"><input type="search" aria-label="搜索监控配置" placeholder="搜索任务名称" value={search} onChange={(event) => { setSearch(event.target.value); setSelection(new Set()); }} /></label>
+    <header className="fm-config-list-heading"><h3>监控任务列表</h3><button type="button" className="fm-config-create" aria-label="添加监控任务" onClick={onAdd}><Plus size={15} aria-hidden="true" />添加</button></header>
     <div className="fm-monitor-config-tools" aria-label="监控配置工具">
       <div className="fm-config-tool-buttons">
-        <Tooltip><TooltipTrigger asChild><button type="button" className="fm-config-create" aria-label="添加监控任务" onClick={onAdd}><Plus size={16} aria-hidden="true" />添加监控任务</button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>添加监控任务</TooltipContent></Tooltip>
+        <label className="fm-config-search"><Search size={15} aria-hidden="true" /><input type="search" aria-label="搜索监控配置" placeholder="搜索任务名称" value={search} onChange={(event) => { setSearch(event.target.value); setSelection(new Set()); }} /></label>
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <Tooltip><TooltipTrigger asChild><PopoverTrigger asChild><button type="button" aria-label={`筛选监控${activeFilterCount ? `，${activeFilterCount} 个条件` : ""}`} className={activeFilterCount ? "is-active" : ""}><SlidersHorizontal size={16} aria-hidden="true" />{activeFilterCount > 0 && <small>{activeFilterCount}</small>}</button></PopoverTrigger></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>筛选监控</TooltipContent></Tooltip>
           <PopoverContent className="fm-monitor-config-popover" align="start" sideOffset={8} collisionPadding={12} aria-label="筛选监控配置">
             <fieldset><legend>监控状态</legend><div className="fm-config-radio-options">{([["all", "全部"], ["active", "已启用"], ["paused", "已暂停"], ["draft", "待启动"]] as const).map(([value, label]) => <label key={value}><input type="radio" name={`${controlId}-status`} checked={filters.status === value} onChange={() => { setFilters({ ...filters, status: value }); setSelection(new Set()); }} />{label}</label>)}</div></fieldset>
             <fieldset><legend>执行方式</legend><div className="fm-config-radio-options">{([["all", "全部"], ["manual", "手动"], ["daily", "每日"], ["weekly", "每周"], ["unknown", "未提供"]] as const).map(([value, label]) => <label key={value}><input type="radio" name={`${controlId}-cadence`} checked={filters.cadence === value} onChange={() => { setFilters({ ...filters, cadence: value }); setSelection(new Set()); }} />{label}</label>)}</div></fieldset>
             <fieldset disabled={!organizationReady}><legend>所属分组</legend><div className="fm-config-radio-options is-vertical">{[{ id: "all", name: "全部分组" }, ...groups].map((group) => <label key={group.id}><input type="radio" name={`${controlId}-group-filter`} checked={filters.group === group.id} onChange={() => { setFilters({ ...filters, group: group.id }); setSelection(new Set()); }} />{group.name}</label>)}</div></fieldset>
-            <footer><button type="button" onClick={() => { setFilters(ALL_FILTERS); setSelection(new Set()); }}>清除筛选</button><span>选择后立即生效</span></footer>
+            <footer><button type="button" onClick={() => { setFilters(ALL_FILTERS); setSelection(new Set()); }}>清除筛选</button></footer>
           </PopoverContent>
         </Popover>
         <Tooltip><TooltipTrigger asChild><button type="button" aria-label="管理分组" disabled={organizationBusy} onClick={() => { setManagerOpen(true); setGroupError(""); }}><FolderCog size={17} aria-hidden="true" /></button></TooltipTrigger><TooltipContent className="fm-config-tooltip" sideOffset={6}>管理分组</TooltipContent></Tooltip>

@@ -1,3 +1,4 @@
+import MonitoringDatePicker from "../../components/MonitoringDatePicker";
 import {
   useEffect,
   useMemo,
@@ -314,23 +315,9 @@ export default function MonitoringReportDialog({
         </DialogHeader>
         <div className="fm-report-download-body">
           <div className="fm-report-date-fields">
-            <label>
-              开始日期
-              <input
-                type="date"
-                value={from}
-                disabled={downloading}
-                onChange={(event) => setFrom(event.target.value)}
-              />
-            </label>
-            <label>
-              结束日期
-              <input
-                type="date"
-                value={to}
-                disabled={downloading}
-                onChange={(event) => setTo(event.target.value)}
-              />
+            <label>日期范围
+              <MonitoringDatePicker from={from} to={to} timezone={timezone} maxDays={366} disabled={downloading}
+                onApply={(nextFrom, nextTo) => { setFrom(nextFrom); setTo(nextTo); }} />
             </label>
           </div>
           <p className="fm-report-note">

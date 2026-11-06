@@ -1,3 +1,4 @@
+import TimezoneSelect from "./TimezoneSelect";
 import {
   KEYWORD_CATEGORY_OPTIONS,
   keywordCategoryKey,
@@ -8,7 +9,6 @@ import {
   CameraOff,
   Check,
   ChevronDown,
-  CircleHelp,
   FileUp,
   Globe2,
   ListChecks,
@@ -943,7 +943,7 @@ function MonitorFormFields({
     if (scheduleType !== "none") {
       if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(localTime)) return setError("请选择有效的每日执行时间。");
       if (!isValidTimezone(timezone)) {
-        return setError("请输入有效的 IANA 时区，例如 Asia/Shanghai。");
+        return setError("请选择有效的时区。");
       }
     }
     setError("");
@@ -1588,7 +1588,7 @@ function MonitorFormFields({
               </label>
               {scheduleType !== "none" && <>
                 <label className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></label>
-                <label className="field"><span className="field-label">时区</span><input aria-label="执行时区" value={timezone} onChange={event => setTimezone(event.target.value)} placeholder="Asia/Shanghai" /></label>
+                <label className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" /></label>
               </>}
             </div>
             <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => setScheduleSettingsOpen(false)}>完成设置</button></div>
@@ -1604,7 +1604,6 @@ function MonitorFormFields({
                     为国内与海外网页版模型分别选择执行地区；手机版使用默认地区。
                   </p>
                 </div>
-                <CircleHelp size={15} />
               </div>
               <div className="location-grid">
                 {domesticWebModels.length > 0 && (
@@ -1769,7 +1768,6 @@ function MonitorFormFields({
                 </div>
               </div>
             </div>
-            <p className="model-verification-help">平台及验证状态来自服务端目录；验证记录不代表实时可用，思考能力单独标注。</p>
             <div className="model-grid">
               {models.length === 0 && (
                 <div className="compact-empty">
@@ -1819,10 +1817,6 @@ function MonitorFormFields({
                         {active ? <Check size={12} /> : null}
                       </i>
                     </button>
-                    <p className={`model-verification-status ${model.verified ? "verified" : "pending"}`}>
-                      <span title="由服务端返回的平台验证记录，不代表实时可用性或深度思考能力。">{model.verified ? "平台已有验证记录" : "平台待验证"}</span>
-                      {!model.enabled && <span title="目录标记未启用；当前仍保留选择，提交时由服务端校验。">目录未启用</span>}
-                    </p>
                     <div className="model-platform-settings">
                       <div className="model-capability">
                         <span>思考</span>

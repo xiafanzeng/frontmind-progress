@@ -1,0 +1,151 @@
+/* Scope this round to the progress task rail, scope controls and answer reader. */
+@media (min-width: 761px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel) { grid-template-columns: 268px minmax(0, 1fr); }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-resource-reading.resource-reading-layout.fm-progress-frame:has(> .fm-monitor-config-panel[data-collapsed="true"]) { grid-template-columns: 48px minmax(0, 1fr); }
+}
+.monitoring-module .fm-config-project-picker .module-project-picker { display: flex; flex-direction: column; align-items: stretch; gap: 7px; min-width: 0; width: 100%; }
+.monitoring-module .fm-config-project-picker .module-project-picker > span { display: block; color: #716a80; font-size: 12px; }
+.monitoring-module .fm-config-project-picker .module-project-picker select { display: block; appearance: none; width: 100%; min-width: 0; height: 34px; padding: 6px 32px 6px 10px; border: 1px solid #cdd2da; border-radius: 7px; text-overflow: ellipsis; background-color: #fff; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23716a80' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.monitoring-module .fm-config-project-context, .monitoring-module .fm-config-project-picker { flex: 1; min-width: 0; width: 100%; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-collapse { align-self: flex-end; margin-bottom: 2px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-list-heading h3 { margin: 0; font-size: 15px; }
+.monitoring-module .fm-config-list-heading .fm-config-create { display: inline-flex; align-items: center; gap: 3px; flex: none; min-height: 30px; padding: 4px 7px; border: 0; border-radius: 6px; background: transparent; color: #5b2a86; font: inherit; font-size: 13px; cursor: pointer; }
+.monitoring-module .fm-config-list-heading .fm-config-create:hover { background: #f1eaf7; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons { grid-template-columns: minmax(0, 1fr) repeat(3, 28px); gap: 4px; align-items: center; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-tool-buttons > button { width: 28px; height: 32px; min-height: 32px; padding: 4px; border-color: transparent; border-radius: 5px; font-weight: 400; position: relative; }
+.monitoring-module .fm-config-tool-buttons > button > small { position: absolute; top: -4px; right: -3px; display: grid; place-items: center; width: 14px; height: 14px; border-radius: 7px; background: #5b2a86; color: #fff; font-size: 10px; }
+.monitoring-module .fm-config-search { display: flex; align-items: center; gap: 6px; min-width: 0; height: 32px; margin: 0; padding: 0 7px; border: 1px solid #cdd2da; border-radius: 6px; background: #fff; color: #716a80; }
+.monitoring-module .fm-config-search > svg { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-config-panel .fm-config-search > input { width: 100%; min-width: 0; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: #302638; font: inherit; font-size: 12px; }
+.monitoring-module .fm-config-search:focus-within { outline: 2px solid #b69acb; outline-offset: 1px; }
+.monitoring-module .fm-config-search > input:focus { outline: none; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions > button:is(.fm-primary-button, .fm-secondary-button) { order: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; min-height: 32px; padding: 5px 9px; border-radius: 6px; font-size: 12px; line-height: 20px; white-space: nowrap; box-shadow: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-monitor-delete { color: #a43a47; }
+.monitoring-module .fm-monitor-refresh-feedback { flex-basis: 100%; text-align: right; font-size: 12px; color: #716a80; }
+.monitoring-module .fm-monitor-refresh-feedback:empty { display: none; }
+.monitoring-module .fm-filter-bar .fm-date-filter .fm-date-picker-trigger { width: 100%; min-height: 34px; height: 34px; padding: 6px 10px; border: 1px solid #cdd2da; font-size: 13px; line-height: 20px; }
+.monitoring-module .fm-filter-bar .fm-date-filter .fm-date-picker-trigger > span { font-size: 13px; font-weight: 400; color: #48404c; }
+.fm-report-download-dialog .fm-report-date-fields { grid-template-columns: minmax(0,1fr); }
+.fm-report-download-dialog .fm-report-date-fields .fm-date-picker-trigger { width: 100%; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-repetitions > small { margin-left: auto; text-align: right; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-qa-evidence-column { grid-template-rows: minmax(180px, 1fr) minmax(100px, .28fr); }
+
+/* One mounted reading surface: the browser fullscreen top layer, not a Dialog. */
+.monitoring-module .fm-monitor-detail:has(.fm-reading-fullscreen),
+.monitoring-module .fm-question-detail:has(.fm-reading-fullscreen) { container-type: normal; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-workspace.fm-reading-fullscreen,
+.monitoring-module .fm-reading-workspace.fm-reading-fullscreen { position: fixed; inset: 0; z-index: 110; display: flex; flex-direction: column; width: 100%; height: 100dvh; max-width: none; max-height: none; min-height: 0; margin: 0; padding: clamp(20px, 2.4vw, 36px); border: 0; border-radius: 0; background: #f7f8fc; overflow: hidden; box-shadow: none; }
+.monitoring-module .fm-reading-workspace.fm-reading-fullscreen::backdrop { background: #f7f8fc; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-qa-reading-card,
+.monitoring-module .fm-reading-fullscreen .fm-qa-reading-card { display: flex; flex: 1; flex-direction: column; width: 100%; height: 100%; min-height: 0; border: 1px solid #e7ebef; border-radius: 8px; background: #fff; overflow: hidden; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-reading-card > :not(.fm-answer-layout) { flex: none; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-answer-layout,
+.monitoring-module .fm-reading-fullscreen .fm-answer-layout { display: grid; flex: 1; grid-template-columns: minmax(0, 1fr) minmax(300px, 32%); grid-template-rows: minmax(0, 1fr); gap: 0; height: auto; min-height: 0; max-height: none; overflow: hidden; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-body-column { display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-answer-reader,
+.monitoring-module .fm-reading-fullscreen .fm-answer-reader { display: flex; flex-direction: column; flex: 1; min-height: 0; height: auto; overflow: hidden; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-answer-scroll,
+.monitoring-module .fm-reading-fullscreen .fm-answer-scroll { flex: 1; min-height: 0; height: auto; overflow-y: auto; padding: 24px 28px; scrollbar-width: thin; overscroll-behavior: contain; }
+.monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-qa-evidence-column,
+.monitoring-module .fm-reading-fullscreen .fm-qa-evidence-column { display: grid; grid-template-rows: minmax(160px, 1fr) minmax(100px, .28fr); min-width: 0; min-height: 0; height: 100%; border-left: 1px solid #e7ebef; overflow: hidden; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-source-rail { display: flex; flex-direction: column; min-height: 0; height: 100%; overflow: hidden; padding: 16px; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-source-cards { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; overscroll-behavior: contain; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-sentiment-card { min-height: 0; overflow-y: auto; padding: 14px 16px; border-top: 1px solid #d3e2ef; background: #f7faff; scrollbar-width: thin; overscroll-behavior: contain; }
+.monitoring-module .fm-reading-fullscreen .fm-qa-sentiment-card .fm-answer-insights { padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; }
+@media (max-width: 760px) {
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-workspace.fm-reading-fullscreen,
+  .monitoring-module .fm-reading-workspace.fm-reading-fullscreen { padding: 12px; }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-answer-layout,
+  .monitoring-module .fm-reading-fullscreen .fm-answer-layout { overflow-y: auto; grid-template-columns: minmax(0,1fr); grid-template-rows: max(360px, 55dvh) max(340px, 45dvh); }
+  .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-question-detail .fm-reading-fullscreen .fm-qa-evidence-column,
+  .monitoring-module .fm-reading-fullscreen .fm-qa-evidence-column { border-left: 0; border-top: 1px solid #e7ebef; }
+}
+
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-hero > div:first-child { flex: 1 1 160px; min-width: 0; }
+
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame .fm-monitor-actions[hidden] { display: none; }
+
+/* Shared field appearance for progress screens and their nested form dialogs.
+   Explicit overrides keep legacy, more-specific form rules from drawing a second focus frame. */
+:where(.monitoring-module, .fm-report-download-dialog, .fm-monitor-config-popover) {
+  --fm-control-border: #cdd2da;
+  --fm-control-focus: #9ca3af;
+  --fm-control-text: #48404c;
+  --fm-control-label: #716a80;
+}
+:where(.monitoring-module, .fm-report-download-dialog) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="color"]),
+  select, textarea, .fm-date-picker-trigger, button[role="combobox"]
+) {
+  box-sizing: border-box;
+  border: 1px solid var(--fm-control-border) !important;
+  border-radius: 7px !important;
+  background-color: #fff !important;
+  color: var(--fm-control-text) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 20px !important;
+  padding: 6px 10px !important;
+  box-shadow: none !important;
+}
+:where(.monitoring-module, .fm-report-download-dialog) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="color"]),
+  select, .fm-date-picker-trigger, button[role="combobox"]
+) { height: 34px !important; min-height: 34px !important; }
+:where(.monitoring-module, .fm-report-download-dialog) :where(input, select, textarea, .fm-date-picker-trigger, button[role="combobox"]):not([type="checkbox"]):not([type="radio"]):is(:focus, :focus-visible) {
+  border-color: var(--fm-control-focus) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgb(156 163 175 / 14%) !important;
+}
+:where(.monitoring-module, .fm-report-download-dialog) :is(input, textarea)::placeholder { color: #979ca5 !important; opacity: 1; }
+:where(.monitoring-module, .fm-report-download-dialog) :is(input, select, textarea):disabled { background-color: #f7f8fa !important; color: #9298a2 !important; }
+:where(.monitoring-module, .fm-report-download-dialog) :is(input, select, textarea)[aria-invalid="true"] { border-color: #c15b67 !important; }
+:where(.monitoring-module, .fm-report-download-dialog) select:not([multiple]):not([size]) {
+  appearance: none !important;
+  padding-right: 34px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23716a80' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 14px 14px !important;
+  text-overflow: ellipsis;
+}
+.monitoring-module select + svg.lucide-chevron-down { display: none; }
+:where(.monitoring-module, .fm-report-download-dialog) .fm-date-picker-trigger { padding-right: 12px !important; gap: 10px; }
+:where(.monitoring-module, .fm-report-download-dialog) .fm-date-picker-trigger > svg { width: 14px; height: 14px; stroke-width: 1.6; color: var(--fm-control-label); }
+.monitoring-module :is(.fm-filter-bar > label, .fm-date-filter, .fm-qa-question-filters > label, .field) { gap: 6px !important; }
+.monitoring-module :is(.fm-filter-bar > label > span, .fm-date-filter > span, .fm-qa-question-filters > label > span, .field > .field-label, .field > span:first-child:not(.number-input), .module-project-picker > span) {
+  color: var(--fm-control-label) !important; font-size: 12px !important; line-height: 18px !important; font-weight: 400 !important;
+}
+/* Composite search/number controls own the border; their input never draws a second one. */
+.monitoring-module :is(.fm-config-search, .fm-group-search, .fm-qa-search, .optimized-import-search, .number-input) {
+  box-sizing: border-box; display: flex; align-items: center; min-width: 0; height: 34px; min-height: 34px;
+  border: 1px solid var(--fm-control-border) !important; border-radius: 7px !important;
+  background: #fff !important; padding: 0 10px !important; gap: 6px; outline: none !important; box-shadow: none !important;
+}
+.monitoring-module :is(.fm-config-search, .fm-group-search, .fm-qa-search, .optimized-import-search, .number-input):focus-within {
+  border-color: var(--fm-control-focus) !important; outline: none !important; box-shadow: 0 0 0 2px rgb(156 163 175 / 14%) !important;
+}
+.monitoring-module :is(.fm-config-search, .fm-group-search, .fm-qa-search, .optimized-import-search, .number-input) > input,
+.monitoring-module :is(.fm-config-search, .fm-group-search, .fm-qa-search, .optimized-import-search, .number-input) > input:is(:focus, :focus-visible) {
+  flex: 1; width: 100%; min-width: 0; height: 32px !important; min-height: 0 !important;
+  border: 0 !important; outline: none !important; box-shadow: none !important; border-radius: 0 !important;
+  background: transparent !important; padding: 0 !important;
+}
+.monitoring-module .fm-config-search { padding-inline: 7px !important; }
+.monitoring-module .fm-config-search > input { font-size: 12px !important; }
+.monitoring-module :is(.fm-config-search, .fm-group-search, .fm-qa-search, .optimized-import-search) > svg { flex: none; color: #8b919b; }
+.monitoring-module .number-input-suffix { flex: none; white-space: nowrap; }
+
+.monitoring-module .fm-reading-fullscreen > .fm-fullscreen-header {
+  display: flex; flex: none; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 0 0 12px; margin: 0;
+}
+.monitoring-module .fm-fullscreen-header > strong { color: #48404c; font-size: 14px; font-weight: 600; }
+.monitoring-module .fm-fullscreen-header > .fm-fullscreen-exit {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: none;
+  height: 34px; padding: 6px 14px; border: 1px solid #cdd2da; border-radius: 7px; background: #fff; color: #48404c;
+  font: inherit; font-size: 13px; line-height: 20px; cursor: pointer;
+}
+.monitoring-module .fm-fullscreen-header > .fm-fullscreen-exit:hover { background: #f0edf5; }
+.monitoring-module .fm-fullscreen-header > .fm-fullscreen-exit:focus-visible { outline: 2px solid #9ca3af; outline-offset: 2px; }

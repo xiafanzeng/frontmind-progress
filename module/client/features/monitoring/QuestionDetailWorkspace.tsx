@@ -189,7 +189,7 @@ function QuestionDetail({ query, project, onChange, navigation, data }: Props & 
             if (next) selectAnswer(next);
           }}><ChevronRight size={16} /></button>
         </div>
-        {selected && <small><span className={`fm-attempt-state ${selected.status}`}>{attemptStatusLabel(selected.status)}</span> {formatDateTime(selected.capturedAt)} · 回答 ID：{selected.id}</small>}
+        {selected && <small><span className={`fm-attempt-state ${selected.status}`}>{attemptStatusLabel(selected.status)}</span> {formatDateTime(selected.capturedAt)}</small>}
       </div>
     </div>
   );
