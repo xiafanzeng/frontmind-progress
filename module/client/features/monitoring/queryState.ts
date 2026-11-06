@@ -28,6 +28,12 @@ const projectScopedParameters = [
   "sourceScope",
   "fullscreen",
   "subject",
+  "reportMonitor",
+  "reportMetric",
+  "reportPhase",
+  "reportQuestion",
+  "reportBefore",
+  "reportAfter",
 ] as const;
 
 export function monitoringProjectIdFromSearch(
@@ -289,6 +295,15 @@ export function readMonitoringQuery(
       ? (rawSubject as MonitoringQueryState["subject"])
       : "self";
 
+  // A report batch selection must not leak into another monitor or project.
+  const reportScoped = Boolean(monitorId && params.get("reportMonitor") === monitorId);
+  const reportMetric = params.get("reportMetric");
+  const reportPhase = params.get("reportPhase");
+  const reportRunId = (key: string) => {
+    const id = params.get(key);
+    return reportScoped && id && (isMonitoringUuid(id) || matchingRun(id, monitorId, context.runs)) ? id : undefined;
+  };
+
   return {
     projectId: context.project?.id,
     monitorId,
@@ -309,6 +324,16 @@ export function readMonitoringQuery(
       ? (rawSourceScope as SourceScope)
       : "all",
     fullscreen: params.get("fullscreen") === "1",
+    reportMonitorId: reportScoped ? monitorId : undefined,
+    reportMetric: reportScoped && ["mentionRate", "top3Rate", "averagePosition", "positiveRate"].includes(reportMetric || "")
+      ? reportMetric as MonitoringQueryState["reportMetric"] : undefined,
+    reportPhase: reportScoped && ["before", "compare", "after"].includes(reportPhase || "")
+      ? reportPhase as MonitoringQueryState["reportPhase"] : undefined,
+    // Report history includes retired questions and explicitly pinned out-of-window runs.
+    // Keep this selector independent of the date-scoped monitoring catalog.
+    reportQuestionId: reportScoped ? params.get("reportQuestion")?.slice(0, 300) || undefined : undefined,
+    reportBeforeId: reportScoped && params.get("reportBefore") === "none" ? "none" : reportRunId("reportBefore"),
+    reportAfterId: reportRunId("reportAfter"),
   };
 }
 
@@ -332,6 +357,14 @@ export function monitoringQueryString(state: MonitoringQueryState) {
     params.set("sourceScope", state.sourceScope);
   }
   if (state.fullscreen) params.set("fullscreen", "1");
+  if (state.reportMonitorId && state.reportMonitorId === state.monitorId) {
+    params.set("reportMonitor", state.reportMonitorId);
+    if (state.reportMetric) params.set("reportMetric", state.reportMetric);
+    if (state.reportPhase) params.set("reportPhase", state.reportPhase);
+    if (state.reportQuestionId) params.set("reportQuestion", state.reportQuestionId);
+    if (state.reportBeforeId) params.set("reportBefore", state.reportBeforeId);
+    if (state.reportAfterId) params.set("reportAfter", state.reportAfterId);
+  }
   const value = params.toString();
   return value ? `?${value}` : "";
 }

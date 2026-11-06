@@ -39,6 +39,13 @@ export type MonitoringQueryState = {
   answerId?: string;
   sourceScope: SourceScope;
   fullscreen: boolean;
+  /** Report-only selection; scoped to the monitor and persisted with the module query. */
+  reportMonitorId?: string;
+  reportMetric?: "mentionRate" | "top3Rate" | "averagePosition" | "positiveRate";
+  reportPhase?: "before" | "compare" | "after";
+  reportQuestionId?: string;
+  reportBeforeId?: string;
+  reportAfterId?: string;
 };
 
 export type MonitoringQueryContext = {

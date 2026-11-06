@@ -19,6 +19,6 @@ export function monitoringRunHref(projectId: string | undefined, monitorId: stri
   params.set("run", runId);
   params.set("view", "reports");
   params.set("tab", "overview");
-  for (const key of ["answer", "answerQuestion", "optimizationAnswer", "fullscreen"]) params.delete(key);
+  for (const key of ["answer", "answerQuestion", "optimizationAnswer", "fullscreen", "reportBefore", "reportAfter", "reportMonitor"]) params.delete(key);
   return projectWorkspaceUrl(`/monitoring-system/${encodeURIComponent(monitorId)}/runs/${encodeURIComponent(runId)}?${params}`);
 }
