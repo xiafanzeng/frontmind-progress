@@ -360,7 +360,7 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   await expectOverviewEffective(3);
   fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
   // v3 概览情感分析改由服务端 overview.sentiment 驱动（OverviewSentimentLive），
-  // 环形图以 aria-label 汇报四类判定数量，取代 v2 的 fm-ov-tone-legend 图例。
+  // 环形图只汇报三类已判定数量；保留已判定分母，不展示缺失标签。
   await waitFor(() =>
     expect(document.querySelector(".fm-ov-donut")).not.toBeNull(),
   );
@@ -368,10 +368,12 @@ it("keeps UUID v8 question, platform and date filters together when switching th
     ".fm-ov-donut",
   ) as HTMLElement;
   expect(sentimentDonut.getAttribute("aria-label")).toContain("负面 3");
-  expect(sentimentDonut.getAttribute("aria-label")).toContain("缺失 0");
-  expect(
-    screen.getByText(/2026-09-13 — 2026-09-14/),
-  ).toBeVisible();
+  expect(sentimentDonut.getAttribute("aria-label")).not.toContain("缺失");
+  expect(screen.queryByRole("button", { name: /标签缺失/ })).not.toBeInTheDocument();
+  expect(screen.queryByText(/标签缺失/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/筛选同时作用于/)).not.toBeInTheDocument();
+  expect(screen.getByLabelText("开始日期")).toHaveValue("2026-09-13");
+  expect(screen.getByLabelText("结束日期（不含）")).toHaveValue("2026-09-15");
   // 筛选联动改由 overview.sentiment 请求的 scope 携带；断言当前筛选的读取确实发生。
   expect(
     read.mock.calls

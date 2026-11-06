@@ -10,6 +10,11 @@
   --fm-brand-line: #d9c7e7;
 }
 .user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-topbar__group { color: var(--fm-brand); }
+/* Anchor Progress's heading to its workspace instead of a centered 1280px canvas. */
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-topbar__canvas { max-width: none; margin-inline: 0; padding-inline: 24px; gap: 16px; }
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-topbar__inner { gap: 22px; }
+.user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-topbar__group { flex-shrink: 0; padding-right: 22px; }
+
 .user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button { font-size: 15px; }
 .user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button:is(.is-active, :hover:not(:disabled)) { color: var(--fm-brand); background: var(--fm-brand-soft); }
 .user-brand-dashboard .agent-workbench-shell:is(.module-monitoring, .module-reports):has(.monitoring-module) .agent-workbench-subagents--bar button:focus-visible { outline-color: var(--fm-brand); }
@@ -27,7 +32,7 @@
 .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button:not(.fm-report-button):hover:not(:disabled) { background: var(--fm-brand-hover); }
 .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button.fm-report-button { background: var(--fm-brand-soft); color: var(--fm-brand); border: 1px solid var(--fm-brand-line); box-shadow: none; }
 .monitoring-module .monitoring-reference-page .fm-progress-frame .fm-monitor-actions > .fm-primary-button.fm-report-button:hover:not(:disabled) { background: #e8dcf1; border-color: #b89acd; }
-.monitoring-module .fm-progress-report { background: var(--fm-brand-tint); color: #292333; }
+.monitoring-module .fm-progress-report { background: #fff; color: #24232c; }
 .monitoring-module .fm-progress-report :is(button, a) { color: var(--fm-brand); }
 .monitoring-module .fm-progress-report :is(button, select, a):focus-visible { outline-color: var(--fm-brand); }
 .monitoring-module .fm-progress-report .fm-pr-tabs button { color: #716a80; font-size: 15px; }
@@ -36,5 +41,3 @@
 .monitoring-module .fm-progress-report .fm-pr-value { color: var(--fm-brand); }
 .monitoring-module .fm-progress-report .fm-pr-category .fm-pr-value { color: var(--report-accent); }
 .monitoring-module .fm-progress-report .fm-pr-answer { border-left-color: var(--fm-brand); background: var(--fm-brand-tint); }
-.monitoring-module .fm-report-example { --ex-blue: var(--fm-brand); background: var(--fm-brand-tint); }
-.monitoring-module .fm-report-mode-entry > .fm-secondary-button { border-color: var(--fm-brand-line); color: var(--fm-brand); }

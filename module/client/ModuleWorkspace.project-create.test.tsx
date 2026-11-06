@@ -160,8 +160,7 @@ it("switches the shared shell report tab without creating a run or losing the se
   const view = render(<ModuleWorkspace view="monitoring" />);
   await screen.findByText("已有项目", { selector: '[data-testid="selected-project"]' });
   view.rerender(<ModuleWorkspace view="reports" />);
-  // 新行为：报告视图默认展示真实报告，不再自动进入示例（示例由 ProgressReportWorkspace
-  // 的「查看示例报告」入口打开）。本测试 mock 了 MonitoringPage（直接渲染 renderReport(undefined)），
+  // 报告视图只展示真实报告。本测试 mock 了 MonitoringPage（直接渲染 renderReport(undefined)），
   // 无运行时显示真实空态。
   expect(await screen.findByText("暂无运行报告。完成一次监控后，可在这里查看回答、引用和报告。")).toBeVisible();
   expect(screen.queryByTestId("selected-project")).not.toBeInTheDocument();

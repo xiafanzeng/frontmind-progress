@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { KEYWORD_CATEGORY_OPTIONS } from "@frontmind/module-ui/keyword-categories";
 import type { MonitorRun, ProjectSummary } from "../../domain";
 import MonitoringFilterBar from "./MonitoringFilterBar";
-import { monitoringDateWindow, shiftCalendarDate } from "./queryState";
+import { monitoringDateWindow } from "./queryState";
 import type { MonitoringQueryState } from "./types";
 import type { MonitoringSummaryData } from "./useMonitoringDataSource";
 
@@ -40,6 +40,5 @@ export default function MonitoringScopeFilters({ project, query, run, summary, q
         <button type="button" className="fm-text-button" onClick={() => changeDates({ question: undefined, questionCategory: undefined, model: undefined, subject: "self", range: "7d", ...monitoringDateWindow("7d", project.timezone) })}>重置</button>
       </div>
     </div>
-    <p className="fm-qa-scope-hint">筛选同时作用于概览、问题明细与引用信源 · {query.from} — {shiftCalendarDate(query.to, -1)}</p>
   </div>{navigation}</div>;
 }
