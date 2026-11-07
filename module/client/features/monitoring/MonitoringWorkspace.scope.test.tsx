@@ -294,14 +294,6 @@ async function applyDateRange(start: string, end: string) {
 it("uses the selected UUID v8 question for the answer list, denominator, sentiment and export", async () => {
   const read = mountWorkspace();
   // 逐题改版：问题经左侧问题列表选择（目录来自 monitors.get 聚合，保留原 ID）。
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  const fs = await import("node:fs");
-  fs.writeFileSync("/tmp/scope-probe.json", JSON.stringify({
-    paths: [...new Set(read.mock.calls.map(([path]) => path))],
-    url: window.location.search,
-    asides: Array.from(document.querySelectorAll("aside")).map((a) => a.className.slice(0, 80)),
-    sidebarText: document.querySelector(".fm-question-sidebar")?.textContent?.replace(/\s+/g, " ").slice(0, 200) ?? null,
-  }, null, 1));
   const doctorCard = await screen.findByRole("button", { name: /台心医美有哪些医生/ });
   fireEvent.click(doctorCard);
   await waitFor(() => expect(doctorCard.getAttribute("aria-pressed")).toBe("true"));

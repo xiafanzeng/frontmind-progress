@@ -23,8 +23,8 @@ it("compares the same collection slot and leaves unpaired repetitions missing", 
 });
 
 it("does not align different collection modes", () => {
-  const prior = { ...answer(5), mode: "standard" as const };
-  const next = { ...answer(1), mode: "search" as const };
+  const prior = { ...answer(5), mode: "search" as const };
+  const next = { ...answer(1), mode: "reasoning_search" as const };
   const rows = questionRankComparisons([prior], [next]);
   expect(rows).toHaveLength(2);
   expect(rows.every(row => row.before.value === undefined || row.after.value === undefined)).toBe(true);

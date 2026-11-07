@@ -9,29 +9,22 @@ import type { MonitoringAnalysisData } from "../useMonitoringDataSource";
 import { citationPage } from "../../../../shared/overviewAnalysis";
 import { sourceCategoryLabels, type SourceCategory } from "../../../../shared/sourceClassification";
 
-import douyinLogo from "../../../assets/model-logos/tiktok.svg";
-import rednoteLogo from "../../../assets/model-logos/xiaohongshu.svg";
-import weiboLogo from "../../../assets/model-logos/sinaweibo.svg";
-import baiduLogo from "../../../assets/model-logos/baidu-color.svg";
-import googleLogo from "../../../assets/model-logos/google-color.svg";
-import bingLogo from "../../../assets/model-logos/bing-color.svg";
-import zhihuLogo from "../../../assets/source-logos/zhihu.svg";
-import wechatLogo from "../../../assets/source-logos/wechat.svg";
-import bilibiliLogo from "../../../assets/source-logos/bilibili.svg";
-import taobaoLogo from "../../../assets/source-logos/taobao.svg";
+// SVG assets load through URL references (the module tsconfig has no "*.svg"
+// module declarations; this matches the existing ModelBrandIcon pattern).
+const logoUrl = (path: string) => new URL(path, import.meta.url).href;
 
 // Match host boundaries, never a title or a substring of an unrelated domain.
 const siteLogos = [
-  { hosts: ["douyin.com", "iesdouyin.com", "tiktok.com"], src: douyinLogo },
-  { hosts: ["xiaohongshu.com", "xhslink.com"], src: rednoteLogo },
-  { hosts: ["weibo.com", "weibo.cn"], src: weiboLogo },
-  { hosts: ["baidu.com"], src: baiduLogo },
-  { hosts: ["google.com", "google.com.hk"], src: googleLogo },
-  { hosts: ["bing.com"], src: bingLogo },
-  { hosts: ["zhihu.com"], src: zhihuLogo },
-  { hosts: ["mp.weixin.qq.com", "weixin.qq.com", "wechat.com"], src: wechatLogo },
-  { hosts: ["bilibili.com", "b23.tv"], src: bilibiliLogo },
-  { hosts: ["taobao.com"], src: taobaoLogo },
+  { hosts: ["douyin.com", "iesdouyin.com", "tiktok.com"], src: logoUrl("../../../assets/model-logos/tiktok.svg") },
+  { hosts: ["xiaohongshu.com", "xhslink.com"], src: logoUrl("../../../assets/model-logos/xiaohongshu.svg") },
+  { hosts: ["weibo.com", "weibo.cn"], src: logoUrl("../../../assets/model-logos/sinaweibo.svg") },
+  { hosts: ["baidu.com"], src: logoUrl("../../../assets/model-logos/baidu-color.svg") },
+  { hosts: ["google.com", "google.com.hk"], src: logoUrl("../../../assets/model-logos/google-color.svg") },
+  { hosts: ["bing.com"], src: logoUrl("../../../assets/model-logos/bing-color.svg") },
+  { hosts: ["zhihu.com"], src: logoUrl("../../../assets/source-logos/zhihu.svg") },
+  { hosts: ["mp.weixin.qq.com", "weixin.qq.com", "wechat.com"], src: logoUrl("../../../assets/source-logos/wechat.svg") },
+  { hosts: ["bilibili.com", "b23.tv"], src: logoUrl("../../../assets/source-logos/bilibili.svg") },
+  { hosts: ["taobao.com"], src: logoUrl("../../../assets/source-logos/taobao.svg") },
 ];
 
 function SourceCategoryBadge({ category }: { category: SourceCategory }) {
@@ -90,8 +83,8 @@ export default function OverviewSources({ attempts, citations, sources, to, refr
     enabled: Boolean(scope), staleTime: 60_000, refetchOnWindowFocus: false, retry: false, trpc: { abortOnUnmount: true },
   });
   const chooseDomain = (value: string | null) => { rememberHeight(); setDomain(value); setContentPage(1); setSelectedUrl(null); };
-  const localCitations = attempts.flatMap(attempt => visibleSourcesForAttempt(attempt, "cited")).map(source => ({ ...source, url: source.url || "" }));
-  const localSources = attempts.flatMap(attempt => visibleSourcesForAttempt(attempt, "all")).map(source => ({ ...source, url: source.url || "" }));
+  const localCitations = attempts.flatMap(attempt => visibleSourcesForAttempt(attempt, "cited")).map(source => ({ ...source, url: source.url || "", domain: source.domain || "" }));
+  const localSources = attempts.flatMap(attempt => visibleSourcesForAttempt(attempt, "all")).map(source => ({ ...source, url: source.url || "", domain: source.domain || "" }));
   const citationRows = citations ? citations.contents.map(item => ({ ...item, url: item.url || "",
     siteName: localCitations.find(source => source.domain === item.domain && source.siteName)?.siteName })) : localCitations;
   const localPage = citationPage(citationRows, { domain, domainPage, contentPage }, "已读取的本地记录", brandNames, localSources);

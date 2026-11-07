@@ -37,8 +37,9 @@ export function measureQuestion(attempts: RunAttempt[], metric: QuestionReportMe
   if (!enabled) return { ...base, missing: "当前四项指标以各批次监控主品牌为对象；请切换本品查看，竞品仍可查看原始证据。" };
   if (!answers.length) return { ...base, missing: attempts.length ? "当前问题没有已完成且有正文的回答。" : "所选批次未采集当前问题或模型。" };
   if (metric === "averagePosition") {
-    const ranks = answers.map(answer => ({ label: `${reportPlatformLabel(answer)} · 第 ${answer.repetition} 次`,
-      value: answer.brandMentioned === true && Number.isInteger(answer.mentionPosition) && (answer.mentionPosition ?? 0) > 0 ? answer.mentionPosition : undefined }));
+    const ranks = answers.map(answer => { const position = answer.mentionPosition;
+      return { label: `${reportPlatformLabel(answer)} · 第 ${answer.repetition} 次`,
+      value: answer.brandMentioned === true && typeof position === "number" && Number.isInteger(position) && position > 0 ? position : undefined }; });
     const known = ranks.filter(row => row.value !== undefined).length;
     return { ...base, ranks, value: ranks.length === 1 ? ranks[0]?.value : undefined,
       numerator: known, denominator: ranks.length, basis: ranks.length > 1 ? "按采集记录逐条展示实际排名" : "该回答返回的品牌排名",
