@@ -1,4 +1,5 @@
 import TimezoneSelect from "./TimezoneSelect";
+import InlineSelect from "./InlineSelect";
 import {
   KEYWORD_CATEGORY_OPTIONS,
   keywordCategoryKey,
@@ -260,6 +261,7 @@ function MonitorFormFields({
 }: MonitorFormProps) {
   const [groupChoice, setGroupChoice] = useState<string | null | undefined>(initial?.groupAssignment?.groupId);
   const [scheduleSettingsOpen, setScheduleSettingsOpen] = useState(false);
+  const scheduleSettingsButton = useRef<HTMLButtonElement>(null);
   const submitInFlight = useRef(false);
   const immediateRequest = useRef<{
     fingerprint: string;
@@ -293,6 +295,7 @@ function MonitorFormFields({
   const [questionDraft, setQuestionDraft] = useState("");
   const [brandName, setBrandName] = useState(initial ? initial.mainBrand || "" : project.brandName);
   const [brandAliasText, setBrandAliasText] = useState((initial?.brandAliases ?? project.brandAliases).join("、"));
+  const competitorDisclosure = useRef<HTMLDetailsElement>(null);
   const [questionMode, setQuestionMode] = useState<"list" | "batch">("list");
   const [questionImportError, setQuestionImportError] = useState("");
   const [questionFileLoading, setQuestionFileLoading] = useState(false);
@@ -885,6 +888,11 @@ function MonitorFormFields({
     draftCallback.current?.(JSON.parse(draftFingerprint));
   }, [draftFingerprint]);
 
+  const reportCompetitorError = (message: string) => {
+    if (questionOnly && competitorDisclosure.current) competitorDisclosure.current.open = true;
+    setError(message);
+  };
+
   const validateAndSubmit = async (runNow: boolean) => {
     if (submitting || submitInFlight.current || questionFileLoading) return;
     if (!questionOnly && !name.trim()) return setError("请填写任务名称。");
@@ -923,11 +931,11 @@ function MonitorFormFields({
     if (attemptCount > 500)
       return setError("本次运行超过 500 次上限，请减少问题、模型或重复次数。");
     if (competitors.some((competitor) => !competitor.name.trim()))
-      return setError("请先填写竞品名称，或删除未完成的竞品。");
+      return reportCompetitorError("请先填写竞品名称，或删除未完成的竞品。");
     if (normalizedCompetitors.length > 50)
-      return setError("每个监控最多添加 50 个竞品。");
+      return reportCompetitorError("每个监控最多添加 50 个竞品。");
     if (new Set(competitorNames).size !== competitorNames.length)
-      return setError("竞品名称不能重复，请合并重复竞品后再保存。");
+      return reportCompetitorError("竞品名称不能重复，请合并重复竞品后再保存。");
     const invalidCompetitorIndex = normalizedCompetitors.findIndex(
       (competitor) =>
         competitor.name.length > 120 ||
@@ -935,7 +943,7 @@ function MonitorFormFields({
         competitor.aliases.some((alias) => alias.length > 120),
     );
     if (invalidCompetitorIndex >= 0)
-      return setError(
+      return reportCompetitorError(
         `第 ${invalidCompetitorIndex + 1} 个竞品名称或别名超过限制，请精简后再保存。`,
       );
     if (runNow && quoteLoading)
@@ -971,6 +979,132 @@ function MonitorFormFields({
     }
   };
 
+  const competitorFields = (
+            <div className="monitor-competitor-editor">
+              {competitors.length ? (
+                competitors.map((competitor, index) => (
+                  <div className="monitor-competitor-row" key={index}>
+                    <span className="monitor-competitor-index">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <label>
+                      <span className="sr-only">竞品 {index + 1} 名称</span>
+                      <input
+                        aria-label={`竞品 ${index + 1} 名称`}
+                        value={competitor.name}
+                        maxLength={120}
+                        placeholder="竞品名称"
+                        onChange={(event) =>
+                          updateCompetitor(index, "name", event.target.value)
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span className="sr-only">竞品 {index + 1} 别名</span>
+                      <input
+                        aria-label={`竞品 ${index + 1} 别名`}
+                        value={competitor.aliases}
+                        maxLength={6_000}
+                        placeholder="别名用逗号分隔（可选）"
+                        onChange={(event) =>
+                          updateCompetitor(index, "aliases", event.target.value)
+                        }
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="competitor-remove-button"
+                      aria-label={`删除竞品 ${index + 1}`}
+                      onClick={() => removeCompetitor(index)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="monitor-competitor-empty">
+                  <strong>暂未设置竞品</strong>
+                  <span>可只监控主品牌，也可添加竞品进行对比。</span>
+                </div>
+              )}
+            </div>
+  );
+
+  const scheduleSettingsContent = (
+            <div className="monitor-frequency-dialog"><div className={`frequency-grid${scheduleType === "none" ? " manual" : ""}`}>
+              {scheduleType !== "none" && <div className="field">
+                <span className="field-label">自动监控</span>
+                {questionOnly ? <InlineSelect label="执行频率" value={scheduleType} options={[{ value: "daily", label: "每日" }, { value: "weekly", label: "每周" }]} onChange={value => { const frequency = value as "daily" | "weekly"; setScheduleFrequency(frequency); setScheduleType(frequency); }} /> : <>
+                <select
+                  aria-label="执行频率"
+                  value={scheduleType}
+                  onChange={(event) => {
+                    const value = event.target.value as Exclude<
+                      ScheduleType,
+                      "none"
+                    >;
+                    setScheduleFrequency(value);
+                    setScheduleType(value);
+                  }}
+                >
+                  <option value="daily">每日</option>
+                  <option value="weekly">每周</option>
+                </select>
+                <ChevronDown size={14} aria-hidden="true" />
+                </>}
+              </div>}
+              {scheduleType === "weekly" && (
+                <div className="field">
+                  <span className="field-label">星期</span>
+                  {questionOnly ? <InlineSelect label="执行星期" value={String(weekday)} options={weekdays.map((label, index) => ({ value: String(index + 1), label }))} onChange={value => setWeekday(Number(value))} /> : <>
+                  <select
+                    aria-label="执行星期"
+                    value={weekday}
+                    onChange={(event) => setWeekday(Number(event.target.value))}
+                  >
+                    {weekdays.map((label, index) => (
+                      <option key={label} value={index + 1}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} aria-hidden="true" />
+                  </>}
+                </div>
+              )}
+              <div className="field repetition-field">
+                <span className="field-label">
+                  提问次数 <b aria-hidden="true">*</b>
+                </span>
+                <span className="number-input">
+                  <input
+                    aria-label="重复次数"
+                    type="number"
+                    min={1}
+                    max={10}
+                    required
+                    value={repetitions}
+                    onChange={(event) =>
+                      setRepetitions(
+                        Math.max(
+                          1,
+                          Math.min(10, Number(event.target.value) || 1),
+                        ),
+                      )
+                    }
+                  />
+                  <span className="number-input-suffix">次 / 平台</span>
+                </span>
+              </div>
+              {scheduleType !== "none" && <>
+                <div className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></div>
+                <div className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" inline={questionOnly} /></div>
+              </>}
+            </div>
+            <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => { setScheduleSettingsOpen(false); scheduleSettingsButton.current?.focus({ preventScroll: true }); }}>完成设置</button></div>
+            </div>
+  );
+
   const collectionSettings = <>
           <section className="form-section monitor-frequency-section">
             <div className="section-heading frequency-heading">
@@ -1001,76 +1135,11 @@ function MonitorFormFields({
                 </button>
               </div>
             </div>
-            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>{scheduleType === "none" ? "设置提问次数" : "设置频次"}</button></div>
+            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" ref={scheduleSettingsButton} className="secondary" aria-expanded={questionOnly ? scheduleSettingsOpen : undefined} aria-controls={questionOnly && scheduleSettingsOpen ? `${errorId}-schedule-settings` : undefined} onClick={() => setScheduleSettingsOpen(questionOnly ? !scheduleSettingsOpen : true)}>{scheduleType === "none" ? "设置提问次数" : "设置频次"}</button></div>
+            {questionOnly ? scheduleSettingsOpen && <section id={`${errorId}-schedule-settings`} className="fm-question-frequency-settings" aria-label="监控频次设置">{scheduleSettingsContent}</section> : (
             <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title={scheduleType === "none" ? "提问次数设置" : "监控频次设置"} description={scheduleType === "none" ? "设置手动执行时每个平台的提问次数。" : "设置执行时间和每个平台的提问次数。"}>
-            <div className="monitor-frequency-dialog"><div className={`frequency-grid${scheduleType === "none" ? " manual" : ""}`}>
-              {scheduleType !== "none" && <label className="field">
-                <span className="field-label">自动监控</span>
-                <select
-                  aria-label="执行频率"
-                  value={scheduleType}
-                  onChange={(event) => {
-                    const value = event.target.value as Exclude<
-                      ScheduleType,
-                      "none"
-                    >;
-                    setScheduleFrequency(value);
-                    setScheduleType(value);
-                  }}
-                >
-                  <option value="daily">每日</option>
-                  <option value="weekly">每周</option>
-                </select>
-                <ChevronDown size={14} aria-hidden="true" />
-              </label>}
-              {scheduleType === "weekly" && (
-                <label className="field">
-                  <span className="field-label">星期</span>
-                  <select
-                    aria-label="执行星期"
-                    value={weekday}
-                    onChange={(event) => setWeekday(Number(event.target.value))}
-                  >
-                    {weekdays.map((label, index) => (
-                      <option key={label} value={index + 1}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} aria-hidden="true" />
-                </label>
-              )}
-              <label className="field repetition-field">
-                <span className="field-label">
-                  提问次数 <b aria-hidden="true">*</b>
-                </span>
-                <span className="number-input">
-                  <input
-                    aria-label="重复次数"
-                    type="number"
-                    min={1}
-                    max={10}
-                    required
-                    value={repetitions}
-                    onChange={(event) =>
-                      setRepetitions(
-                        Math.max(
-                          1,
-                          Math.min(10, Number(event.target.value) || 1),
-                        ),
-                      )
-                    }
-                  />
-                  <span className="number-input-suffix">次 / 平台</span>
-                </span>
-              </label>
-              {scheduleType !== "none" && <>
-                <label className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></label>
-                <label className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" /></label>
-              </>}
-            </div>
-            <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => setScheduleSettingsOpen(false)}>完成设置</button></div>
-            </div></Modal>
+              {scheduleSettingsContent}
+            </Modal>)}
           </section>
 
           <div className="monitor-bottom-grid">
@@ -1085,11 +1154,16 @@ function MonitorFormFields({
               </div>
               <div className="location-grid">
                 {domesticWebModels.length > 0 && (
-                  <label className="field">
+                  <div className="field">
                     <span className="field-label">
                       <Globe2 size={14} />
                       国内网页版
                     </span>
+                    {questionOnly ? <InlineSelect label="批量设置国内网页版位置" value={domesticRegion} onChange={value => setRegionForModels(domesticWebModels, value)} options={[
+                      ...(domesticRegion === mixedRegionValue ? [{ value: mixedRegionValue, label: "多个位置", disabled: true }] : []),
+                      { value: "", label: "默认地区" },
+                      ...regions.filter(region => region.scope === "domestic").map(region => ({ value: region.code, label: region.name })),
+                    ]} /> : <>
                     <select
                       aria-label="批量设置国内网页版位置"
                       value={domesticRegion}
@@ -1115,14 +1189,20 @@ function MonitorFormFields({
                         ))}
                     </select>
                     <ChevronDown size={14} />
-                  </label>
+                    </>}
+                  </div>
                 )}
                 {overseasWebModels.length > 0 && (
-                  <label className="field">
+                  <div className="field">
                     <span className="field-label">
                       <MonitorSmartphone size={14} />
                       海外网页版
                     </span>
+                    {questionOnly ? <InlineSelect label="批量设置海外网页版位置" value={overseasRegion} onChange={value => setRegionForModels(overseasWebModels, value)} options={[
+                      ...(overseasRegion === mixedRegionValue ? [{ value: mixedRegionValue, label: "多个位置", disabled: true }] : []),
+                      { value: "", label: "默认地区" },
+                      ...regions.filter(region => region.scope === "overseas").map(region => ({ value: region.code, label: region.name })),
+                    ]} /> : <>
                     <select
                       aria-label="批量设置海外网页版位置"
                       value={overseasRegion}
@@ -1148,7 +1228,8 @@ function MonitorFormFields({
                         ))}
                     </select>
                     <ChevronDown size={14} />
-                  </label>
+                    </>}
+                  </div>
                 )}
                 {hasMobile && (
                   <div className="mobile-location-note">
@@ -1178,6 +1259,23 @@ function MonitorFormFields({
     >
       <div className="monitor-form-body">
         {questionOnly ? <div className="monitor-form-left fm-single-question-definition">
+          <section className="fm-question-brand-fields" aria-label="监控品牌配置">
+            <label className="field">
+              <span className="field-label">监控品牌 <b aria-hidden="true">*</b></span>
+              <input aria-label="监控品牌" required maxLength={120} value={brandName} placeholder="输入这个问题需要监控的品牌" onChange={event => setBrandName(event.target.value)} />
+            </label>
+            <label className="field">
+              <span className="field-label">品牌别名</span>
+              <input aria-label="品牌别名" value={brandAliasText} placeholder="多个别名用「、」或「,」分隔" onChange={event => setBrandAliasText(event.target.value)} />
+            </label>
+          </section>
+          <details ref={competitorDisclosure} className="fm-question-competitors" aria-invalid={competitorsInvalid || undefined} aria-describedby={competitorsInvalid ? errorId : undefined}>
+            <summary><span>竞品配置</span><small>可选{competitors.length > 0 ? ` · ${competitors.length} 个` : ""}</small></summary>
+            <div className="fm-question-competitor-body">
+              {competitorFields}
+              <button type="button" className="competitor-add-button" disabled={competitors.length >= 50} onClick={addCompetitor}><Plus size={13} aria-hidden="true" />添加竞品</button>
+            </div>
+          </details>
           <label className="field"><span className="field-label">监控问题 <b aria-hidden="true">*</b></span><textarea aria-label="监控问题" required aria-required="true" rows={4} maxLength={4000} placeholder="输入你希望持续关注的一个问题" value={questionText} onChange={event => {
             const next = event.target.value;
             const category = questionCategories[questionText.trim()];
@@ -1277,54 +1375,7 @@ function MonitorFormFields({
                 添加竞品
               </button>
             </div>
-            <div className="monitor-competitor-editor">
-              {competitors.length ? (
-                competitors.map((competitor, index) => (
-                  <div className="monitor-competitor-row" key={index}>
-                    <span className="monitor-competitor-index">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <label>
-                      <span className="sr-only">竞品 {index + 1} 名称</span>
-                      <input
-                        aria-label={`竞品 ${index + 1} 名称`}
-                        value={competitor.name}
-                        maxLength={120}
-                        placeholder="竞品名称"
-                        onChange={(event) =>
-                          updateCompetitor(index, "name", event.target.value)
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span className="sr-only">竞品 {index + 1} 别名</span>
-                      <input
-                        aria-label={`竞品 ${index + 1} 别名`}
-                        value={competitor.aliases}
-                        maxLength={6_000}
-                        placeholder="别名用逗号分隔（可选）"
-                        onChange={(event) =>
-                          updateCompetitor(index, "aliases", event.target.value)
-                        }
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="competitor-remove-button"
-                      aria-label={`删除竞品 ${index + 1}`}
-                      onClick={() => removeCompetitor(index)}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="monitor-competitor-empty">
-                  <strong>暂未设置竞品</strong>
-                  <span>可只监控主品牌，也可添加竞品进行对比。</span>
-                </div>
-              )}
-            </div>
+            {competitorFields}
           </section>
           <div
             className={`question-workbench ${demoMode ? "with-demo-keywords" : ""}`}

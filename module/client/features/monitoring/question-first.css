@@ -95,7 +95,7 @@
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row { display:flex; align-items:center; gap:7px; min-width:0; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row > input { flex:none; margin:0; accent-color:#9072ad; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-row .fm-project-question { flex:1; min-width:0; border:1px solid #e0e2e7; background:#fff; }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question strong { width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question strong { width:100%; white-space:normal; overflow-wrap:anywhere; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled { font-size:10px; color:#9b94a3; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled.is-enabled { color:#518b7f; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer { flex:none; padding:12px; border-top:1px solid #eceaf0; }
@@ -212,10 +212,43 @@
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:none; min-height:0; overflow:visible; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:none; overflow:visible; scrollbar-gutter:auto; }
 
-/* Only the single-question editor gains two columns; its left fields set the height. */
+/* In the two-column editor, each column owns its scroll within the dialog body. */
 @container monitor-form (min-width: 1048px) {
-  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { grid-template-columns:minmax(0,45fr) minmax(0,55fr); align-items:stretch; }
-  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-right { contain:size; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
-  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:1 1 0; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
-  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { flex:1 1 0; grid-template-columns:minmax(0,45fr) minmax(0,55fr); grid-template-rows:minmax(0,1fr); align-items:stretch; overflow:hidden; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form :is(.monitor-form-left,.monitor-form-right) { box-sizing:border-box; min-height:0; height:100%; padding-right:8px; overflow-x:hidden; overflow-y:auto; overscroll-behavior-y:contain; scrollbar-gutter:stable; scrollbar-width:thin; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form :is(.monitor-form-left,.monitor-form-right) > * { flex-shrink:0; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:none; min-height:0; overflow:visible; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:none; min-height:0; overflow:visible; scrollbar-gutter:auto; }
+}
+
+/* Keep question rows scrollable while the toolbar and recycle bin stay reachable. */
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { display:flex; flex-direction:column; box-sizing:border-box; height:calc(100dvh - 160px); min-height:0; max-height:calc(100dvh - 160px); overflow-y:auto; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar > :not(.fm-project-question-list) { flex:none; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list { display:flex; flex-direction:column; flex:1 1 0; min-height:64px; max-height:none; overflow-y:auto; scrollbar-width:thin; scrollbar-gutter:stable; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list > * { flex:none; }
+.agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { height:100%; max-height:100%; }
+@media (max-width:760px) {
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar,
+  .agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { height:340px; max-height:340px; }
+  .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar[data-collapsed="true"],
+  .agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar[data-collapsed="true"] { height:48px; max-height:48px; }
+}
+
+.monitoring-module .fm-single-question-form .fm-question-brand-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:0; }
+.monitoring-module .fm-single-question-form .fm-question-competitors + .field { margin-top:22px; }
+.monitoring-module .fm-single-question-form .fm-question-competitors { margin-top:14px; border:1px solid #e2dbe9; border-radius:10px; background:#fff; }
+.monitoring-module .fm-single-question-form .fm-question-competitors > summary { padding:12px 14px; color:#51475e; font-size:13px; cursor:pointer; }
+.monitoring-module .fm-single-question-form .fm-question-competitors > summary::marker { color:var(--fm-brand,#3d1560); }
+.monitoring-module .fm-single-question-form .fm-question-competitors > summary small { margin-left:8px; color:#8a8297; font-size:12px; }
+.monitoring-module .fm-single-question-form .fm-question-competitors > summary:focus-visible { outline:2px solid #a99ab9; outline-offset:-2px; border-radius:10px; }
+.monitoring-module .fm-single-question-form .fm-question-competitor-body { display:grid; gap:12px; padding:0 14px 14px; }
+.monitoring-module .fm-single-question-form .fm-question-competitor-body > .competitor-add-button { justify-self:start; color:var(--fm-brand,#3d1560); border-color:#dcd5e5; }
+.monitoring-module .fm-single-question-form .fm-question-frequency-settings { margin-top:14px; padding:14px; border:1px solid #e2dbe9; border-radius:10px; background:#faf8fc; }
+.monitoring-module .fm-single-question-form .fm-question-frequency-settings .frequency-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:14px; }
+.monitoring-module .fm-single-question-form .fm-question-frequency-settings .frequency-grid.manual { grid-template-columns:minmax(0,1fr); }
+.monitoring-module .fm-single-question-form .fm-question-frequency-settings .monitor-schedule-actions { display:flex; justify-content:flex-end; margin-top:14px; }
+.monitoring-module .fm-single-question-form .fm-question-frequency-settings .primary { border:1px solid var(--fm-brand,#3d1560); border-radius:8px; padding:8px 16px; background:var(--fm-brand,#3d1560); color:#fff; }
+@media (max-width:600px) {
+  .monitoring-module .fm-single-question-form .fm-question-brand-fields { grid-template-columns:minmax(0,1fr); }
+  .monitoring-module .fm-single-question-form .fm-question-frequency-settings .frequency-grid { grid-template-columns:minmax(0,1fr); }
 }

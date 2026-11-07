@@ -119,9 +119,8 @@ export function AnswerReader({
         </div>
       </header>
       <div className="fm-answer-scroll" aria-busy={loading || undefined}>
-        {attempt.brandContext && <p className="fm-ov-notice pending">
-          采集时的评价对象：{attempt.brandContext.targetBrand || "该主体当时未配置"}。
-          {!attempt.brandContext.matchesCurrent && <> 当前监控品牌为{attempt.brandContext.currentBrand}；下方保留历史原始结果，不计入当前品牌指标。</>}
+        {attempt.brandContext && !attempt.brandContext.matchesCurrent && <p className="fm-ov-notice pending">
+          历史回答的品牌与当前配置不同，不计入当前品牌指标。
         </p>}
         {loading && !attempt.answer?.trim() ? (
           <div className="fm-reader-loading" role="status">

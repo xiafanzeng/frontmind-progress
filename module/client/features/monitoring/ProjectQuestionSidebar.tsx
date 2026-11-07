@@ -62,7 +62,7 @@ export default function ProjectQuestionSidebar({ questions, selectedKey, loading
     <div className="fm-question-list-count"><span>{matching.length} 个问题</span>{(count > 0 || search) && <button type="button" className="fm-text-button" onClick={clearFilters}>清除条件</button>}</div>
     {loading && <p className="fm-qa-notice" role="status">正在读取问题…</p>}
     {error && <p className="fm-qa-notice" role="alert">{error}<button type="button" onClick={onRetry}>重试</button></p>}
-    <div className="resource-result-list fm-project-question-list" aria-label="选择监控问题">{matching.map(question => <div key={questionKey(question)} className={`fm-question-row${batch ? " is-batch" : ""}`}>
+    <div className="resource-result-list fm-project-question-list" role="region" tabIndex={0} aria-label="选择监控问题">{matching.map(question => <div key={questionKey(question)} className={`fm-question-row${batch ? " is-batch" : ""}`}>
       {batch && <input type="checkbox" aria-label={`选择问题：${question.label}`} checked={selection.has(questionKey(question))} disabled={deleting} onChange={() => toggle(questionKey(question))} />}
       <button type="button" className="fm-project-question" aria-pressed={selectedKey === questionKey(question)} onClick={() => onSelect(question)}>
         <strong title={question.label}>{question.label}</strong><span className="fm-project-question-meta"><span>{questionCategoryLabel(question.category)}</span><span>{question.monitor.scheduleType === "none" ? "手动" : question.monitor.scheduleType === "weekly" ? "每周自动" : question.monitor.scheduleType === "daily" ? "每日自动" : "待设置"}</span></span><span className={`fm-question-enabled ${question.monitor.status === "active" ? "is-enabled" : ""}`}>{question.monitor.status === "active" ? "开启" : "未开启"}</span>
