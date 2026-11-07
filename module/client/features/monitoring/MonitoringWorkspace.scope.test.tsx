@@ -139,10 +139,11 @@ function mountWorkspace(options: {
           attempts: selected.length,
           answers: selected.length,
           mentionedAnswers: 0,
-          mentionRate: 0,
+          triggeredRuns: selected.length ? 1 : 0, mentionedRuns: 0, top3Runs: 0,
+          mentionRate: selected.length ? 0 : null,
           averagePosition: null,
           top1Rate: null,
-          top3Rate: null,
+          top3Rate: selected.length ? 0 : null,
           top10Rate: null,
           citationCount: 0,
           discoveredSourceCount: 0,
@@ -185,6 +186,10 @@ function mountWorkspace(options: {
         referenceList: [],
         archivedScreenshots: [],
       } satisfies MonitoringAnswerDetail;
+    }
+    if (path === "monitoring.overview.sources") {
+      return { total: 0, domainCount: 0, contentCount: 0, domainPage: 1, contentPage: 1, pageSize: 5,
+        domains: [], contents: [], typeCounts: ["news", "knowledge", "social", "commerce", "official", "other"].map(category => ({ category, count: 0 })), coverage: "测试固定范围" };
     }
     if (path === "monitoring.overview.sentiment") {
       // v3 概览情感分析由服务端 overview.sentiment 聚合（OverviewSentimentLive）。
@@ -302,6 +307,8 @@ it("uses the selected UUID v8 question for the answer list, denominator, sentime
   await waitFor(() => expect(doctorCard.getAttribute("aria-pressed")).toBe("true"));
   await expectOverviewEffective(13);
   const navigation = screen.getByRole("tablist", { name: "概览分析子模块" });
+  expect(screen.getByText("0 次提及 / 1 次采集")).toBeVisible();
+  expect(screen.getByText("0 次 Top3 / 1 次采集")).toBeVisible();
   expect(within(navigation).getAllByRole("tab")).toHaveLength(5);
   for (const label of ["趋势分析", "情感分析", "信源分析", "AI 优化建议", "指标看板"]) {
     fireEvent.click(within(navigation).getByRole("tab", { name: label }));

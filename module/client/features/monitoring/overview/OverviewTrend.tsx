@@ -79,10 +79,7 @@ export default function OverviewTrend({ runs, query, timezone, competitors, curr
         </g>)}
       </svg></div><p className="fm-ov-chart-readout" role="status">{activePoint || "悬停或聚焦查看数值；无采集记录的日期按 0 绘图，不计入真实采集数量"}</p>
       {series.every(item => hidden.includes(item.subject)) && <p role="status" className="fm-ov-note">曲线已全部隐藏，点击上方品牌名称重新显示。</p>}
-      <div className="fm-ov-periods">{series.map((item) => {
-        const values = item.observations.filter((value): value is number => value !== undefined);
-        return <p key={item.subject}><strong>{item.name}</strong> 本周期 {values.length ? `${metricText(metric, Math.min(...values))}–${metricText(metric, Math.max(...values))}` : "—"}<small>每日末次完成运行范围{complete ? "" : " · 已读取部分"}</small></p>;
-      })}</div>
+
 
     </>}</section>
   </section>;

@@ -1,5 +1,5 @@
 import type { CompetitorInput, MonitorRun, RunAttempt } from "../../../domain";
-import { calculateEvidenceMetrics, projectAttemptsForRunSubject } from "../selectors";
+import { calculateSubjectMetrics, projectAttemptsForRunSubject } from "../selectors";
 import { calendarDateRangeToUtc, monitoringQueryString } from "../queryState";
 import type { MonitoringQueryState } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
@@ -22,6 +22,9 @@ export function metricText(key: OverviewMetric, value?: number | null) {
 export function summaryMetrics(summary: MonitoringSummaryData) {
   return {
     effective: summary.metrics.answers,
+    triggeredRuns: summary.metrics.triggeredRuns,
+    mentionedRuns: summary.metrics.mentionedRuns,
+    top3Runs: summary.metrics.top3Runs,
     mentionRate: summary.metrics.mentionRate === null ? undefined : summary.metrics.mentionRate * 100,
     top3Rate: summary.metrics.top3Rate === null ? undefined : summary.metrics.top3Rate * 100,
     averagePosition: summary.metrics.averagePosition ?? undefined,
@@ -81,9 +84,14 @@ export function comparablePeriods(current: MonitorRun[], previous: MonitorRun[],
   return new Set(signatures).size === 1;
 }
 
-export function periodMetrics(runs: MonitorRun[], query: MonitoringQueryState, competitors: CompetitorInput[]) {
-  // Aggregate answer facts once: never average daily or per-run percentages.
-  return calculateEvidenceMetrics(runs.flatMap((run) => subjectAttempts(run, query, competitors)));
+export function periodMetrics(runs: MonitorRun[], query: MonitoringQueryState, competitors: CompetitorInput[], currentBrand?: string) {
+  const attempts = runs.flatMap(run => subjectAttempts(run, query, competitors, currentBrand));
+  const collections = runs.filter(run => run.status === "completed").flatMap(run =>
+    subjectAttempts(run, query, competitors, currentBrand).map(attempt => ({ ...attempt, runId: run.id })));
+  const metrics = calculateSubjectMetrics(attempts, "self", "answers");
+  const counts = calculateSubjectMetrics(collections, "self");
+  return { ...metrics, effective: effectiveAttempts(runs.flatMap(run => scopedAttempts(run, query))).length, mentionRate: counts.mentionRate, top3Rate: counts.top3Rate,
+    triggeredRuns: counts.triggeredRuns, mentionedRuns: counts.mentionedRuns, top3Runs: counts.top3Runs };
 }
 
 export type Suggestion = {

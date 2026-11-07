@@ -162,7 +162,7 @@ export function buildMetricRows(attempts: RunAttempt[]): AttemptMetricRow[] {
 }
 
 export function calculateEvidenceMetrics(attempts: RunAttempt[]) {
-  return calculateSubjectMetrics(attempts, "self");
+  return calculateSubjectMetrics(attempts, "self", "answers");
 }
 
 type NormalizedRanking = {
@@ -306,6 +306,7 @@ export function projectAttemptsForRunSubject(
 export function calculateSubjectMetrics(
   attempts: RunAttempt[],
   subject: MonitoringProjectionSubject,
+  basis: "runs" | "answers" = "runs",
 ) {
   const rows = buildMetricRows(attempts);
   const total = rows.reduce((sum, row) => sum + row.total, 0);
@@ -322,6 +323,19 @@ export function calculateSubjectMetrics(
   const facts = effectiveAttempts.map((attempt) =>
     subjectFact(attempt, subject, competitorNames),
   );
+  const collected = new Map<string, { mentioned: boolean; top3: boolean }>();
+  effectiveAttempts.forEach((attempt, index) => {
+    // periodMetrics supplies completed runs and their IDs; never invent a missing run ID.
+    if (!attempt.runId) return;
+    const fact = facts[index]!;
+    const run = collected.get(attempt.runId) || { mentioned: false, top3: false };
+    run.mentioned ||= fact.mentioned;
+    run.top3 ||= fact.mentioned && typeof fact.position === "number" && fact.position > 0 && fact.position <= 3;
+    collected.set(attempt.runId, run);
+  });
+  const triggeredRuns = collected.size;
+  const mentionedRuns = [...collected.values()].filter(run => run.mentioned).length;
+  const top3Runs = [...collected.values()].filter(run => run.top3).length;
   const mentioned = facts.filter((fact) => fact.mentioned);
   const positions = mentioned
     .map((fact) => fact.position)
@@ -341,11 +355,12 @@ export function calculateSubjectMetrics(
     total,
     completed,
     effective: effectiveAttempts.length,
-    mentionRate: effectiveAttempts.length
-      ? (mentioned.length / effectiveAttempts.length) * 100
-      : undefined,
+    triggeredRuns, mentionedRuns, top3Runs,
+    mentionRate: basis === "runs"
+      ? (triggeredRuns ? mentionedRuns / triggeredRuns * 100 : undefined)
+      : (effectiveAttempts.length ? mentioned.length / effectiveAttempts.length * 100 : undefined),
     top1Rate: rateAt(1),
-    top3Rate: rateAt(3),
+    top3Rate: basis === "runs" ? (triggeredRuns ? top3Runs / triggeredRuns * 100 : undefined) : rateAt(3),
     top10Rate: rateAt(10),
     averagePosition: positions.length
       ? positions.reduce((sum, value) => sum + value, 0) / positions.length
@@ -373,7 +388,7 @@ export function buildCompetitorRows(
   competitors: CompetitorInput[],
 ): CompetitorMetricRow[] {
   return competitors.map((competitor) => {
-    const metrics = calculateSubjectMetrics(attempts, competitor);
+    const metrics = calculateSubjectMetrics(attempts, competitor, "answers");
     const effective = attempts.filter(
       (attempt) => attempt.status === "completed" && attempt.answer?.trim(),
     );

@@ -45,7 +45,8 @@ const summary = {
   },
   metrics: {
     runs: 1, attempts: 5, answers: 5, mentionedAnswers: 0, mentionRate: 0,
-    averagePosition: null, top1Rate: null, top3Rate: null, top10Rate: null,
+    triggeredRuns: 1, mentionedRuns: 0, top3Runs: 0,
+    averagePosition: null, top1Rate: null, top3Rate: 0, top10Rate: null,
     citationCount: 0, discoveredSourceCount: 0, uniqueDomainCount: 0,
     sentiments: { positive: 0, negative: 0, neutral: 0, unknown: 0 },
   },

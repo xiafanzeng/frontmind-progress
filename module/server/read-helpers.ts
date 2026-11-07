@@ -432,6 +432,7 @@ export function monitoringMetrics(
   facts: readonly MonitoringFact[],
   evidence: MonitoringEvidence,
   subject: ResolvedMonitoringSubject,
+  basis: "answers" | "runs" = "answers",
 ) {
   const answers = facts.filter(isEffectiveMonitoringAnswer);
   const eligibleAnswers = answers.filter(fact => monitoringSubjectEligible(fact, subject));
@@ -463,19 +464,34 @@ export function monitoringMetrics(
     sentiments[tone === "positive" || tone === "neutral" || tone === "negative" ? tone : "unknown"]++;
   }
   const positionRates = monitoringPositionRates(positions, eligibleAnswers.length);
+  const collected = new Map<string, { mentioned: boolean; top3: boolean }>();
+  for (const fact of eligibleAnswers) {
+    if (fact.runStatus !== "completed") continue;
+    const contribution = monitoringSubjectContribution(fact, subject);
+    const run = collected.get(fact.runId) || { mentioned: false, top3: false };
+    run.mentioned ||= contribution.mentioned;
+    run.top3 ||= contribution.position !== null && contribution.position > 0 && contribution.position <= 3;
+    collected.set(fact.runId, run);
+  }
+  const triggeredRuns = collected.size;
+  const mentionedRuns = [...collected.values()].filter(run => run.mentioned).length;
+  const top3Runs = [...collected.values()].filter(run => run.top3).length;
   return {
     runs: new Set(facts.map((fact) => fact.runId)).size,
     attempts: facts.length,
     answers: answers.length,
     mentionedAnswers,
-    mentionRate:
-      eligibleAnswers.length === 0 ? null : mentionedAnswers / eligibleAnswers.length,
+    triggeredRuns, mentionedRuns, top3Runs,
+    mentionRate: basis === "runs"
+      ? (triggeredRuns ? mentionedRuns / triggeredRuns : null)
+      : (eligibleAnswers.length ? mentionedAnswers / eligibleAnswers.length : null),
     averagePosition:
       positions.length === 0
         ? null
         : positions.reduce((sum, position) => sum + position, 0) /
           positions.length,
     ...positionRates,
+    top3Rate: basis === "runs" ? (triggeredRuns ? top3Runs / triggeredRuns : null) : positionRates.top3Rate,
     citationCount,
     discoveredSourceCount,
     uniqueDomainCount: domains.size,
@@ -626,6 +642,8 @@ export type MonitoringEvidence = {
 export type MonitoringFact = {
   /** Explicit on current-scope reads; absent on immutable single-run reads. */
   selfBrandMatches?: boolean;
+  /** Supplied by scope reads; missing run state cannot count as a completed collection. */
+  runStatus?: string;
   attemptId: string;
   runId: string;
   runCreatedAt: Date;

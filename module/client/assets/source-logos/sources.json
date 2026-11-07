@@ -1,0 +1,10 @@
+{
+  "sources": {
+    "zhihu.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/zhihu.svg",
+    "wechat.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/wechat.svg",
+    "bilibili.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/bilibili.svg",
+    "taobao.svg": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/taobao.svg"
+  },
+  "license": "../model-logos/LICENSE-SimpleIcons.txt",
+  "note": "Brand artwork identifies sources. Trademarks belong to their owners. Retrieved 2026-11-07. Other logos reuse ../model-logos assets and their source/license records."
+}
