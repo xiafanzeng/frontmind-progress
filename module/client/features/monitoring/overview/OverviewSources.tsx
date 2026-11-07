@@ -9,22 +9,21 @@ import type { MonitoringAnalysisData } from "../useMonitoringDataSource";
 import { citationPage } from "../../../../shared/overviewAnalysis";
 import { sourceCategoryLabels, type SourceCategory } from "../../../../shared/sourceClassification";
 
-// SVG assets load through URL references (the module tsconfig has no "*.svg"
-// module declarations; this matches the existing ModelBrandIcon pattern).
-const logoUrl = (path: string) => new URL(path, import.meta.url).href;
-
 // Match host boundaries, never a title or a substring of an unrelated domain.
+// new URL() must receive a string literal per site: Vite only rewrites these
+// statically analyzable references into hashed build assets. A shared helper
+// with a runtime parameter compiles into a raw path that 404s in production.
 const siteLogos = [
-  { hosts: ["douyin.com", "iesdouyin.com", "tiktok.com"], src: logoUrl("../../../assets/model-logos/tiktok.svg") },
-  { hosts: ["xiaohongshu.com", "xhslink.com"], src: logoUrl("../../../assets/model-logos/xiaohongshu.svg") },
-  { hosts: ["weibo.com", "weibo.cn"], src: logoUrl("../../../assets/model-logos/sinaweibo.svg") },
-  { hosts: ["baidu.com"], src: logoUrl("../../../assets/model-logos/baidu-color.svg") },
-  { hosts: ["google.com", "google.com.hk"], src: logoUrl("../../../assets/model-logos/google-color.svg") },
-  { hosts: ["bing.com"], src: logoUrl("../../../assets/model-logos/bing-color.svg") },
-  { hosts: ["zhihu.com"], src: logoUrl("../../../assets/source-logos/zhihu.svg") },
-  { hosts: ["mp.weixin.qq.com", "weixin.qq.com", "wechat.com"], src: logoUrl("../../../assets/source-logos/wechat.svg") },
-  { hosts: ["bilibili.com", "b23.tv"], src: logoUrl("../../../assets/source-logos/bilibili.svg") },
-  { hosts: ["taobao.com"], src: logoUrl("../../../assets/source-logos/taobao.svg") },
+  { hosts: ["douyin.com", "iesdouyin.com", "tiktok.com"], src: new URL("../../../assets/model-logos/tiktok.svg", import.meta.url).href },
+  { hosts: ["xiaohongshu.com", "xhslink.com"], src: new URL("../../../assets/model-logos/xiaohongshu.svg", import.meta.url).href },
+  { hosts: ["weibo.com", "weibo.cn"], src: new URL("../../../assets/model-logos/sinaweibo.svg", import.meta.url).href },
+  { hosts: ["baidu.com"], src: new URL("../../../assets/model-logos/baidu-color.svg", import.meta.url).href },
+  { hosts: ["google.com", "google.com.hk"], src: new URL("../../../assets/model-logos/google-color.svg", import.meta.url).href },
+  { hosts: ["bing.com"], src: new URL("../../../assets/model-logos/bing-color.svg", import.meta.url).href },
+  { hosts: ["zhihu.com"], src: new URL("../../../assets/source-logos/zhihu.svg", import.meta.url).href },
+  { hosts: ["mp.weixin.qq.com", "weixin.qq.com", "wechat.com"], src: new URL("../../../assets/source-logos/wechat.svg", import.meta.url).href },
+  { hosts: ["bilibili.com", "b23.tv"], src: new URL("../../../assets/source-logos/bilibili.svg", import.meta.url).href },
+  { hosts: ["taobao.com"], src: new URL("../../../assets/source-logos/taobao.svg", import.meta.url).href },
 ];
 
 function SourceCategoryBadge({ category }: { category: SourceCategory }) {

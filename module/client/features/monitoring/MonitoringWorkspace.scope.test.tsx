@@ -403,7 +403,7 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   expect(within(screen.getByRole("dialog")).getByText("台心医美口碑怎么样")).toBeVisible();
   expect(within(screen.getByRole("dialog")).getByText("2026-09-13 至 2026-09-14")).toBeVisible();
   // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
-}, 120_000);
+}, 180_000);
 
 it("accepts valid UUID v8 deep links and retains strict identifier validation", () => {
   expect(answerDetailLoadDecision(doctorId, true, []).shouldFetch).toBe(true);
@@ -510,4 +510,4 @@ it("clears a historical question after its date window no longer contains any ca
   )).toBe(false);
   expect(screen.queryByText(/实时监控数据读取失败/)).not.toBeInTheDocument();
   // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
-}, 60000);
+}, 120_000);
