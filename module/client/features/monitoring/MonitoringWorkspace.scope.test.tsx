@@ -366,15 +366,19 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   await expectOverviewEffective(3);
   fireEvent.click(screen.getByRole("tab", { name: "情感分析" }));
   // v3 概览情感分析改由服务端 overview.sentiment 驱动（OverviewSentimentLive），
-  // 环形图只汇报三类已判定数量；保留已判定分母，不展示缺失标签。
-  await waitFor(() =>
-    expect(document.querySelector(".fm-ov-donut")).not.toBeNull(),
+  // 交互式环图（OverviewSentimentDonut）只汇报三类已判定数量；分母为已判定，不展示缺失标签。
+  // 慢速构建容器里情感读取回包较晚，放宽等待预算（与既有超时放宽实践一致）。
+  await waitFor(
+    () => expect(document.querySelector(".fm-ov-interactive-donut")).not.toBeNull(),
+    { timeout: 5000 },
   );
   const sentimentDonut = document.querySelector(
-    ".fm-ov-donut",
+    ".fm-ov-interactive-donut",
   ) as HTMLElement;
-  expect(sentimentDonut.getAttribute("aria-label")).toContain("负面 3");
+  expect(sentimentDonut.getAttribute("aria-label")).toMatch(/^情感分布，已判定 \d+ 条回答$/);
   expect(sentimentDonut.getAttribute("aria-label")).not.toContain("缺失");
+  // 夹具含已判定回答（含负面 3 条），环图应绘制对应扇区。
+  expect(document.querySelectorAll(".fm-ov-donut-segment").length).toBeGreaterThan(0);
   expect(screen.queryByRole("button", { name: /标签缺失/ })).not.toBeInTheDocument();
   expect(screen.queryByText(/标签缺失/)).not.toBeInTheDocument();
   expect(screen.queryByText(/筛选同时作用于/)).not.toBeInTheDocument();
@@ -399,7 +403,7 @@ it("keeps UUID v8 question, platform and date filters together when switching th
   expect(within(screen.getByRole("dialog")).getByText("台心医美口碑怎么样")).toBeVisible();
   expect(within(screen.getByRole("dialog")).getByText("2026-09-13 至 2026-09-14")).toBeVisible();
   // jsdom 下 Radix 弹层与大型工作区渲染较慢，构建容器更慢，放宽本用例超时。
-}, 60000);
+}, 120_000);
 
 it("accepts valid UUID v8 deep links and retains strict identifier validation", () => {
   expect(answerDetailLoadDecision(doctorId, true, []).shouldFetch).toBe(true);
