@@ -8,7 +8,7 @@ type MarkdownNode = {
   value?: string;
   url?: string;
   title?: string | null;
-  data?: { hProperties?: Record<string, unknown> };
+  data?: { hName?: string; hProperties?: Record<string, unknown> };
   children?: MarkdownNode[];
 };
 
@@ -23,6 +23,43 @@ const excludedCitationNodes = new Set([
   "link",
   "linkReference",
 ]);
+
+export type MonitoringHighlight = { text: string; kind: "brand" | "keyword" };
+
+// Opt-in for progress reports. Transform text nodes, never HTML, URLs or code.
+function highlightPlugin(highlights: MonitoringHighlight[]) {
+  const terms = new Map<string, MonitoringHighlight>();
+  for (const item of highlights) {
+    const text = item.text.trim();
+    if (text && text.length <= 200 && !terms.has(text.toLocaleLowerCase())) terms.set(text.toLocaleLowerCase(), { ...item, text });
+    if (terms.size >= 100) break;
+  }
+  const alternatives = [...terms.values()].sort((a, b) => b.text.length - a.text.length)
+    .map(item => item.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const pattern = alternatives.length ? new RegExp(alternatives.join("|"), "giu") : undefined;
+  return () => (tree: MarkdownNode) => {
+    if (!pattern) return;
+    const visit = (node: MarkdownNode) => {
+      if (excludedCitationNodes.has(node.type) || node.type === "reportHighlight" || !node.children) return;
+      node.children = node.children.flatMap(child => {
+        if (child.type !== "text" || !child.value) { visit(child); return [child]; }
+        const result: MarkdownNode[] = [];
+        let cursor = 0;
+        pattern.lastIndex = 0;
+        for (const match of child.value.matchAll(pattern)) {
+          const index = match.index ?? 0;
+          if (index > cursor) result.push({ type: "text", value: child.value.slice(cursor, index) });
+          const kind = terms.get(match[0].toLocaleLowerCase())?.kind || "keyword";
+          result.push({ type: "reportHighlight", data: { hName: "mark", hProperties: { className: [`fm-qpr-highlight-${kind}`] } }, children: [{ type: "text", value: match[0] }] });
+          cursor = index + match[0].length;
+        }
+        if (cursor < child.value.length) result.push({ type: "text", value: child.value.slice(cursor) });
+        return result.length ? result : [child];
+      });
+    };
+    visit(tree);
+  };
+}
 
 function sourceForCitation(attempt: RunAttempt, number: number) {
   return Number.isSafeInteger(number) && number > 0
@@ -126,10 +163,12 @@ export function MonitoringMarkdown({
   markdown,
   attempt,
   className,
+  highlights,
 }: {
   markdown?: string;
   attempt?: RunAttempt;
   className?: string;
+  highlights?: MonitoringHighlight[];
 }) {
   const content = markdown?.trim();
   if (!content)
@@ -141,7 +180,7 @@ export function MonitoringMarkdown({
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, citationPlugin(attempt)]}
+        remarkPlugins={[remarkGfm, citationPlugin(attempt), ...(highlights?.length ? [highlightPlugin(highlights)] : [])]}
         components={components}
         skipHtml
         urlTransform={(url) => safeExternalUrl(url) ?? ""}
