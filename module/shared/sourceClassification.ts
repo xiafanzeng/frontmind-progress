@@ -9,7 +9,10 @@ const seeds: Record<Exclude<SourceCategory, "other">, readonly string[]> = {
   knowledge: ["zhihu.com", "wikipedia.org", "wikipedia.com", "baike.baidu.com", "baike.com", "csdn.net", "csdn.com", "stackoverflow.com", "quora.com", "juejin.cn"],
   social: ["weibo.com", "weibo.cn", "xiaohongshu.com", "xhslink.com", "douban.com", "bilibili.com", "b23.tv", "reddit.com", "douyin.com", "tiktok.com", "tieba.baidu.com", "x.com", "twitter.com"],
   commerce: ["taobao.com", "tmall.com", "jd.com", "1688.com", "amazon.com", "amazon.cn", "amazon.co.uk", "amazon.co.jp", "pinduoduo.com", "yangkeduo.com", "suning.com", "ebay.com"],
-  official: ["cuhk.edu.cn", "cuhk.edu.hk", "cuhk.hk", "cscse.edu.cn", "longdameishi.com"],
+  // University and government hosts are classified by the .edu/.gov/.ac suffix
+  // rule below; do NOT add literal campus domains here — the Core production
+  // bundle audit rejects certain legacy tenant fixtures by name.
+  official: ["cscse.edu.cn", "longdameishi.com"],
 };
 export function sourceHostname(value: string): string {
   const input = value.trim().toLowerCase();
