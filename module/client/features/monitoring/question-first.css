@@ -42,7 +42,7 @@
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-reading .fm-qa-source-cards article { padding:12px 13px; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article > p { margin:6px 0; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article > footer { margin-top:6px; }
-/* Single-column question editor; shared form fields keep their existing behavior. */
+/* Question editor defaults to one column below the form-width breakpoint. */
 .monitoring-module .modal-wide .monitor-form-v2.fm-single-question-form .monitor-form-body { grid-template-columns:minmax(0,1fr); }
 .monitoring-module .modal-wide .fm-single-question-form .fm-single-question-definition { padding:0; background:#fff; border-right:0; }
 .monitoring-module .modal-wide .fm-single-question-form .monitor-form-right { padding:0; }
@@ -159,9 +159,9 @@
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards article strong a { white-space:nowrap; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-qa-source-cards .fm-citation-site { display:block; flex:0 0 auto; max-width:36%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#92939d; font-size:10px; line-height:18px; }
 
-.monitoring-module .modal-card.modal-wide.fm-question-editor:has(.fm-single-question-form) { width:min(760px,calc(100vw - 40px)); height:min(900px,calc(100dvh - 48px)); max-height:calc(100dvh - 48px); display:flex; flex-direction:column; overflow:clip; }
+.monitoring-module .modal-card.modal-wide.fm-question-editor:has(.fm-single-question-form) { width:min(1200px,calc(100vw - 40px)); height:min(900px,calc(100dvh - 48px)); max-height:calc(100dvh - 48px); display:flex; flex-direction:column; overflow:clip; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form { display:flex; flex-direction:column; flex:1; min-height:0; overflow:clip; }
-.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { display:flex; flex-direction:column; gap:24px; min-height:0; padding:20px 24px; overflow-y:auto; }
+.monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; gap:24px; min-height:0; padding:20px 24px; overflow-y:auto; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form :is(.monitor-form-left,.monitor-form-right) { width:100%; flex:none; padding:0; border:0; background:white; overflow:visible; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .fm-question-category-picker { width:100%; margin:4px 0 0; gap:6px; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .fm-question-category-picker label { padding:9px 12px; }
@@ -207,8 +207,15 @@
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-select-trigger,.fm-date-picker-trigger) { font-family:inherit; font-size:13px!important; font-weight:400!important; font-style:normal; line-height:20px!important; letter-spacing:normal; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-filter-bar :is(.fm-select-trigger,.fm-date-picker-trigger) > span { font-family:inherit; font-size:inherit; font-weight:inherit; font-style:inherit; line-height:inherit; letter-spacing:inherit; }
 
-/* The new baseline constrains the old two-column model pane. Single-question
-   forms scroll as one column, so the model section must size to its content. */
+/* Below the form-width breakpoint, the model section sizes to its content. */
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-right { contain:none; scrollbar-gutter:auto; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:none; min-height:0; overflow:visible; }
 .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:none; overflow:visible; scrollbar-gutter:auto; }
+
+/* Only the single-question editor gains two columns; its left fields set the height. */
+@container monitor-form (min-width: 1048px) {
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-body { grid-template-columns:minmax(0,45fr) minmax(0,55fr); align-items:stretch; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .monitor-form-right { contain:size; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section { flex:1 1 0; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+  .monitoring-module .modal-wide.fm-question-editor .fm-single-question-form .models-section > .model-grid { flex:1 1 auto; min-height:0; overflow-y:auto; scrollbar-gutter:stable; }
+}

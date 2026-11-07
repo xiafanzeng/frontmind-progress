@@ -60,7 +60,7 @@ function LiveReport(props: Props) {
 export default function ProgressReportWorkspace(props: Props) {
   const [path] = useLocation();
   const linkedRun = progressRunRoute(path);
-  const effectiveProps = { ...props, query: { ...props.query,
+  const effectiveProps = { ...props, query: { ...props.query, subject: "self" as const,
     runId: linkedRun && linkedRun.monitorId === props.query.monitorId ? linkedRun.runId : props.query.runId,
   } };
   const key = `${props.project.id}:${props.query.monitorId}:${props.query.from}:${props.query.to}`;

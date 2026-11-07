@@ -45,6 +45,7 @@ const metrics: MonitoringSummaryData["metrics"] = {
   attempts: 1,
   answers: 0,
   mentionedAnswers: 0,
+  triggeredRuns: 0, mentionedRuns: 0, top3Runs: 0,
   mentionRate: null,
   averagePosition: null,
   top1Rate: null,
@@ -125,7 +126,7 @@ function setup(options: { delayLists?: boolean } = {}) {
           platforms: [{ ...platform, ordinal: 0 }],
           subjects: [{ kind: "self", label: "品牌" }],
         },
-        metrics: { ...metrics, answers: completed ? 1 : 0 },
+        metrics: { ...metrics, answers: completed ? 1 : 0, triggeredRuns: completed ? 1 : 0, mentionRate: completed ? 0 : null, top3Rate: completed ? 0 : null },
         brandScope: { targetBrand: "验收品牌", eligibleAnswers: completed ? 1 : 0, excludedAnswers: 0 },
       };
       return summary;
@@ -504,6 +505,7 @@ describe("live monitoring result reads", () => {
     await advance(10_100);
     await advance(50);
     expect(result.current.summary?.metrics.answers).toBe(1);
+    expect(result.current.summary?.metrics).toMatchObject({ triggeredRuns: 1, mentionedRuns: 0, top3Runs: 0, mentionRate: 0, top3Rate: 0 });
     expect(result.current.attempts[0]?.answer).toBe(detail.answerMarkdown);
     expect(result.current.attempts[0]?.status).toBe("completed");
     expect(result.current.attempts[0]?.assets?.[0].archiveStatus).toBe(

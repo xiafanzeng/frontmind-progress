@@ -130,3 +130,7 @@
   .monitoring-module .fm-qpr-phase-icon { display: none; }
   .monitoring-module .fm-qpr-phases small { display: none; }
 }
+
+.monitoring-module .fm-qpr-ranks { list-style: none; display: grid; gap: 8px; padding: 0; margin: 14px 0; max-height: 240px; overflow-y: auto; }
+.monitoring-module .fm-qpr-ranks li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12px; }
+.monitoring-module .fm-qpr-ranks b { flex: none; color: var(--fm-brand, #3d1560); }

@@ -1,3 +1,4 @@
+import { classifyOverviewSource, sourceTypeCounts } from "./sourceClassification.js";
 import type { OverviewSentimentInput, OverviewSentimentData, OverviewSourcesInput, OverviewSourcesData } from "../contracts/overview.js";
 
 export type Tone = "positive" | "neutral" | "negative";
@@ -61,8 +62,8 @@ export function analyzeSentiment(answers: SentimentAnswer[], targetBrand: string
     filteredAnswers: filtered.length, keywords, rows: selected.slice((page - 1) * 10, page * 10), page, pageSize: 10, rowCount: selected.length, pageCount, coverage };
 }
 
-export type CitationRow = { title: string; url: string; domain: string; siteName?: string | null };
-export function citationPage(citations: Iterable<CitationRow>, input: Pick<OverviewSourcesInput, "domain" | "domainPage" | "contentPage">, coverage: string): OverviewSourcesData {
+export type CitationRow = { title: string; url: string; domain: string; siteName?: string | null; count?: number };
+export function citationPage(citations: Iterable<CitationRow>, input: Pick<OverviewSourcesInput, "domain" | "domainPage" | "contentPage">, coverage: string, brandNames: readonly string[] = [], sourceRecords?: Iterable<CitationRow>): OverviewSourcesData {
   const domains = new Map<string, number>();
   const siteNames = new Map<string, Map<string, number>>();
   const contents = new Map<string, CitationRow & { count: number }>();
@@ -70,20 +71,28 @@ export function citationPage(citations: Iterable<CitationRow>, input: Pick<Overv
   for (const source of citations) {
     let url = source.url.trim();
     try { const parsed = new URL(url); parsed.hash = ""; url = parsed.toString(); } catch { /* Keep an opaque source identifier unchanged. */ }
-    total++;
-    domains.set(source.domain, (domains.get(source.domain) || 0) + 1);
+    const count = source.count ?? 1;
+    total += count;
+    domains.set(source.domain, (domains.get(source.domain) || 0) + count);
     const name = source.siteName?.trim();
     if (name && name !== source.domain) {
       const names = siteNames.get(source.domain) || new Map<string, number>();
-      names.set(name, (names.get(name) || 0) + 1); siteNames.set(source.domain, names);
+      names.set(name, (names.get(name) || 0) + count); siteNames.set(source.domain, names);
     }
-    const content = contents.get(url) || { ...source, url, count: 0 };
-    content.count++; contents.set(url, content);
+    const key = url || JSON.stringify([source.domain, source.title]);
+    const content = contents.get(key) || { ...source, url, count: 0 };
+    content.count += count; contents.set(key, content);
   }
   const rankedDomains = [...domains].map(([domain, count]) => ({ domain, count, siteName: [...(siteNames.get(domain) || [])].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null })).sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
-  const rankedContents = [...contents.values()].filter(item => input.domain === null || item.domain === input.domain).sort((a, b) => b.count - a.count || a.url.localeCompare(b.url));
-  const domainPage = Math.min(input.domainPage, Math.max(1, Math.ceil(rankedDomains.length / 10)));
-  const contentPage = Math.min(input.contentPage, Math.max(1, Math.ceil(rankedContents.length / 10)));
-  return { total, domainCount: rankedDomains.length, contentCount: rankedContents.length, domainPage, contentPage, pageSize: 10,
-    domains: rankedDomains.slice((domainPage - 1) * 10, domainPage * 10), contents: rankedContents.slice((contentPage - 1) * 10, contentPage * 10), coverage };
+  const domainNames = new Map(rankedDomains.map(item => [item.domain, item.siteName]));
+  const classifiedDomains = rankedDomains.map(item => ({ ...item, category: classifyOverviewSource(item.domain, item.siteName, brandNames) }));
+  const rankedContents = [...contents.values()].filter(item => input.domain === null || item.domain === input.domain)
+    .map(item => { const siteName = domainNames.get(item.domain) ?? null;
+      return { ...item, siteName, category: classifyOverviewSource(item.domain, siteName, brandNames) }; })
+    .sort((a, b) => b.count - a.count || a.url.localeCompare(b.url));
+  const domainPage = Math.min(input.domainPage, Math.max(1, Math.ceil(rankedDomains.length / 5)));
+  const contentPage = Math.min(input.contentPage, Math.max(1, Math.ceil(rankedContents.length / 5)));
+  return { total, domainCount: rankedDomains.length, contentCount: rankedContents.length, domainPage, contentPage, pageSize: 5,
+    typeCounts: sourceTypeCounts(sourceRecords ?? rankedDomains, brandNames),
+    domains: classifiedDomains.slice((domainPage - 1) * 5, domainPage * 5), contents: rankedContents.slice((contentPage - 1) * 5, contentPage * 5), coverage };
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowLeftRight, BarChart3, Clock3, Info, RefreshCw, Search, Target, TrendingUp, Trophy } from "lucide-react";
+import { ArrowLeftRight, BarChart3, Clock3, Info, RefreshCw, Target, TrendingUp, Trophy } from "lucide-react";
 import { runStatusLabel, type MonitorRun, type ProjectSummary, type RunAttempt } from "../../../domain";
 import ModelBrandIcon from "../../../components/ModelBrandIcon";
 import MonitoringFilterBar from "../MonitoringFilterBar";
@@ -8,11 +8,9 @@ import { monitoringDateWindow } from "../queryState";
 import type { MonitoringQueryState } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
 import { rangeBounds } from "../overview/overviewModel";
-import { latestComparable } from "./reportInsights";
 import { reportAttempts, validAnswers } from "./reportModel";
 import ReportAnswerEvidence from "./ReportAnswerEvidence";
-import ReportSources from "./ReportSources";
-import { measureQuestion, measurementChange, measurementText, questionComparisonReason, questionReportMetrics, questionReportPhases, reportPlatformKey, reportPlatformLabel, type QuestionReportMetric, type ReportMeasurement } from "./questionReportModel";
+import { questionRankComparisons, measureQuestion, measurementChange, measurementText, questionComparisonReason, questionReportMetrics, questionReportPhases, reportPlatformKey, reportPlatformLabel, type QuestionReportMetric, type ReportMeasurement } from "./questionReportModel";
 
 export type QuestionProgressReportProps = {
   project: ProjectSummary;
@@ -38,7 +36,7 @@ function MetricCard({ side, measurement, metric, run, date }: {
 }) {
   return <article className={`fm-qpr-score is-${side}`}>
     <header><strong>{side === "before" ? "优化前基准" : "优化后复测"}</strong><span>{date(run)}</span></header>
-    <strong className="fm-qpr-value">{measurementText(measurement.value, metric)}</strong>
+    {metric === "averagePosition" && (measurement.ranks?.length || 0) > 1 ? <ul className="fm-qpr-ranks">{measurement.ranks!.map((row, index) => <li key={index}><span>{row.label}</span><b>{measurementText(row.value, metric)}</b></li>)}</ul> : <strong className="fm-qpr-value">{measurementText(measurement.value, metric)}</strong>}
     <p>{measurement.basis}</p>
     {measurement.value !== undefined && metric !== "averagePosition" && <div className="fm-qpr-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, Math.max(0, measurement.value))}%` }} /></div>}
     <small>{measurement.coverage}</small>
@@ -66,7 +64,6 @@ function AnswerSample({ side, attempts, selectedId, onSelect, onEvidence, run, d
 }
 
 export default function QuestionProgressReport({ project, query, catalog, questions, onChange, renderRun, serverData, data }: QuestionProgressReportProps & { data: QuestionReportData }) {
-  const [search, setSearch] = useState("");
   const [platform, setPlatform] = useState("");
   const [beforeAnswer, setBeforeAnswer] = useState("");
   const [afterAnswer, setAfterAnswer] = useState("");
@@ -88,18 +85,22 @@ export default function QuestionProgressReport({ project, query, catalog, questi
     ...(after?.attempts || []).map(attempt => ({ id: attempt.questionId, label: attempt.question, category: attempt.questionCategory })),
   ].map(question => [question.id, question])).values()];
   // A requested question missing from loaded history must not silently become another question.
-  const questionId = query.reportQuestionId || query.question || after?.attempts[0]?.questionId || questionCatalog[0]?.id;
+  const questionId = query.question || query.reportQuestionId || after?.attempts[0]?.questionId || questionCatalog[0]?.id;
   const question = questionCatalog.find(item => item.id === questionId);
   const scopeQuery = { ...query, question: questionId, questionCategory: undefined };
-  const before = query.reportBeforeId === "none" ? undefined : query.reportBeforeId ? runs.find(run => run.id === query.reportBeforeId) : latestComparable(runs, after, scopeQuery);
+  const before = query.reportBeforeId === "none" ? undefined : query.reportBeforeId ? runs.find(run => run.id === query.reportBeforeId) : [...runs].reverse().find(run => !questionComparisonReason(run, after, scopeQuery, questionId));
   const priorAttempts = questionId ? reportAttempts(before, scopeQuery, questionId) : [];
   const currentAttempts = questionId ? reportAttempts(after, scopeQuery, questionId) : [];
   const self = query.subject === "self";
   const beforeMetric = measureQuestion(priorAttempts, metric, self);
   const afterMetric = measureQuestion(currentAttempts, metric, self);
   const reason = data.loading ? "正在读取所选运行快照，暂不输出变化。" : data.error || refreshError ? "数据读取存在错误，暂不输出变化。" : questionComparisonReason(before, after, scopeQuery, questionId);
-  const change = measurementChange(beforeMetric, afterMetric, metric, reason);
-  const comparable = !reason;
+  const rankRows = metric === "averagePosition" ? questionRankComparisons(phase === "after" ? [] : priorAttempts, phase === "before" ? [] : currentAttempts) : [];
+  const change = metric === "averagePosition" && rankRows.length === 1
+    ? measurementChange(rankRows[0]!.before, rankRows[0]!.after, metric, reason || rankRows[0]!.reason)
+    : metric === "averagePosition" && !reason && rankRows.length > 1
+      ? { title: "逐条排名对照", description: "按相同采集条件和回答序号查看下方排名变化。" }
+      : measurementChange(beforeMetric, afterMetric, metric, reason);
   const date = (run?: MonitorRun) => run ? new Intl.DateTimeFormat("zh-CN", { timeZone: project.timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(run.createdAt)) : "尚未选择批次";
   const sampleAttempts = phase === "before" ? priorAttempts : phase === "after" ? currentAttempts : [...priorAttempts, ...currentAttempts];
   const platformOptions = [...new Map(sampleAttempts.map(attempt => [reportPlatformKey(attempt), reportPlatformLabel(attempt)])).entries()];
@@ -110,7 +111,6 @@ export default function QuestionProgressReport({ project, query, catalog, questi
   const evidenceRun = evidence?.side === "before" ? before : after;
   const currentRun = phase === "before" ? before : after;
   const displayedSides: Side[] = phase === "compare" ? ["before", "after"] : [phase];
-  const matchingQuestions = questionCatalog.filter(item => item.label.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   const changeReport = (patch: Partial<MonitoringQueryState>) => onChange({ reportMonitorId: query.monitorId, questionCategory: undefined, ...patch });
   const changeScope = (patch: Partial<MonitoringQueryState>) => changeReport({ answerId: undefined, answerQuestion: undefined, fullscreen: false, ...patch });
   const changeDates = (patch: Partial<MonitoringQueryState>) => changeScope({ runId: undefined, reportBeforeId: undefined, reportAfterId: undefined, ...patch });
@@ -139,9 +139,8 @@ export default function QuestionProgressReport({ project, query, catalog, questi
   useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#question-optimization") root.current?.focus({ preventScroll: true }); }, []);
 
   return <section id="question-optimization" ref={root} tabIndex={-1} className="fm-progress-report fm-question-progress-report" aria-label="问题进度报告">
-    <header className="fm-pr-header"><div><h2>问题进度报告</h2><p className="fm-pr-note">选择具体问题和评估指标，查看优化前、优化后与前后对比。</p></div><button type="button" disabled={data.refreshing} onClick={() => { setRefreshError(""); void data.refresh().catch(() => setRefreshError("刷新失败，请重试。")); }}><RefreshCw size={15} aria-hidden="true" /> {data.refreshing ? "正在刷新…" : "刷新数据"}</button></header>
-    <nav className="fm-qpr-phases" aria-label="报告阶段">{questionReportPhases.map(item => { const Icon = phaseIcons[item.key]; return <button type="button" key={item.key} aria-pressed={phase === item.key} onClick={() => changeReport({ reportPhase: item.key })}><span className="fm-qpr-phase-icon"><Icon size={21} aria-hidden="true" /></span><span><b>{item.label}</b><small>{item.description}</small></span></button>; })}</nav>
-    <div className="fm-qpr-scope"><MonitoringFilterBar project={project} run={after || before} summary={catalog} hideQuestion question={questionId} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
+    <header className="fm-pr-header"><div><h2>问题进度报告</h2><p className="fm-pr-note">查看当前问题在所选批次中的指标与回答变化。</p></div><button type="button" disabled={data.refreshing} onClick={() => { setRefreshError(""); void data.refresh().catch(() => setRefreshError("刷新失败，请重试。")); }}><RefreshCw size={15} aria-hidden="true" /> {data.refreshing ? "正在刷新…" : "刷新数据"}</button></header>
+    <div className="fm-qpr-scope"><MonitoringFilterBar project={project} run={after || before} summary={catalog} hideQuestion hideSubject question={questionId} model={query.model} range={query.range} from={query.from} to={query.to} subject={query.subject}
       onQuestionChange={reportQuestionId => changeScope({ question: undefined, reportQuestionId })} onModelChange={model => changeScope({ model })} onSubjectChange={subject => changeScope({ subject })}
       onRangeChange={range => changeDates(range === "custom" ? { range } : { range, ...monitoringDateWindow(range, project.timezone) })}
       onDateWindowChange={(from, to) => { if (from && to && from < to) changeDates({ range: "custom", from, to }); }} />
@@ -152,11 +151,9 @@ export default function QuestionProgressReport({ project, query, catalog, questi
       {pinnedOutside.length > 0 && <p className="fm-pr-note">所选批次中有 {new Set(pinnedOutside.map(run => run.id)).size} 个在日期范围外，已按明确选择保留。</p>}
       {deepLink.current && !data.loading && <p className="fm-pr-warning">链接中的回答尚未在已读取批次中找到，请继续加载；当前报告显示所选问题。</p>}
     </div>
+    <nav className="fm-qpr-phases" aria-label="报告阶段">{questionReportPhases.map(item => { const Icon = phaseIcons[item.key]; return <button type="button" key={item.key} aria-pressed={phase === item.key} onClick={() => changeReport({ reportPhase: item.key })}><span className="fm-qpr-phase-icon"><Icon size={21} aria-hidden="true" /></span><span><b>{item.label}</b><small>{item.description}</small></span></button>; })}</nav>
     {!query.monitorId ? <p className="fm-pr-empty">请先从监控任务列表选择一个任务。</p> : <div className="fm-qpr-layout">
-      <aside className="fm-qpr-picker"><h3>选择报告内容</h3><p>先选指标，再选一个具体问题</p><h4>评估指标 · 4 项</h4><div className="fm-qpr-metrics">{questionReportMetrics.map(item => { const Icon = metricIcons[item.key]; return <button type="button" key={item.key} aria-pressed={metric === item.key} onClick={() => changeReport({ reportMetric: item.key })}><Icon size={17} aria-hidden="true" /><b>{item.label}</b><small>{item.caption}</small></button>; })}</div>
-        <h4>监控问题 <small>{questionCatalog.length} 个</small></h4><label className="fm-qpr-search"><Search size={14} aria-hidden="true" /><input aria-label="搜索具体问题" placeholder="搜索问题关键词" value={search} onChange={event => setSearch(event.target.value)} /></label>
-        <div className="fm-qpr-question-list">{matchingQuestions.map((item, index) => <button key={item.id} type="button" aria-pressed={questionId === item.id} onClick={() => changeScope({ question: undefined, reportQuestionId: item.id })}><span>{String(index + 1).padStart(2, "0")}</span>{item.label}</button>)}{!matchingQuestions.length && <p className="fm-pr-empty">{data.loading ? "正在读取问题…" : "没有匹配的问题"}</p>}</div>
-        <small className="fm-qpr-picker-note">按真实问题选择，不需要问题分组。历史问题保留采集时的内容。</small>
+      <aside className="fm-qpr-picker"><h3>选择报告内容</h3><p>选择指标查看当前问题的批次变化</p><h4>评估指标 · 4 项</h4><div className="fm-qpr-metrics">{questionReportMetrics.map(item => { const Icon = metricIcons[item.key]; return <button type="button" key={item.key} aria-pressed={metric === item.key} onClick={() => changeReport({ reportMetric: item.key })}><Icon size={17} aria-hidden="true" /><b>{item.label}</b><small>{item.caption}</small></button>; })}</div>
       </aside>
       <article className={`fm-qpr-paper is-${phase}`} aria-label={`${definition.label}报告`}>
         <header className="fm-qpr-hero"><span>{questionReportPhases.find(item => item.key === phase)!.label}</span><h3>{question?.label || (questionId ? "所选问题尚未读取" : "请先选择具体问题")}</h3><p>当前指标：{definition.label}</p></header>
@@ -171,8 +168,8 @@ export default function QuestionProgressReport({ project, query, catalog, questi
             {phase === "compare" && <div className="fm-qpr-change"><strong>{change.title}</strong><span>{change.description}</span></div>}
             <div className="fm-qpr-explanation"><Info size={16} aria-hidden="true" /><p><b>如何理解：</b>{definition.interpretation}</p></div>
           </section>
-          <section className="fm-qpr-section"><header><span>02</span><div><h3>不同平台的表现</h3><p>同一具体问题，按平台、设备、思考模式与区域分别计算。</p></div></header>
-            <div className="fm-pr-table fm-qpr-table"><table><thead><tr><th>平台 / 采集条件</th>{displayedSides.map(side => <th key={side}>{side === "before" ? "优化前" : "优化后"}</th>)}{phase === "compare" && <th>变化</th>}</tr></thead><tbody>{platformOptions.map(([key, label]) => {
+          <section className="fm-qpr-section"><header><span>02</span><div><h3>不同平台的表现</h3></div></header>
+            <div className="fm-pr-table fm-qpr-table"><table><thead><tr><th>平台 / 采集条件</th>{displayedSides.map(side => <th key={side}>{side === "before" ? "优化前" : "优化后"}</th>)}{phase === "compare" && <th>变化</th>}</tr></thead><tbody>{metric === "averagePosition" ? rankRows.map(row => <tr key={row.key}><th scope="row">{row.label}</th>{displayedSides.map(side => <td key={side}><b>{measurementText(row[side].value, metric)}</b>{row[side].missing && <small>{row[side].missing}</small>}</td>)}{phase === "compare" && <td>{measurementChange(row.before, row.after, metric, reason || row.reason).title}</td>}</tr>) : platformOptions.map(([key, label]) => {
               const prior = measureQuestion(priorAttempts.filter(attempt => reportPlatformKey(attempt) === key), metric, self);
               const current = measureQuestion(currentAttempts.filter(attempt => reportPlatformKey(attempt) === key), metric, self);
               return <tr key={key}><th scope="row">{label}</th>{displayedSides.map(side => { const item = side === "before" ? prior : current; return <td key={side}><b>{measurementText(item.value, metric)}</b><small>{item.basis}</small><small>{item.coverage}</small>{item.missing && <small>{item.missing}</small>}</td>; })}{phase === "compare" && <td>{measurementChange(prior, current, metric, reason).title}</td>}</tr>;
@@ -182,9 +179,7 @@ export default function QuestionProgressReport({ project, query, catalog, questi
             <div className={`fm-qpr-answers ${phase === "compare" ? "" : "is-single"}`}>{displayedSides.map(side => <AnswerSample key={side} side={side} attempts={side === "before" ? priorSamples : currentSamples} selectedId={side === "before" ? beforeAnswer : afterAnswer} onSelect={side === "before" ? setBeforeAnswer : setAfterAnswer} onEvidence={openEvidence} run={side === "before" ? before : after} date={date} />)}</div>
             {evidenceAttempt && query.monitorId && <section ref={evidenceRef} tabIndex={-1} className="fm-qpr-evidence"><header><b>{evidence?.side === "before" ? "优化前" : "优化后"}完整证据</b><button type="button" onClick={() => setEvidence(undefined)}>收起</button></header><ReportAnswerEvidence key={`${evidenceAttempt.id}:${query.subject}`} attempt={evidenceAttempt} monitorId={query.monitorId} subject={query.subject} brand={evidenceRun?.config.brandName || ""} serverData={serverData} /></section>}
           </section>
-          <section className="fm-qpr-section"><header><span>04</span><div><h3>统计与数据说明</h3><p>保留样本覆盖与缺失信息，结论可回溯到回答。</p></div></header><div className="fm-qpr-explanation"><div><p><b>有效回答：</b>完成且有非空正文；失败、处理中或空正文不计入。{phase !== "after" && `优化前 ${beforeMetric.effective}/${beforeMetric.attempts} 条。`}{phase !== "before" && `优化后 ${afterMetric.effective}/${afterMetric.attempts} 条。`}</p><p><b>比较条件：</b>{reason || "所选问题、模型及采集配置一致，两个批次已完成。"}</p><p><b>样本解释：</b>小样本波动和标签覆盖变化都可能影响结果。四项指标独立观察，不合成总分。</p></div></div>
-            <details className="fm-qpr-details"><summary>查看引用资料与关联回答</summary><ReportSources key={`${before?.id}:${after?.id}:${questionId}:${query.model}:${phase}`} before={phase === "compare" ? priorAttempts : []} after={phase === "before" ? priorAttempts : currentAttempts} comparable={phase === "compare" && comparable} onEvidence={(attempt, side) => openEvidence(attempt, phase === "before" ? "before" : side)} /></details>
-          </section>
+
         </div>
       </article>
     </div>}

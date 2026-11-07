@@ -99,7 +99,7 @@ export class ProgressMonitoringReadRepository {
           })),
         ],
       },
-      metrics: monitoringMetrics(facts, evidence, resolved.subject),
+      metrics: monitoringMetrics(facts, evidence, resolved.subject, "runs"),
       brandScope: {
         targetBrand: resolved.subject.kind === "self" ? resolved.brand.mainBrand : resolved.subject.name,
         eligibleAnswers: facts.filter(fact => isEffectiveMonitoringAnswer(fact) && monitoringSubjectEligible(fact, resolved.subject)).length,
@@ -540,7 +540,9 @@ export class ProgressMonitoringReadRepository {
     const facts = await this.readMonitoringFacts(ownerId, resolved);
     const evidence = await this.readMonitoringEvidence(facts);
     const citations = facts.filter(isEffectiveMonitoringAnswer).flatMap(fact => evidence.citationsByRevision.get(fact.revisionId || "") || []);
-    return citationPage(citations, input, "当前筛选的全部明确引用；最多 50,000 次采集、100,000 条证据，超限需缩小范围，不截断排行。");
+    const sourceRecords = facts.filter(isEffectiveMonitoringAnswer).flatMap(fact => evidence.referencesByRevision.get(fact.revisionId || "") || []);
+    const brandNames = resolved.subject.kind === "self" ? [resolved.brand.mainBrand, ...resolved.brand.aliases] : [resolved.subject.name, ...resolved.subject.aliases];
+    return citationPage(citations, input, "当前筛选的全部明确引用；类型分布统计全部来源记录；最多 50,000 次采集、100,000 条证据，超限需缩小范围，不截断排行。", brandNames, sourceRecords);
   }
 
   async getOverviewEvidence(ownerId: string, input: OverviewEvidenceInput) {
@@ -710,6 +712,7 @@ export class ProgressMonitoringReadRepository {
       .select({
         attemptId: attempts.id,
         runId: runs.id,
+        runStatus: runs.status,
         runCreatedAt: runs.createdAt,
         questionId: monitorQuestions.questionId,
         platformId: attempts.platformId,

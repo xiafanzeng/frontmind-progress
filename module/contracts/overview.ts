@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sourceCategoryKeys } from "../shared/sourceClassification.js";
 import { monitoringScopeSchema, monitoringSubjectSchema } from "@frontmind/monitoring-contracts";
 import { brandScopedAnswerDetailOutputSchema } from "./monitoring-brand-scope.js";
 
@@ -31,9 +32,10 @@ export const overviewSourcesInputSchema = z.object({
   scope: monitoringScopeSchema, domain: z.string().max(2000).nullable().default(null), domainPage: page, contentPage: page,
 });
 export const overviewSourcesOutputSchema = z.object({
-  total: z.number(), domainCount: z.number(), contentCount: z.number(), domainPage: z.number(), contentPage: z.number(), pageSize: z.literal(10),
-  domains: z.array(z.object({ domain: z.string(), siteName: z.string().nullable(), count: z.number() })),
-  contents: z.array(z.object({ title: z.string(), url: z.string(), domain: z.string(), count: z.number() })),
+  total: z.number(), domainCount: z.number(), contentCount: z.number(), domainPage: z.number(), contentPage: z.number(), pageSize: z.literal(5),
+  domains: z.array(z.object({ domain: z.string(), siteName: z.string().nullable(), category: z.enum(sourceCategoryKeys), count: z.number() })),
+  contents: z.array(z.object({ title: z.string(), url: z.string(), domain: z.string(), siteName: z.string().nullable(), category: z.enum(sourceCategoryKeys), count: z.number() })),
+  typeCounts: z.array(z.object({ category: z.enum(sourceCategoryKeys), count: z.number() })),
   coverage: z.string(),
 });
 export const overviewEvidenceInputSchema = z.object({ monitorId: z.string().uuid(), answerId: z.string().uuid(), revisionId: z.string().uuid(), subject: monitoringSubjectSchema.default({ kind: "self" }) });

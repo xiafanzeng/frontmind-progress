@@ -38,8 +38,8 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
   const suggestions = buildSuggestions(query.subject === "self" ? attempts : []);
   const evidenceCount = new Set(suggestions.flatMap((item) => item.evidence.map((attempt) => attempt.id))).size;
   const questionCount = new Set(suggestions.flatMap((item) => item.evidence.map((attempt) => attempt.questionId || attempt.question))).size;
-  const metrics = summary ? summaryMetrics(summary) : serverData ? undefined : periodMetrics(current, query, data.competitors);
-  const prior = data.prior ? summaryMetrics(data.prior) : serverData ? undefined : periodMetrics(previous, query, data.competitors);
+  const metrics = summary ? summaryMetrics(summary) : serverData ? undefined : periodMetrics(current, query, data.competitors, currentBrand);
+  const prior = data.prior ? summaryMetrics(data.prior) : serverData ? undefined : periodMetrics(previous, query, data.competitors, currentBrand);
   const yearPrior = data.yearPrior ? summaryMetrics(data.yearPrior) : undefined;
   const comparable = data.complete && !data.error && comparablePeriods(current, previous, query);
   const yearComparable = data.yearComplete && !data.error && comparablePeriods(current, data.yearSnapshots, query);
@@ -55,9 +55,9 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
   };
   const cards = [
     { key: "effective" as const, label: "累计有效回答", icon: <RadioTower size={18} />, hint: "所选日期范围内全部有效回答" },
-    { key: "mentionRate" as const, label: "品牌提及率", icon: <Target size={18} />, hint: "提及回答 / 同一目标品牌的有效回答" },
+    { key: "mentionRate" as const, label: "品牌提及率", icon: <Target size={18} />, hint: "提及采集次数 / 同品牌有效采集次数" },
     { key: "averagePosition" as const, label: "平均排名", icon: <BarChart3 size={18} />, hint: "仅统计有效且提及的已知排名" },
-    { key: "top3Rate" as const, label: "Top3 推荐率", icon: <Medal size={18} />, hint: "前三提及回答 / 同一目标品牌的有效回答" },
+    { key: "top3Rate" as const, label: "Top3 推荐率", icon: <Medal size={18} />, hint: "Top3 采集次数 / 同品牌有效采集次数" },
   ];
   return <div ref={scrollRef} className="fm-overview-workspace fm-ov-content" tabIndex={0} aria-label="概览分析内容">
     {summary?.brandScope && summary.brandScope.excludedAnswers > 0 && <p className="fm-ov-notice pending">已隔离 {summary.brandScope.excludedAnswers} 条不同目标品牌的历史回答；当前品牌“{summary.brandScope.targetBrand}”有 {summary.brandScope.eligibleAnswers} 条可用于品牌指标的有效回答。累计回答数与信源保留全部记录，历史标签不混算，趋势缺口不补零。</p>}
@@ -74,14 +74,13 @@ function OverviewContent({ project, monitor, query, summary, serverData, onChang
         <div className="fm-ov-metrics">{cards.map((card) => {
           const periodChange = change(card.key, "环比", prior, comparable);
           const yearChange = change(card.key, "同比", yearPrior, yearComparable);
-          return <article key={card.key} className={`fm-ov-card metric-${card.key}`}><span className="fm-ov-metric-label">{card.icon}{card.label}</span><strong className="fm-ov-metric-value">{metricText(card.key, metrics?.[card.key])}</strong><small>{card.hint}</small>{summary && card.key === "effective" && <small>{summary.metrics.answers} 条有效 / {summary.metrics.attempts} 次采集</small>}{summary && card.key === "mentionRate" && <small>{summary.metrics.mentionedAnswers} 条提及 / {summary.brandScope?.eligibleAnswers ?? summary.metrics.answers} 条同品牌有效</small>}{periodChange && <small>{periodChange}</small>}{yearChange && <small>{yearChange}</small>}</article>;
+          return <article key={card.key} className={`fm-ov-card metric-${card.key}`}><span className="fm-ov-metric-label">{card.icon}{card.label}</span><strong className="fm-ov-metric-value">{metricText(card.key, metrics?.[card.key])}</strong><small>{card.hint}</small>{summary && card.key === "effective" && <small>{summary.metrics.answers} 条有效 / {summary.metrics.attempts} 次采集</small>}{metrics && card.key === "mentionRate" && <small>{metrics.mentionedRuns} 次提及 / {metrics.triggeredRuns} 次采集</small>}{metrics && card.key === "top3Rate" && <small>{metrics.top3Runs} 次 Top3 / {metrics.triggeredRuns} 次采集</small>}{periodChange && <small>{periodChange}</small>}{yearChange && <small>{yearChange}</small>}</article>;
         })}</div>
         <article className="fm-ov-highlight"><div className="fm-ov-highlight-main"><header><Lightbulb size={20} /><h3>AI 建议重点</h3><span className="fm-ov-tag">待核查</span></header><h4>{evidenceCount ? "从回答证据出发，确认下一步优化方向" : "等待可核查证据"}</h4><p>{evidenceCount ? "优先核对资料与实际回答是否一致，再准备知识库、FAQ 或公开信源的行动草稿。" : "当前证据不足，先核对采集结果与关联资料。"}</p><button type="button" onClick={() => setTab("suggestions")}>查看建议与依据 <span aria-hidden="true">→</span></button></div><aside className="fm-ov-highlight-aside"><span>已读取的核查线索</span><div><strong>{evidenceCount}</strong> 条回答证据</div><div><strong>{questionCount}</strong> 个关联问题</div><small>证据数量不等于已确认问题数量</small></aside></article>
-        <div className="fm-ov-two-columns"><section className="fm-ov-card"><h3>监控范围与采集质量</h3><dl className="fm-ov-quality"><div><dt>有效回答</dt><dd>{metrics?.effective ?? "—"}</dd></div><div><dt>采集次数</dt><dd>{summary?.metrics.attempts ?? "—"}</dd></div><div><dt>已读取批次</dt><dd>{current.length}</dd></div></dl><p className="fm-ov-note">有效回答排除失败或空回答。具体判定可进入原回答核查。</p></section><section className="fm-ov-card"><h3>从指标进入分析</h3><div className="fm-ov-analysis-links">{tabs.filter(item => ["trends", "sentiment", "sources"].includes(item.id)).map(item => <button type="button" key={item.id} onClick={() => setTab(item.id)}><span>{item.label}</span><span aria-hidden="true">→</span></button>)}</div></section></div>
       </section>}
       {tab === "trends" && <OverviewTrend key={scopeKey} runs={current} query={query} timezone={project.timezone} currentBrand={currentBrand} competitors={data.competitors} loading={data.loading} complete={data.complete} onConfigure={onConfigure} />}
       {tab === "sentiment" && (serverData ? data.scope ? <OverviewSentimentLive key={scopeKey} scope={data.scope} draftNamespace={draftNamespace} onAnswer={openAnswer} /> : <p role="status">等待当前筛选范围…</p> : <OverviewSentiment key={scopeKey} draftNamespace={draftNamespace} attempts={attempts} summary={summary} self={query.subject === "self"} onAnswer={openAnswer} />)}
-      {tab === "sources" && (serverData && (!data.scope || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的信源分布…"}</p> : <OverviewSources key={scopeKey} scope={data.scope} attempts={attempts} sources={data.sources} to={query.to} refreshing={data.loading} onRefresh={data.refresh} onAnswer={openAnswer} />)}
+      {tab === "sources" && (serverData && (!data.scope || !data.sources) ? <p role="status">{data.error ? "信源数据读取失败，请稍后刷新。" : "正在读取当前筛选的信源分布…"}</p> : <OverviewSources key={scopeKey} brandNames={query.subject === "self" ? [currentBrand, ...(current[0]?.config.brandAliases || [])] : [query.subject.slice(11), ...(data.competitors.find(item => `competitor:${item.name}` === query.subject)?.aliases || [])]} scope={data.scope} attempts={attempts} sources={data.sources} to={query.to} refreshing={data.loading} onRefresh={data.refresh} onAnswer={openAnswer} />)}
       {tab === "suggestions" && <>{query.subject !== "self" && <p className="fm-ov-notice pending">竞品的资料缺口与情感证据未单独提供。以下保留核查入口，切回当前品牌可查看关联证据。</p>}<OverviewSuggestions key={scopeKey} draftNamespace={draftNamespace} suggestions={suggestions} monitorId={monitor.id} query={query} onAnswer={openAnswer} /></>}
     </div>
   </div>;

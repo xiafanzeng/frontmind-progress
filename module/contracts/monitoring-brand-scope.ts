@@ -7,6 +7,11 @@ export const answerBrandContextSchema = z.object({
   matchesCurrent: z.boolean(),
 });
 export const brandScopedSummaryOutputSchema = monitoringSummaryOutputSchema.extend({
+  metrics: monitoringSummaryOutputSchema.shape.metrics.extend({
+    triggeredRuns: z.number().int().nonnegative(),
+    mentionedRuns: z.number().int().nonnegative(),
+    top3Runs: z.number().int().nonnegative(),
+  }),
   brandScope: z.object({
     targetBrand: z.string(), eligibleAnswers: z.number().int().nonnegative(), excludedAnswers: z.number().int().nonnegative(),
   }),

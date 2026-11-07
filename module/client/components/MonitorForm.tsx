@@ -971,6 +971,201 @@ function MonitorFormFields({
     }
   };
 
+  const collectionSettings = <>
+          <section className="form-section monitor-frequency-section">
+            <div className="section-heading frequency-heading">
+              <div>
+                <h3>监控频次</h3>
+                <p>选择自动监控或按需手动执行。</p>
+              </div>
+              <div
+                className="schedule-status-toggle"
+                role="group"
+                aria-label="自动监控状态"
+              >
+                <button
+                  type="button"
+                  className={scheduleType !== "none" ? "active" : ""}
+                  aria-pressed={scheduleType !== "none"}
+                  onClick={() => setScheduleEnabled(true)}
+                >
+                  自动监控模式
+                </button>
+                <button
+                  type="button"
+                  className={scheduleType === "none" ? "active" : ""}
+                  aria-pressed={scheduleType === "none"}
+                  onClick={() => setScheduleEnabled(false)}
+                >
+                  手动执行模式
+                </button>
+              </div>
+            </div>
+            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>{scheduleType === "none" ? "设置提问次数" : "设置频次"}</button></div>
+            <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title={scheduleType === "none" ? "提问次数设置" : "监控频次设置"} description={scheduleType === "none" ? "设置手动执行时每个平台的提问次数。" : "设置执行时间和每个平台的提问次数。"}>
+            <div className="monitor-frequency-dialog"><div className={`frequency-grid${scheduleType === "none" ? " manual" : ""}`}>
+              {scheduleType !== "none" && <label className="field">
+                <span className="field-label">自动监控</span>
+                <select
+                  aria-label="执行频率"
+                  value={scheduleType}
+                  onChange={(event) => {
+                    const value = event.target.value as Exclude<
+                      ScheduleType,
+                      "none"
+                    >;
+                    setScheduleFrequency(value);
+                    setScheduleType(value);
+                  }}
+                >
+                  <option value="daily">每日</option>
+                  <option value="weekly">每周</option>
+                </select>
+                <ChevronDown size={14} aria-hidden="true" />
+              </label>}
+              {scheduleType === "weekly" && (
+                <label className="field">
+                  <span className="field-label">星期</span>
+                  <select
+                    aria-label="执行星期"
+                    value={weekday}
+                    onChange={(event) => setWeekday(Number(event.target.value))}
+                  >
+                    {weekdays.map((label, index) => (
+                      <option key={label} value={index + 1}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} aria-hidden="true" />
+                </label>
+              )}
+              <label className="field repetition-field">
+                <span className="field-label">
+                  提问次数 <b aria-hidden="true">*</b>
+                </span>
+                <span className="number-input">
+                  <input
+                    aria-label="重复次数"
+                    type="number"
+                    min={1}
+                    max={10}
+                    required
+                    value={repetitions}
+                    onChange={(event) =>
+                      setRepetitions(
+                        Math.max(
+                          1,
+                          Math.min(10, Number(event.target.value) || 1),
+                        ),
+                      )
+                    }
+                  />
+                  <span className="number-input-suffix">次 / 平台</span>
+                </span>
+              </label>
+              {scheduleType !== "none" && <>
+                <label className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></label>
+                <label className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" /></label>
+              </>}
+            </div>
+            <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => setScheduleSettingsOpen(false)}>完成设置</button></div>
+            </div></Modal>
+          </section>
+
+          <div className="monitor-bottom-grid">
+            <section className="form-section location-section">
+              <div className="section-heading">
+                <div>
+                  <h3>地区</h3>
+                  <p>
+                    为国内与海外网页版模型分别选择执行地区；手机版使用默认地区。
+                  </p>
+                </div>
+              </div>
+              <div className="location-grid">
+                {domesticWebModels.length > 0 && (
+                  <label className="field">
+                    <span className="field-label">
+                      <Globe2 size={14} />
+                      国内网页版
+                    </span>
+                    <select
+                      aria-label="批量设置国内网页版位置"
+                      value={domesticRegion}
+                      onChange={(event) =>
+                        setRegionForModels(
+                          domesticWebModels,
+                          event.target.value,
+                        )
+                      }
+                    >
+                      {domesticRegion === mixedRegionValue && (
+                        <option value={mixedRegionValue} disabled>
+                          多个位置
+                        </option>
+                      )}
+                      <option value="">默认地区</option>
+                      {regions
+                        .filter((region) => region.scope === "domestic")
+                        .map((region) => (
+                          <option key={region.code} value={region.code}>
+                            {region.name}
+                          </option>
+                        ))}
+                    </select>
+                    <ChevronDown size={14} />
+                  </label>
+                )}
+                {overseasWebModels.length > 0 && (
+                  <label className="field">
+                    <span className="field-label">
+                      <MonitorSmartphone size={14} />
+                      海外网页版
+                    </span>
+                    <select
+                      aria-label="批量设置海外网页版位置"
+                      value={overseasRegion}
+                      onChange={(event) =>
+                        setRegionForModels(
+                          overseasWebModels,
+                          event.target.value,
+                        )
+                      }
+                    >
+                      {overseasRegion === mixedRegionValue && (
+                        <option value={mixedRegionValue} disabled>
+                          多个位置
+                        </option>
+                      )}
+                      <option value="">默认地区</option>
+                      {regions
+                        .filter((region) => region.scope === "overseas")
+                        .map((region) => (
+                          <option key={region.code} value={region.code}>
+                            {region.name}
+                          </option>
+                        ))}
+                    </select>
+                    <ChevronDown size={14} />
+                  </label>
+                )}
+                {hasMobile && (
+                  <div className="mobile-location-note">
+                    <Smartphone size={15} />
+                    手机版使用默认地区。
+                  </div>
+                )}
+                {!selectedModels.length && (
+                  <div className="compact-empty">
+                    选择模型后显示适用的位置选项。
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+  </>;
+
   return (
     <form
       className={`monitor-form monitor-form-v2${questionOnly ? " fm-single-question-form" : ""}`}
@@ -995,6 +1190,7 @@ function MonitorFormFields({
               <span><strong>{category.label.replace(/词$/, "问题")}</strong><small>{{ industry: "关注行业推荐与品牌排名", competitor_comparison: "比较品牌与竞品的表现", reputation: "关注口碑与情感倾向", product_scenario: "关注产品在具体场景中的推荐" }[category.key]}</small></span>
             </label>)}
           </fieldset>
+          {collectionSettings}
         </div> : <>
         <div className="monitor-form-left">
           <div className="monitor-basic-grid">
@@ -1513,198 +1709,7 @@ function MonitorFormFields({
 
 
         <div className="monitor-form-right">
-          <section className="form-section monitor-frequency-section">
-            <div className="section-heading frequency-heading">
-              <div>
-                <h3>监控频次</h3>
-                <p>选择自动监控或按需手动执行。</p>
-              </div>
-              <div
-                className="schedule-status-toggle"
-                role="group"
-                aria-label="自动监控状态"
-              >
-                <button
-                  type="button"
-                  className={scheduleType !== "none" ? "active" : ""}
-                  aria-pressed={scheduleType !== "none"}
-                  onClick={() => setScheduleEnabled(true)}
-                >
-                  自动监控模式
-                </button>
-                <button
-                  type="button"
-                  className={scheduleType === "none" ? "active" : ""}
-                  aria-pressed={scheduleType === "none"}
-                  onClick={() => setScheduleEnabled(false)}
-                >
-                  手动执行模式
-                </button>
-              </div>
-            </div>
-            <div className="monitor-schedule-summary"><span>{scheduleType === "none" ? "仅在手动发起时执行" : `${scheduleType === "weekly" ? `每周${weekdays[weekday - 1].replace("星期", "")}` : "每日"} ${localTime} · ${timezone}`} · 每个平台提问 {repetitions} 次</span><button type="button" className="secondary" onClick={() => setScheduleSettingsOpen(true)}>{scheduleType === "none" ? "设置提问次数" : "设置频次"}</button></div>
-            <Modal open={scheduleSettingsOpen} onClose={() => setScheduleSettingsOpen(false)} title={scheduleType === "none" ? "提问次数设置" : "监控频次设置"} description={scheduleType === "none" ? "设置手动执行时每个平台的提问次数。" : "设置执行时间和每个平台的提问次数。"}>
-            <div className="monitor-frequency-dialog"><div className={`frequency-grid${scheduleType === "none" ? " manual" : ""}`}>
-              {scheduleType !== "none" && <label className="field">
-                <span className="field-label">自动监控</span>
-                <select
-                  aria-label="执行频率"
-                  value={scheduleType}
-                  onChange={(event) => {
-                    const value = event.target.value as Exclude<
-                      ScheduleType,
-                      "none"
-                    >;
-                    setScheduleFrequency(value);
-                    setScheduleType(value);
-                  }}
-                >
-                  <option value="daily">每日</option>
-                  <option value="weekly">每周</option>
-                </select>
-                <ChevronDown size={14} aria-hidden="true" />
-              </label>}
-              {scheduleType === "weekly" && (
-                <label className="field">
-                  <span className="field-label">星期</span>
-                  <select
-                    aria-label="执行星期"
-                    value={weekday}
-                    onChange={(event) => setWeekday(Number(event.target.value))}
-                  >
-                    {weekdays.map((label, index) => (
-                      <option key={label} value={index + 1}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} aria-hidden="true" />
-                </label>
-              )}
-              <label className="field repetition-field">
-                <span className="field-label">
-                  提问次数 <b aria-hidden="true">*</b>
-                </span>
-                <span className="number-input">
-                  <input
-                    aria-label="重复次数"
-                    type="number"
-                    min={1}
-                    max={10}
-                    required
-                    value={repetitions}
-                    onChange={(event) =>
-                      setRepetitions(
-                        Math.max(
-                          1,
-                          Math.min(10, Number(event.target.value) || 1),
-                        ),
-                      )
-                    }
-                  />
-                  <span className="number-input-suffix">次 / 平台</span>
-                </span>
-              </label>
-              {scheduleType !== "none" && <>
-                <label className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></label>
-                <label className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" /></label>
-              </>}
-            </div>
-            <div className="monitor-schedule-actions"><button type="button" className="primary" onClick={() => setScheduleSettingsOpen(false)}>完成设置</button></div>
-            </div></Modal>
-          </section>
-
-          <div className="monitor-bottom-grid">
-            <section className="form-section location-section">
-              <div className="section-heading">
-                <div>
-                  <h3>地区</h3>
-                  <p>
-                    为国内与海外网页版模型分别选择执行地区；手机版使用默认地区。
-                  </p>
-                </div>
-              </div>
-              <div className="location-grid">
-                {domesticWebModels.length > 0 && (
-                  <label className="field">
-                    <span className="field-label">
-                      <Globe2 size={14} />
-                      国内网页版
-                    </span>
-                    <select
-                      aria-label="批量设置国内网页版位置"
-                      value={domesticRegion}
-                      onChange={(event) =>
-                        setRegionForModels(
-                          domesticWebModels,
-                          event.target.value,
-                        )
-                      }
-                    >
-                      {domesticRegion === mixedRegionValue && (
-                        <option value={mixedRegionValue} disabled>
-                          多个位置
-                        </option>
-                      )}
-                      <option value="">默认地区</option>
-                      {regions
-                        .filter((region) => region.scope === "domestic")
-                        .map((region) => (
-                          <option key={region.code} value={region.code}>
-                            {region.name}
-                          </option>
-                        ))}
-                    </select>
-                    <ChevronDown size={14} />
-                  </label>
-                )}
-                {overseasWebModels.length > 0 && (
-                  <label className="field">
-                    <span className="field-label">
-                      <MonitorSmartphone size={14} />
-                      海外网页版
-                    </span>
-                    <select
-                      aria-label="批量设置海外网页版位置"
-                      value={overseasRegion}
-                      onChange={(event) =>
-                        setRegionForModels(
-                          overseasWebModels,
-                          event.target.value,
-                        )
-                      }
-                    >
-                      {overseasRegion === mixedRegionValue && (
-                        <option value={mixedRegionValue} disabled>
-                          多个位置
-                        </option>
-                      )}
-                      <option value="">默认地区</option>
-                      {regions
-                        .filter((region) => region.scope === "overseas")
-                        .map((region) => (
-                          <option key={region.code} value={region.code}>
-                            {region.name}
-                          </option>
-                        ))}
-                    </select>
-                    <ChevronDown size={14} />
-                  </label>
-                )}
-                {hasMobile && (
-                  <div className="mobile-location-note">
-                    <Smartphone size={15} />
-                    手机版使用默认地区。
-                  </div>
-                )}
-                {!selectedModels.length && (
-                  <div className="compact-empty">
-                    选择模型后显示适用的位置选项。
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
+          {!questionOnly && collectionSettings}
           <section
             className="form-section models-section"
             aria-invalid={modelsInvalid || undefined}
