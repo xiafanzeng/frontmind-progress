@@ -47,7 +47,7 @@ export default function ReportTrend({ runs, query, questionId, metric, before, a
   const focus = rows.find(row => row.run.id === focusedId) || rows.find(row => row.run.id === after?.id) || rows.at(-1);
   const ticks = rank ? [...new Set([1, Math.ceil(maximum / 2), maximum])] : [100, 50, 0];
   return <section className="fm-qpr-panel fm-qpr-trend" aria-label="指标趋势">
-    <header className="fm-qpr-section-heading"><div><h3>指标趋势</h3><p>所选日期内已读取 {history.length} 个批次{rank ? " · 同一采集条件和回答序号的实际排名" : " · 每个点对应一次真实采集批次"}</p></div>
+    <header className="fm-qpr-section-heading"><div><h3>指标趋势</h3></div>
       {rank && <label className="fm-qpr-platform">采集记录<select aria-label="排名趋势采集记录" value={selectedSlot || ""} disabled={!slots.length} onChange={event => { setSlot(event.target.value); setFocusedId(""); }}>{!slots.length && <option value="">暂无记录</option>}{slots.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>}
     </header>
     {unavailable ? <p className="fm-pr-empty">{unavailable}</p> : !valid.length ? <p className="fm-pr-empty">当前日期与筛选范围内没有可绘制的有效数据。</p> : <>
@@ -60,9 +60,7 @@ export default function ReportTrend({ runs, query, questionId, metric, before, a
         </circle>)}
         <text x="64" y="246">{date(history[0])}</text>{history.length > 1 && <text x="856" y="246" textAnchor="end">{date(history.at(-1))}</text>}
       </svg></div>
-      {focus && <div className="fm-qpr-trend-readout" aria-live="polite"><span>{date(focus.run)} · V{focus.run.version}{focus.run.id === before?.id ? " · 优化前" : focus.run.id === after?.id ? " · 优化后" : ""}</span><b>{measurementText(focus.value, metric)}</b><small>{focus.missing || focus.measurement.coverage}</small></div>}
+      {focus && <div className="fm-qpr-trend-readout" aria-live="polite"><span>{date(focus.run)} · V{focus.run.version}{focus.run.id === before?.id ? " · 优化前" : focus.run.id === after?.id ? " · 优化后" : ""}</span><b>{measurementText(focus.value, metric)}</b></div>}
     </>}
-    <p className="fm-qpr-muted">仅展示已读取批次；缺失、未完成及不同品牌快照不连线。{rank ? "排名不取平均值。" : "不同批次的样本数量和平台构成可能不同。"}</p>
-    {!!rows.length && <details className="fm-qpr-trend-records"><summary>查看采集点与样本数</summary><div className="fm-pr-table fm-qpr-table"><table><thead><tr><th>采集批次</th><th>指标值</th><th>统计依据</th></tr></thead><tbody>{rows.map(row => <tr key={row.run.id}><th scope="row">{date(row.run)} · V{row.run.version}</th><td>{measurementText(row.value, metric)}</td><td>{row.missing || row.measurement.basis}<small>{row.measurement.coverage}</small></td></tr>)}</tbody></table></div></details>}
   </section>;
 }

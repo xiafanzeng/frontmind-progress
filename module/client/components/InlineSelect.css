@@ -1,0 +1,9 @@
+.monitoring-module .fm-inline-select { width:100%; min-width:0; }
+.monitoring-module .fm-inline-select .fm-inline-select-trigger { display:flex; align-items:center; gap:8px; width:100%; min-height:38px; padding:8px 11px; border:1px solid #dcd5e5; border-radius:8px; background:#fff; color:#51475e; font:inherit; text-align:left; cursor:pointer; }
+.monitoring-module .fm-inline-select button > span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.monitoring-module .fm-inline-select button > svg { flex:none; position:static; transform:none; }
+.monitoring-module .fm-inline-select .fm-inline-select-options { position:static; display:grid; gap:2px; max-height:220px; overflow-y:auto; margin-top:6px; padding:5px; border:1px solid #dcd5e5; border-radius:8px; background:#fff; scrollbar-width:thin; }
+.monitoring-module .fm-inline-select-options > button { display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; border:0; border-radius:5px; background:#fff; color:#51475e; font:inherit; text-align:left; cursor:pointer; }
+.monitoring-module .fm-inline-select-options > button:is(:hover,:focus-visible,[aria-selected="true"]) { background:var(--fm-brand-soft,#f2edf8); color:var(--fm-brand,#3d1560); }
+.monitoring-module .fm-inline-select button:focus-visible { outline:2px solid #a99ab9; outline-offset:-2px; }
+.monitoring-module .fm-inline-select button:disabled { opacity:.5; cursor:not-allowed; }

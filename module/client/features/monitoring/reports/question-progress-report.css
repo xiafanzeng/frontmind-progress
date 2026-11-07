@@ -1,19 +1,15 @@
-/* V2 styles are scoped to the progress report and its configuration drawer. */
+/* Styles are scoped to the question progress report. */
 .monitoring-module .fm-progress-report.fm-question-progress-report {
-  container-type:inline-size; padding:0; border:0; border-radius:0; background:transparent; color:#303541; gap:18px; font-size:14px;
+  container-type:inline-size; padding:24px; border:0; border-radius:0; background:transparent; color:#303541; gap:24px; font-size:14px; box-sizing:border-box;
 }
 .monitoring-module .fm-question-progress-report h2 { font-size:18px; line-height:1.5; }
 .monitoring-module .fm-question-progress-report h3 { font-size:16px; line-height:1.5; }
 .monitoring-module .fm-question-progress-report h4 { font-size:14px; line-height:1.5; }
 .monitoring-module .fm-question-progress-report small { color:#7b8497; font-size:12px; line-height:1.6; }
 .monitoring-module .fm-question-progress-report button { font-size:13px; }
-.monitoring-module .fm-question-progress-report :is(.fm-pr-header,.fm-qpr-scope-summary)>button { display:inline-flex; gap:7px; align-items:center; justify-content:center; white-space:nowrap; }
-.monitoring-module .fm-question-progress-report :is(.fm-qpr-panel,.fm-qpr-scope) { min-width:0; border:1px solid #e4e8ef; border-radius:10px; background:#fff; padding:22px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-scope { padding:16px 20px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-scope-summary { display:grid; grid-template-columns:minmax(100px,1fr) minmax(160px,1.3fr) repeat(2,minmax(140px,1fr)) auto; align-items:center; gap:18px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-scope-summary>div { display:grid; gap:3px; min-width:0; }
-.monitoring-module .fm-question-progress-report .fm-qpr-scope-summary b { font-size:13px; font-weight:550; overflow-wrap:anywhere; }
-.monitoring-module .fm-question-progress-report .fm-qpr-scope-summary span { color:#7b8497; font-size:11px; }
+.monitoring-module .fm-question-progress-report .fm-pr-header>button { display:inline-flex; gap:7px; align-items:center; justify-content:center; white-space:nowrap; }
+.monitoring-module .fm-question-progress-report :is(.fm-qpr-panel,.fm-qpr-scope) { min-width:0; border:1px solid #e4e8ef; border-radius:10px; background:#fff; padding:24px; }
+.monitoring-module .fm-question-progress-report .fm-qpr-scope { padding:20px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-load-state { display:grid; gap:8px; font-size:12px; color:#7b8497; margin-top:-6px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-load-state>p:first-child { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
 .monitoring-module .fm-question-progress-report .fm-qpr-load-state button { padding:0; border:0; background:none; font-size:12px; }
@@ -22,10 +18,8 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-phases b { display:block; font-size:14px; margin-bottom:3px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-phases button[aria-pressed=true] { border-color:#a58bbe; background:#faf8fd; box-shadow:inset 3px 0 0 var(--fm-brand,#3d1560); color:var(--fm-brand,#3d1560); }
 .monitoring-module .fm-question-progress-report .fm-qpr-phase-icon { flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:8px; background:#f4f0f9; color:var(--fm-brand,#3d1560); }
-.monitoring-module .fm-question-progress-report .fm-qpr-question-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:3px 0; }
-.monitoring-module .fm-question-progress-report .fm-qpr-question-heading h3 { overflow-wrap:anywhere; }
 .monitoring-module .fm-question-progress-report .fm-qpr-metric-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-metric-card { display:flex; flex-direction:column; text-align:left; padding:19px 17px; gap:14px; border-radius:10px; min-width:0; color:var(--metric-color); background:var(--metric-background); border-color:var(--metric-border); }
+.monitoring-module .fm-question-progress-report .fm-qpr-metric-card { display:flex; flex-direction:column; text-align:left; padding:20px; gap:16px; border-radius:10px; min-width:0; color:var(--metric-color); background:var(--metric-background); border-color:var(--metric-border); }
 .monitoring-module .fm-question-progress-report :is(.fm-qpr-metric-card,.fm-qpr-detail-primary).is-mentionRate { --metric-color:#316db0; --metric-background:#f0f6ff; --metric-border:#d5e5fb; }
 .monitoring-module .fm-question-progress-report :is(.fm-qpr-metric-card,.fm-qpr-detail-primary).is-top3Rate { --metric-color:#66318d; --metric-background:#f7f1ff; --metric-border:#e5d8fa; }
 .monitoring-module .fm-question-progress-report :is(.fm-qpr-metric-card,.fm-qpr-detail-primary).is-averagePosition { --metric-color:#237e68; --metric-background:#eff9f5; --metric-border:#d7ece2; }
@@ -39,7 +33,7 @@
 .monitoring-module .fm-question-progress-report .is-averagePosition .fm-qpr-card-pair { font-size:14px; }
 .monitoring-module .fm-question-progress-report .is-averagePosition .fm-qpr-card-pair>b { font-size:18px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-card-change { font-size:12px; margin-top:auto; }
-.monitoring-module .fm-question-progress-report .fm-qpr-section-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+.monitoring-module .fm-question-progress-report .fm-qpr-section-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-section-heading p { font-size:12px; color:#7b8497; margin-top:5px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-period-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-period-values>div { padding:18px; border:1px solid #eee6f1; border-radius:8px; background:#fdfaff; }
@@ -77,10 +71,8 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-trend-point:focus-visible { outline:2px solid var(--fm-brand,#3d1560); outline-offset:4px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-trend-readout { display:flex; gap:14px; flex-wrap:wrap; align-items:center; background:#f6f8fc; padding:12px 16px; border-radius:7px; font-size:12px; margin-bottom:12px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-trend-readout b { color:var(--fm-brand,#3d1560); font-size:16px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-trend-records { margin-top:12px; font-size:12px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-trend-records summary { cursor:pointer; color:var(--fm-brand,#3d1560); padding:8px 0; }
 .monitoring-module .fm-question-progress-report .fm-qpr-table table { font-size:13px; min-width:600px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-table :is(th,td) { padding:13px 15px; border-color:#edf0f5; line-height:1.75; }
+.monitoring-module .fm-question-progress-report .fm-qpr-table :is(th,td) { padding:14px 18px; border-color:#edf0f5; line-height:1.75; }
 .monitoring-module .fm-question-progress-report .fm-qpr-table thead { background:#f7f5fa; }
 .monitoring-module .fm-question-progress-report .fm-qpr-table tbody th { min-width:160px; font-weight:550; }
 .monitoring-module .fm-question-progress-report .fm-qpr-table td>small { margin-top:4px; }
@@ -89,7 +81,7 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-highlight-toggle input { accent-color:var(--fm-brand,#3d1560); width:14px; height:14px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answers.is-single { grid-template-columns:minmax(0,1fr); }
-.monitoring-module .fm-question-progress-report .fm-qpr-answer-card { border:1px solid #e8e2ed; border-top:3px solid #ba7c9c; border-radius:9px; padding:18px; min-width:0; }
+.monitoring-module .fm-question-progress-report .fm-qpr-answer-card { border:1px solid #e8e2ed; border-top:3px solid #ba7c9c; border-radius:9px; padding:24px; min-width:0; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answer-card.is-after { border-color:#dbece5; border-top-color:#3d9885; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answer-card>header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answer-card>header button { font-size:12px; padding:6px 10px; }
@@ -98,7 +90,7 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-repetition { display:flex; gap:8px; align-items:center; font-size:12px; color:#7b8497; margin:6px 0 14px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-repetition select { font-size:12px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-snapshot-question { padding:10px 13px; border-radius:6px; background:#f6f7fa; font-size:13px; overflow-wrap:anywhere; }
-.monitoring-module .fm-question-progress-report .fm-qpr-answer-card .fm-pr-answer { margin:16px 0; padding:0; border:0; background:#fff; max-height:560px; font-size:14px; line-height:1.9; }
+.monitoring-module .fm-question-progress-report .fm-qpr-answer-card .fm-pr-answer { margin:16px 0; padding:0 8px 0 0; border:0; background:#fff; max-height:560px; font-size:14px; line-height:1.9; }
 .monitoring-module .fm-question-progress-report .fm-qpr-answers.is-single .fm-pr-answer { max-height:none; }
 .monitoring-module .fm-question-progress-report .fm-qpr-highlight-brand { color:var(--fm-brand,#3d1560); background:#eee5f8; padding:1px 2px; border-radius:2px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-highlight-keyword { background:#fcf1ce; color:inherit; padding:1px 2px; border-radius:2px; }
@@ -109,11 +101,11 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-evidence { margin-top:20px; border:1px solid #e4dce9; border-radius:8px; padding:18px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-evidence>header { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:16px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card { padding:17px; border:1px solid #e8e2ed; border-radius:8px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card { padding:20px; border:1px solid #e8e2ed; border-radius:8px; display:flex; flex-direction:column; gap:8px; min-width:0; }
 .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card>header { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:7px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card p { font-size:12px; color:#746d7e; overflow-wrap:anywhere; }
 .monitoring-module .fm-question-progress-report .fm-qpr-review-state { display:inline-block; font-size:11px; font-weight:400; color:#987332; background:#fcf5e7; border-radius:4px; padding:2px 6px; white-space:nowrap; }
-.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-standard { background:#f8f5fb; padding:11px; border-radius:6px; }
+.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-standard { background:#f8f5fb; padding:14px; border-radius:6px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card blockquote { margin:0 0 7px; padding:0 0 0 10px; border-left:2px solid #e3d7ed; color:#6d6575; font-size:12px; line-height:1.85; overflow-wrap:anywhere; white-space:pre-wrap; }
 .monitoring-module .fm-question-progress-report .fm-qpr-text-button { padding:5px 0; border:0; background:transparent; font-size:12px; text-align:left; align-self:start; }
 .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-card>button { margin-top:auto; }
@@ -132,28 +124,7 @@
 .monitoring-module .fm-question-progress-report .fm-qpr-improvement { padding:18px; border:1px solid #ecdfbd; background:#fffcf3; border-radius:8px; margin-top:16px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-improvement h4 { color:#8b743e; margin-bottom:7px; }
 .monitoring-module .fm-question-progress-report .fm-qpr-improvement p { font-size:13px; line-height:1.9; color:#8b7e60; }
-.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-sources { margin-top:18px; border-top:1px solid #eef0f4; padding-top:16px; }
-.monitoring-module .fm-question-progress-report .fm-qpr-knowledge-sources ul { margin:10px 0 0; padding-left:18px; display:grid; gap:8px; font-size:12px; overflow-wrap:anywhere; }
-/* Only this drawer overrides the existing Modal positioning. */
-.monitoring-module .modal-card.fm-qpr-config-drawer { left:auto; right:0; top:0; bottom:0; transform:none; width:min(460px,100vw); height:100dvh; max-height:100dvh; border-radius:12px 0 0 12px; font:inherit; font-size:14px; }
-.monitoring-module .fm-qpr-config-drawer .modal-header h2 { font-size:18px; }
-.monitoring-module .fm-qpr-config-body { overflow-y:auto; flex:1; padding:24px; display:flex; flex-direction:column; gap:28px; min-height:0; }
-.monitoring-module .fm-qpr-config-body h4 { font-size:14px; margin:0 0 16px; }
-.monitoring-module .fm-qpr-config-body p { color:#7b8497; font-size:12px; line-height:1.8; margin:12px 0 0; }
-.monitoring-module .fm-qpr-config-body section>label { display:grid; gap:8px; color:#6f798b; font-size:12px; margin-bottom:18px; }
-.monitoring-module .fm-qpr-config-body section>label>select { width:100%; min-width:0; padding:10px; border:1px solid #d9dce5; border-radius:6px; background:#fff; font:inherit; color:#444857; }
-.monitoring-module .fm-qpr-config-drawer .fm-filter-bar { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; padding:0; border:0; background:transparent; margin:0; }
-.monitoring-module .fm-qpr-config-drawer .fm-filter-bar>:is(.fm-model-filter,.fm-date-filter) { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; min-width:0; width:auto; grid-column:auto; }
-.monitoring-module .fm-qpr-config-drawer .fm-filter-bar :is(.fm-model-filter,.fm-date-filter)>span { color:#6f798b; font-size:12px; }
-.monitoring-module .fm-qpr-config-drawer .fm-select-trigger { width:100%; }
-.monitoring-module .fm-qpr-config-actions { flex:none; display:flex; justify-content:flex-end; gap:10px; padding:18px 24px; border-top:1px solid #e4e8ef; }
-.monitoring-module .fm-qpr-config-actions button { font:inherit; padding:9px 18px; border:1px solid #e4dce9; border-radius:6px; background:#fff; color:var(--fm-brand,#3d1560); cursor:pointer; }
-.monitoring-module .fm-qpr-config-actions .primary-button { background:var(--fm-brand,#3d1560); color:#fff; border-color:var(--fm-brand,#3d1560); }
-.monitoring-module .fm-qpr-config-actions button:disabled { opacity:.55; cursor:default; }
-.monitoring-module .fm-qpr-config-drawer :is(button,select):focus-visible { outline:2px solid var(--fm-brand,#3d1560); outline-offset:3px; }
 @container (max-width:1000px) {
-  .monitoring-module .fm-question-progress-report .fm-qpr-scope-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .monitoring-module .fm-question-progress-report .fm-qpr-scope-summary>button { justify-self:start; grid-column:1/-1; }
   .monitoring-module .fm-question-progress-report .fm-qpr-detail-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .monitoring-module .fm-question-progress-report .fm-qpr-knowledge-grid { grid-template-columns:minmax(0,1fr); }
   .monitoring-module .fm-question-progress-report .fm-qpr-phases button { padding:14px; gap:9px; }
@@ -164,7 +135,7 @@
   .monitoring-module .fm-question-progress-report .fm-qpr-phases small,
   .monitoring-module .fm-question-progress-report .fm-qpr-phase-icon { display:none; }
   .monitoring-module .fm-question-progress-report :is(.fm-qpr-answers,.fm-qpr-comparison-gaps) { grid-template-columns:minmax(0,1fr); }
-  .monitoring-module .fm-question-progress-report .fm-qpr-panel { padding:17px; }
+  .monitoring-module .fm-question-progress-report .fm-qpr-panel { padding:20px; }
   .monitoring-module .fm-question-progress-report .fm-qpr-detail-layout { grid-template-columns:minmax(0,1fr); gap:18px; }
   .monitoring-module .fm-question-progress-report .fm-qpr-detail-tiles>div { background:#fafbfe; padding:12px; border-radius:6px; }
   .monitoring-module .fm-question-progress-report .fm-qpr-platform { flex-wrap:wrap; }
@@ -173,8 +144,44 @@
 @container (max-width:450px) {
   .monitoring-module .fm-question-progress-report .fm-qpr-period-values { grid-template-columns:minmax(0,1fr); }
   .monitoring-module .fm-question-progress-report .fm-qpr-scope { padding:14px; }
-  .monitoring-module .fm-question-progress-report .fm-qpr-scope-summary { gap:14px; }
   .monitoring-module .fm-question-progress-report .fm-qpr-metric-cards { gap:9px; }
-  .monitoring-module .fm-question-progress-report .fm-qpr-metric-card { padding:14px 11px; }
+  .monitoring-module .fm-question-progress-report .fm-qpr-metric-card { padding:16px; }
   .monitoring-module .fm-question-progress-report .fm-qpr-card-pair>b { font-size:21px; }
+}
+
+/* Report-only layout: neutral controls, shared height and aligned label rows. */
+#question-optimization .fm-qpr-report-header { align-items:flex-start; gap:20px; padding:0 0 4px; }
+#question-optimization .fm-qpr-report-title { flex:1 1 320px; min-width:0; display:grid; gap:10px; }
+#question-optimization .fm-qpr-report-title h2 { margin:0; color:#303541; font-size:24px; font-weight:650; line-height:1.45; overflow-wrap:anywhere; }
+#question-optimization .fm-qpr-report-meta { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; color:#7b8497; font-size:12px; line-height:1.6; }
+#question-optimization .fm-qpr-report-meta > span + span { padding-left:16px; border-left:1px solid #e4e8ef; }
+#question-optimization .fm-qpr-report-header > button { flex:none; min-height:38px; padding:8px 14px; border-radius:8px; }
+#question-optimization .fm-qpr-inline-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px; align-items:end; }
+#question-optimization .fm-qpr-inline-filters .fm-filter-bar { display:contents; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-model-filter,.fm-date-filter,.fm-qpr-batch-filter) { display:grid; grid-template-columns:minmax(0,1fr); align-items:stretch; align-content:start; gap:8px; width:100%; min-width:0; margin:0; padding:0; border:0; background:transparent; order:0; grid-column:auto; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-model-filter,.fm-date-filter,.fm-qpr-batch-filter) > span { display:block; margin:0; padding:0; color:#716a80; font-size:12px; font-weight:500; line-height:20px; white-space:nowrap; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-select-trigger,.fm-date-picker-trigger) { display:flex; align-items:center; justify-content:space-between; gap:8px; box-sizing:border-box; width:100%; height:40px; min-height:40px; min-width:0; margin:0; padding:9px 12px; border:1px solid #dcdfe7; border-radius:8px; background:#fff; color:#51475e; font:inherit; font-size:13px; font-weight:400; line-height:20px; text-align:left; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-select-trigger,.fm-date-picker-trigger) > span { color:inherit; font-weight:400; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-select-trigger,.fm-date-picker-trigger) > svg { flex:none; color:#8a8297; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-select-trigger,.fm-date-picker-trigger):hover { border-color:#bba7d5; background:#faf8fc; }
+#question-optimization .fm-qpr-inline-filters :is(.fm-select-trigger,.fm-date-picker-trigger):focus-visible { border-color:#a58bbe; outline:2px solid #d9cae9; outline-offset:2px; }
+#question-optimization .fm-qpr-load-state { padding:0 2px; margin:0; }
+#question-optimization .fm-qpr-platform select { min-height:36px; padding:7px 12px; border-radius:8px; }
+@container (max-width:1100px) {
+  #question-optimization .fm-qpr-inline-filters { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; }
+}
+@container (max-width:760px) {
+  #question-optimization .fm-qpr-report-title h2 { font-size:21px; }
+  #question-optimization .fm-qpr-answer-card { padding:20px; }
+}
+@container (max-width:550px) {
+  #question-optimization .fm-qpr-inline-filters { grid-template-columns:minmax(0,1fr); padding:16px; }
+  #question-optimization .fm-qpr-report-header { gap:12px; }
+  #question-optimization .fm-qpr-report-title { flex-basis:100%; }
+  #question-optimization .fm-qpr-report-title h2 { font-size:20px; }
+  #question-optimization .fm-qpr-report-meta > span + span { padding-left:0; border:0; }
+  #question-optimization .fm-qpr-panel { padding:16px; }
+}
+@media (max-width:760px) {
+  .monitoring-module .fm-progress-report.fm-question-progress-report { padding:16px; gap:20px; }
 }

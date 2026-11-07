@@ -42,8 +42,6 @@ export default function ReportKnowledge({ phase, before, after, beforeRun, after
   const prior = observations(before, beforeRun), current = observations(after, afterRun);
   const changes = observedChanges(before, after, reason);
   const title = phase === "before" ? "知识事实与模型回答差距" : phase === "after" ? "知识事实与模型回答差距的填补" : "知识事实与改善分析";
-  const sourceAnswer = phase === "before" ? before : after;
-  const sources = explicitCitations(sourceAnswer);
   return <section className="fm-qpr-panel fm-qpr-knowledge" aria-label={title}>
     <header className="fm-qpr-section-heading"><h3>{title}</h3><small>跟随上方所选回答记录</small></header>
     {phase === "before" ? <div className="fm-qpr-knowledge-grid">{prior.map(item => <article key={item.key} className="fm-qpr-knowledge-card">
@@ -65,6 +63,5 @@ export default function ReportKnowledge({ phase, before, after, beforeRun, after
       </div>
       <div className="fm-qpr-improvement"><h4>改善分析</h4><p>当前所选指标：{change.title}。{change.description}</p><p>{reason || (!before || !after ? "所选平台至少一期暂无有效回答，暂不比较正文证据。" : "上方列出所选回答的品牌判定、评价词与引用变化；具体事实差距是否填补，仍需关联知识事实并逐项核验。")}</p></div>
     </>}
-    {!!sources?.length && <div className="fm-qpr-knowledge-sources"><h4>{phase === "before" ? "优化前" : "优化后"}引用证据</h4><ul>{sources.slice(0, 3).map(source => { const url = safeExternalUrl(source.url); return <li key={source.id}>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{source.title || source.domain || "查看来源"} ↗</a> : <span>{source.title || "未命名引用"}（未返回链接）</span>}</li>; })}</ul>{sourceAnswer && sources.length > 3 && <button type="button" className="fm-qpr-text-button" onClick={() => onEvidence(sourceAnswer, phase === "before" ? "before" : "after")}>查看全部 {sources.length} 条引用 →</button>}</div>}
   </section>;
 }

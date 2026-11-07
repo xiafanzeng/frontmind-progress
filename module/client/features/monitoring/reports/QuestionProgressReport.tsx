@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowLeftRight, BarChart3, Clock3, RefreshCw, Settings2, Target, TrendingUp, Trophy } from "lucide-react";
-import { runStatusLabel, type MonitorRun, type ProjectSummary, type RunAttempt } from "../../../domain";
-import { shiftCalendarDate } from "../queryState";
+import { ArrowLeftRight, BarChart3, Clock3, RefreshCw, Target, TrendingUp, Trophy } from "lucide-react";
+import { type MonitorRun, type ProjectSummary, type RunAttempt } from "../../../domain";
 import type { MonitoringQueryState } from "../types";
-import { attemptModelKey, attemptModelLabel } from "../types";
 import type { MonitoringSummaryData } from "../useMonitoringDataSource";
 import { rangeBounds } from "../overview/overviewModel";
+import { questionCategoryLabel } from "../ProjectQuestionSidebar";
 import { reportAttempts, validAnswers } from "./reportModel";
 import ReportAnswerEvidence from "./ReportAnswerEvidence";
 import ReportAnswerSample from "./ReportAnswerSample";
@@ -36,9 +35,7 @@ const metricIcons = { mentionRate: Target, top3Rate: Trophy, averagePosition: Ba
 const phaseIcons = { before: Clock3, compare: ArrowLeftRight, after: BarChart3 };
 
 export default function QuestionProgressReport({ project, query, catalog, questions, onChange, serverData, data }: QuestionProgressReportProps & { data: QuestionReportData }) {
-  const [configOpen, setConfigOpen] = useState(false);
   const [highlight, setHighlight] = useState(true);
-  const configButton = useRef<HTMLButtonElement>(null);
   const [platform, setPlatform] = useState("");
   const [beforeAnswer, setBeforeAnswer] = useState("");
   const [afterAnswer, setAfterAnswer] = useState("");
@@ -86,7 +83,6 @@ export default function QuestionProgressReport({ project, query, catalog, questi
   const selectedAfter = currentSamples.find(item => item.id === afterAnswer) || currentSamples[0];
   const evidenceAttempt = evidence ? (evidence.side === "before" ? priorAttempts : currentAttempts).find(attempt => attempt.id === evidence.id) : undefined;
   const evidenceRun = evidence?.side === "before" ? before : after;
-  const currentRun = phase === "before" ? before : after;
   const displayedSides: Side[] = phase === "compare" ? ["before", "after"] : [phase];
   const changeReport = (patch: Partial<MonitoringQueryState>) => onChange({ reportMonitorId: query.monitorId, questionCategory: undefined, ...patch });
   const changeScope = (patch: Partial<MonitoringQueryState>) => changeReport({ answerId: undefined, answerQuestion: undefined, fullscreen: false, ...patch });
@@ -114,19 +110,16 @@ export default function QuestionProgressReport({ project, query, catalog, questi
   useEffect(() => { if (evidenceAttempt) evidenceRef.current?.focus({ preventScroll: false }); }, [evidenceAttempt?.id, evidence?.side]);
   useEffect(() => { if (typeof window !== "undefined" && window.location.hash === "#question-optimization") root.current?.focus({ preventScroll: true }); }, []);
 
-  const modelAttempt = runs.flatMap(run => run.attempts).find(attempt => attemptModelKey(attempt) === query.model || `${attempt.platformCode}:${attempt.clientType}` === query.model);
-  const modelLabel = query.model ? modelAttempt ? attemptModelLabel(modelAttempt) : "所选模型" : "全部模型";
   const trendUnavailable = data.loading ? "正在读取运行快照…" : data.error || refreshError ? "读取存在错误，暂不绘制趋势。" : undefined;
 
   return <section id="question-optimization" ref={root} tabIndex={-1} className="fm-progress-report fm-question-progress-report" aria-label="问题进度报告">
-    <header className="fm-pr-header"><h2>问题进度报告</h2><button type="button" disabled={data.refreshing} onClick={() => { setRefreshError(""); void data.refresh().catch(() => setRefreshError("刷新失败，请重试。")); }}><RefreshCw size={15} aria-hidden="true" /> {data.refreshing ? "正在刷新…" : "刷新数据"}</button></header>
-    <section className="fm-qpr-scope" aria-label="当前报告配置"><div className="fm-qpr-scope-summary">
-      <div><small>监控品牌</small><b>{currentRun?.config.brandName || "待读取"}</b></div>
-      <div><small>模型与日期</small><b>{modelLabel}</b><span>{query.from} — {shiftCalendarDate(query.to, -1)}</span></div>
-      <div><small>优化前</small><b>{date(before)}</b>{before && <span>V{before.version} · {runStatusLabel(before.status)}</span>}</div>
-      <div><small>优化后</small><b>{date(after)}</b>{after && <span>V{after.version} · {runStatusLabel(after.status)}</span>}</div>
-      <button type="button" ref={configButton} onClick={() => setConfigOpen(true)}><Settings2 size={15} aria-hidden="true" /> 编辑配置</button>
-    </div></section>
+    <header className="fm-pr-header fm-qpr-report-header">
+      <div className="fm-qpr-report-title">
+        <h2>{question?.label || (query.monitorId ? questionId ? "所选问题尚未读取" : "请先选择具体问题" : "问题进度报告")}</h2>
+        {query.monitorId && <div className="fm-qpr-report-meta"><span>{questionCategoryLabel(question?.category ?? questions.find(item => item.id === questionId)?.category)}</span><span>{phase === "compare" ? `有效回答：前 ${beforeMetric.effective} / 后 ${afterMetric.effective}` : `有效回答 ${(phase === "before" ? beforeMetric : afterMetric).effective} 条`}</span></div>}
+      </div>
+      <button type="button" disabled={data.refreshing} onClick={() => { setRefreshError(""); void data.refresh().catch(() => setRefreshError("刷新失败，请重试。")); }}><RefreshCw size={15} aria-hidden="true" /> {data.refreshing ? "正在刷新…" : "刷新数据"}</button></header>
+    <ReportConfiguration project={project} query={query} catalog={catalog} runs={runs} before={before} after={after} date={date} onChange={changeScope} />
     <div className="fm-qpr-load-state"><p role="status">{data.loading ? "正在读取运行快照…" : `已读取 ${runs.length} 个批次`} · 时区 {project.timezone}{data.more && <button type="button" disabled={data.loading} onClick={data.loadMore}>继续加载批次</button>}</p>
       {data.limited && <p className="fm-pr-warning">批次列表仅返回最近 100 批，所选范围可能不完整。</p>}
       {(data.error || refreshError) && <p className="fm-pr-warning" role="alert">读取失败：{data.error || refreshError}。已缓存结果仅供查看，暂不输出变化。</p>}
@@ -135,7 +128,6 @@ export default function QuestionProgressReport({ project, query, catalog, questi
     </div>
     <nav className="fm-qpr-phases" aria-label="报告阶段">{questionReportPhases.map(item => { const Icon = phaseIcons[item.key]; return <button type="button" key={item.key} aria-pressed={phase === item.key} onClick={() => changeReport({ reportPhase: item.key })}><span className="fm-qpr-phase-icon"><Icon size={20} aria-hidden="true" /></span><span><b>{item.label}</b><small>{item.description}</small></span></button>; })}</nav>
     {!query.monitorId ? <p className="fm-pr-empty">请先从左侧选择具体问题。</p> : <>
-      <header className="fm-qpr-question-heading"><h3>{question?.label || (questionId ? "所选问题尚未读取" : "请先选择具体问题")}</h3><small>{phase === "compare" ? `有效回答：前 ${beforeMetric.effective} / 后 ${afterMetric.effective}` : `有效回答 ${(phase === "before" ? beforeMetric : afterMetric).effective} 条`}</small></header>
       {!self && <p className="fm-pr-warning">当前指标以主品牌为对象。<button type="button" onClick={() => changeScope({ subject: "self" })}>切换本品</button></p>}
       {!question && <p className="fm-pr-empty">{data.loading ? "正在读取问题与运行快照…" : questionId ? "当前已读取范围没有这个问题，请继续加载或重新选择。" : "暂无问题，请先在问题监控中配置并采集。"}</p>}
       <nav className="fm-qpr-metric-cards" aria-label="评估指标">{questionReportMetrics.map(item => {
@@ -158,7 +150,7 @@ export default function QuestionProgressReport({ project, query, catalog, questi
         </section>
         <ReportTrend key={`${questionId}:${metric}:${query.model || ""}`} runs={runs} query={scopeQuery} questionId={questionId} metric={metric} before={before} after={after} timezone={project.timezone} date={date} unavailable={trendUnavailable} />
       </> : <ReportMetricDetail attempts={phase === "before" ? priorAttempts : currentAttempts} metric={metric} enabled={self} period={phase === "before" ? "优化前" : "优化后"} />}
-      <section className="fm-qpr-panel"><header className="fm-qpr-section-heading"><div><h3>不同平台的表现</h3><p>{definition.interpretation}</p></div></header>
+      <section className="fm-qpr-panel"><header className="fm-qpr-section-heading"><div><h3>不同平台的表现</h3></div></header>
         <div className="fm-pr-table fm-qpr-table"><table><thead><tr><th>平台 / 采集条件</th>{displayedSides.map(side => <th key={side}>{side === "before" ? "优化前" : "优化后"}</th>)}{phase === "compare" && <th>变化</th>}</tr></thead><tbody>{metric === "averagePosition" ? rankRows.map(row => <tr key={row.key}><th scope="row">{row.label}</th>{displayedSides.map(side => <td key={side}><b>{measurementText(row[side].value, metric)}</b>{row[side].missing && <small>{row[side].missing}</small>}</td>)}{phase === "compare" && <td>{measurementChange(row.before, row.after, metric, reason || row.reason).title}</td>}</tr>) : platformOptions.map(([key, label]) => {
           const prior = measureQuestion(priorAttempts.filter(attempt => reportPlatformKey(attempt) === key), metric, self);
           const current = measureQuestion(currentAttempts.filter(attempt => reportPlatformKey(attempt) === key), metric, self);
@@ -174,6 +166,5 @@ export default function QuestionProgressReport({ project, query, catalog, questi
       </section>
       <ReportKnowledge phase={phase} before={selectedBefore} after={selectedAfter} beforeRun={before} afterRun={after} reason={reason} change={change} onEvidence={openEvidence} />
     </>}
-    {configOpen && <ReportConfiguration project={project} query={query} catalog={catalog} runs={runs} before={before} after={after} date={date} onApply={changeScope} onClose={() => setConfigOpen(false)} onReturnFocus={() => configButton.current?.focus()} />}
   </section>;
 }
