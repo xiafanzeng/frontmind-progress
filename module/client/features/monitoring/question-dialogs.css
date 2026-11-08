@@ -1,0 +1,73 @@
+/* Question deletion and recycling only; shared dialogs keep their existing presentation. */
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) {
+  --question-dialog-line: #e9e5ef;
+  --question-dialog-muted: #81788e;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--question-dialog-line);
+  border-radius: 16px;
+  background: #fff;
+}
+.monitoring-module .modal-card.fm-question-delete-dialog { width: min(560px, calc(100vw - 32px)); }
+.monitoring-module .modal-card.fm-question-recycle-dialog { width: min(720px, calc(100vw - 32px)); }
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) > .modal-header {
+  flex: none;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 20px;
+  border-bottom: 1px solid var(--question-dialog-line);
+}
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) > .modal-header :is(h2, h3) { margin: 0; color: #30273c; font-size: 19px; font-weight: 650; line-height: 1.5; }
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) > .modal-header p { margin: 5px 0 0; color: var(--question-dialog-muted); font-size: 13px; line-height: 1.6; }
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) > .modal-header .top-icon { flex: none; width: 30px; height: 30px; min-height: 30px; padding: 5px; border: 0; border-radius: 8px; color: #81788e; background: transparent; }
+.monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog) > .modal-header .top-icon:hover { background: #f4f1f7; }
+.monitoring-module .fm-question-dialog-body { min-height: 0; padding: 22px 24px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.monitoring-module .fm-question-delete-summary { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.monitoring-module .fm-question-dialog-symbol { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 12px; background: #fff1f3; color: #bf4058; }
+.monitoring-module .fm-question-delete-summary p { margin: 0; color: #51475e; font-size: 14px; line-height: 1.7; }
+.monitoring-module .fm-question-delete-summary strong { margin: 0 3px; color: #30273c; font-size: 17px; }
+.monitoring-module .fm-question-delete-dialog .fm-question-delete-list { display: grid; gap: 0; max-height: none; margin: 0; padding: 0; list-style: none; border: 1px solid #e9e5ef; border-radius: 10px; background: #faf9fc; overflow: hidden; }
+.monitoring-module .fm-question-delete-dialog .fm-question-delete-list li { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 12px 14px; }
+.monitoring-module .fm-question-delete-dialog .fm-question-delete-list li + li { border-top: 1px solid #ece8f1; }
+.monitoring-module .fm-question-delete-number { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: #efebf5; color: #806899; font-size: 12px; font-variant-numeric: tabular-nums; }
+.monitoring-module .fm-question-delete-list li > div { min-width: 0; display: grid; gap: 4px; }
+.monitoring-module .fm-question-delete-list strong { color: #51475e; font-size: 14px; font-weight: 500; line-height: 1.65; overflow-wrap: anywhere; }
+.monitoring-module .fm-question-delete-list li > div > span { color: #91879b; font-size: 12px; line-height: 1.5; }
+.monitoring-module .fm-question-dialog-notice { display: flex; align-items: flex-start; gap: 9px; margin-top: 16px; padding: 12px 14px; border: 1px solid #eedfc2; border-radius: 10px; color: #8c692b; background: #fffbf3; }
+.monitoring-module .fm-question-dialog-notice > svg { flex: none; margin-top: 3px; }
+.monitoring-module .fm-question-dialog-notice p { margin: 0; font-size: 13px; line-height: 1.75; overflow-wrap: anywhere; }
+.monitoring-module .fm-question-dialog-notice.is-error { border-color: #f1d2d8; color: #b83c52; background: #fff5f6; }
+.monitoring-module .fm-question-dialog-footer { display: flex; flex: none; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #e9e5ef; background: #fff; }
+.monitoring-module .fm-question-dialog-footer button { min-height: 38px; min-width: 84px; padding: 8px 16px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 500; line-height: 1.5; box-shadow: none; }
+.monitoring-module .fm-question-dialog-footer .ghost-button { border: 1px solid #ded7e7; color: #655b70; background: #fff; }
+.monitoring-module .fm-question-dialog-footer .ghost-button:hover:not(:disabled) { background: #f6f3f9; }
+.monitoring-module .fm-question-dialog-footer .danger-button { border: 1px solid #bd4059; color: #fff; background: #bd4059; }
+.monitoring-module .fm-question-dialog-footer .danger-button:hover:not(:disabled) { background: #a9344b; }
+.monitoring-module .fm-question-dialog-footer button:disabled { opacity: .48; cursor: not-allowed; }
+.monitoring-module .fm-question-dialog-footer button:focus-visible,
+.monitoring-module .fm-question-recycle-body button:focus-visible { outline: 2px solid #9172b4; outline-offset: 3px; }
+.monitoring-module .fm-question-recycle-summary { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; color: #81788e; font-size: 12px; }
+.monitoring-module .fm-question-recycle-body .recycle-list { gap: 12px; }
+.monitoring-module .fm-question-recycle-body .recycle-list article { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid #e9e5ef; border-radius: 12px; background: #fff; }
+.monitoring-module .fm-question-recycle-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 10px; color: #8b739e; background: #f4f0f8; }
+.monitoring-module .fm-question-recycle-body .recycle-list .fm-question-recycle-content { flex: 1; min-width: 0; gap: 8px; }
+.monitoring-module .fm-question-recycle-content strong { color: #51475e; font-size: 14px; font-weight: 600; line-height: 1.65; overflow-wrap: anywhere; }
+.monitoring-module .fm-question-recycle-dates { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.monitoring-module .fm-question-recycle-body .recycle-list small { color: #91879b; font-size: 12px; line-height: 1.6; }
+.monitoring-module .fm-question-recycle-body .secondary-button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 6px; min-height: 36px; padding: 7px 12px; border: 1px solid #dfd5eb; border-radius: 8px; color: var(--fm-brand, #3d1560); background: #faf8fd; font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: none; }
+.monitoring-module .fm-question-recycle-body .secondary-button:hover { background: #f0eaf7; }
+.monitoring-module .fm-question-recycle-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 12px 40px; text-align: center; }
+.monitoring-module .fm-question-recycle-empty .fm-question-recycle-icon { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 4px; }
+.monitoring-module .fm-question-recycle-empty strong { color: #51475e; font-size: 15px; font-weight: 500; }
+.monitoring-module .fm-question-recycle-empty p { margin: 0; color: #91879b; font-size: 13px; line-height: 1.7; }
+@media (max-width: 600px) {
+  .monitoring-module :is(.fm-question-delete-dialog, .fm-question-recycle-dialog, .monitoring-inline-step:has(> .fm-question-recycle-body)) > .modal-header { padding: 18px 16px; }
+  .monitoring-module .fm-question-dialog-body { padding: 18px 16px; }
+  .monitoring-module .fm-question-dialog-footer { padding: 14px 16px; }
+  .monitoring-module .fm-question-recycle-body .recycle-list article { flex-wrap: wrap; gap: 12px; padding: 14px; }
+  .monitoring-module .fm-question-recycle-body .secondary-button { margin-left: auto; }
+  .monitoring-module .fm-question-recycle-body .fm-question-recycle-content { flex-basis: calc(100% - 52px); }
+}

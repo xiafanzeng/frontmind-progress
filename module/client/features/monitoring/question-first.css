@@ -98,8 +98,9 @@
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question strong { width:100%; white-space:normal; overflow-wrap:anywhere; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled { font-size:10px; color:#9b94a3; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question .fm-question-enabled.is-enabled { color:#518b7f; }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer { flex:none; padding:12px; border-top:1px solid #eceaf0; }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer button { display:flex; align-items:center; gap:6px; border:0; background:transparent; color:#82788c; font-size:12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer { flex:none; margin-top:auto; padding:12px; border-top:1px solid #eceaf0; background:#fff; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer button { display:flex; align-items:center; justify-content:center; gap:7px; width:100%; min-height:36px; padding:8px 12px; border:1px solid #e9e3ef; border-radius:8px; background:#faf8fc; color:#756780; font-size:12px; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-sidebar-footer button:hover { background:#f0ebf6; color:var(--fm-brand,#3d1560); }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px 0; color:#82788c; font-size:11px; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar label, .fm-question-batch-bar button { display:flex; align-items:center; gap:5px; font-size:11px; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-question-batch-bar input { accent-color:#9072ad; }
@@ -222,14 +223,13 @@
 }
 
 /* Keep question rows scrollable while the toolbar and recycle bin stay reachable. */
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { display:flex; flex-direction:column; box-sizing:border-box; height:calc(100dvh - 160px); min-height:0; max-height:calc(100dvh - 160px); overflow-y:auto; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { position:sticky; top:0; align-self:start; display:flex; flex-direction:column; box-sizing:border-box; height:var(--fm-question-sidebar-height,calc(100dvh - 160px)); min-height:0; max-height:var(--fm-question-sidebar-height,calc(100dvh - 160px)); overflow:hidden; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar > :not(.fm-project-question-list) { flex:none; }
-.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list { display:flex; flex-direction:column; flex:1 1 0; min-height:64px; max-height:none; overflow-y:auto; scrollbar-width:thin; scrollbar-gutter:stable; }
+.monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list { display:flex; flex-direction:column; flex:1 1 0; min-height:0; max-height:none; overflow-y:auto; overscroll-behavior-y:contain; scrollbar-width:thin; scrollbar-gutter:stable; }
 .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first .fm-project-question-list > * { flex:none; }
-.agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { height:100%; max-height:100%; }
 @media (max-width:760px) {
   .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar,
-  .agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { height:340px; max-height:340px; }
+  .agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar { position:static; height:340px; max-height:340px; }
   .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar[data-collapsed="true"],
   .agent-workbench-shell.has-resource-panes .monitoring-module .monitoring-reference-page .fm-monitoring-workspace.fm-progress-frame.fm-resource-reading.fm-question-first > .fm-question-sidebar[data-collapsed="true"] { height:48px; max-height:48px; }
 }

@@ -1,7 +1,7 @@
 import type { MonitoringQuestionSeed } from "../domain";
 import { useBusinessWorkspace } from "../host-runtime";
 import { activeEnterpriseProjectId } from "../host-runtime";
-import { ArchiveRestore, X } from "lucide-react";
+import { ArchiveRestore, Trash2, X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { monitoringRunHref } from "../features/monitoring/reportNavigation";
@@ -12,6 +12,7 @@ import ProjectForm from "../components/ProjectForm";
 import RunConfirmationDialog from "../components/RunConfirmationDialog";
 import { summarizeScreenshotPolicies } from "../runBilling";
 import MonitoringWorkspace from "../features/monitoring/MonitoringWorkspace";
+import "../features/monitoring/question-dialogs.css";
 import {
   formatDateTime,
   type MonitorInput,
@@ -890,29 +891,34 @@ export default function MonitoringPage({
         inline={isWorkbench}
         open={recycleModal}
         onClose={() => setRecycleModal(false)}
+        className="fm-question-recycle-dialog"
         title="问题监控回收站"
         description="删除后保留 30 天；恢复后保持未开启。"
       >
-        <div className="recycle-list">
+        <div className="fm-question-dialog-body fm-question-recycle-body">
+          {deletedMonitors.length > 0 && <div className="fm-question-recycle-summary"><span>已删除的问题</span><span>{deletedMonitors.length} 个</span></div>}
+          <div className="recycle-list">
           {deletedMonitors.length ? (
             deletedMonitors.map((item) => (
               <article key={item.id}>
-                <div>
+                <span className="fm-question-recycle-icon" aria-hidden="true"><Trash2 size={18} /></span>
+                <div className="fm-question-recycle-content">
                   <strong>{item.name}</strong>
-                  <small>
+                  <div className="fm-question-recycle-dates"><small>
                     删除于{" "}
                     {formatDateTime(
                       item.deletedAt ? String(item.deletedAt) : undefined,
-                    )}{" "}
-                    · 清理时间{" "}
+                    )}
+                  </small><small>清理于{" "}
                     {formatDateTime(
                       item.purgeAfter ? String(item.purgeAfter) : undefined,
                     )}
-                  </small>
+                  </small></div>
                 </div>
                 <button
                   type="button"
                   className="secondary-button"
+                  aria-label={`恢复问题：${item.name}`}
                   onClick={() =>
                     void runAction(async () => {
                       await onRestoreMonitor?.(item.id);
@@ -920,16 +926,20 @@ export default function MonitoringPage({
                     })
                   }
                 >
-                  <ArchiveRestore size={14} /> 恢复并保持未开启
+                  <ArchiveRestore size={15} aria-hidden="true" /> 恢复问题
                 </button>
               </article>
             ))
           ) : (
-            <div className="panel-state">
+            <div className="fm-question-recycle-empty">
+              <span className="fm-question-recycle-icon" aria-hidden="true"><Trash2 size={24} /></span>
               <strong>回收站为空</strong>
+              <p>删除的问题会保留在这里，30 天内可恢复。</p>
             </div>
           )}
+          </div>
         </div>
+        <footer className="fm-question-dialog-footer"><button type="button" className="ghost-button" onClick={() => setRecycleModal(false)}>关闭</button></footer>
       </Modal>
     </div>
   );
