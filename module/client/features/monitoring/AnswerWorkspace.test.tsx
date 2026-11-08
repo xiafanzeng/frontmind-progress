@@ -350,8 +350,8 @@ describe("monitoring answer reading", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "全屏查看" })).toHaveFocus(),
     );
-    // jsdom 渲染较慢，放宽本用例超时。
-  }, 20000);
+    // jsdom 渲染较慢，放宽本用例超时；逐题改版后串行等待更久，慢速本机与构建容器均会超过 20s。
+  }, 60_000);
   it("crosses the 50-answer boundary exactly once when Next is clicked repeatedly", async () => {
     const all = Array.from({ length: 73 }, (_, index) => ({
       ...attempt,
