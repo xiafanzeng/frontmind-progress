@@ -1,10 +1,11 @@
 import Modal from "../../components/Modal";
-import { useEffect, useId, useState } from "react";
-import { PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal, ListChecks, Trash2, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { PanelLeftClose, PanelLeftOpen, Plus, Search, SlidersHorizontal, ListChecks, Trash2, TriangleAlert, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@frontmind/module-ui/components/ui/popover";
 import { KEYWORD_CATEGORY_OPTIONS } from "@frontmind/module-ui/keyword-categories";
 import { questionKey, type ProjectQuestion } from "./useProjectQuestions";
 import "./monitor-configuration.css";
+import "./question-dialogs.css";
 
 export const questionCategoryLabel = (category?: string | null) => KEYWORD_CATEGORY_OPTIONS.find(item => item.key === category)?.label.replace(/词$/, "问题") || "待分类";
 export default function ProjectQuestionSidebar({ questions, selectedKey, loading, error, onRetry, onSelect, onAdd, onOpenRecycle, deletedCount, onDeleteMonitor }: {
@@ -21,6 +22,29 @@ export default function ProjectQuestionSidebar({ questions, selectedKey, loading
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const sidebarRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const top = Math.max(0, sidebar.getBoundingClientRect().top);
+      sidebar.style.setProperty("--fm-question-sidebar-height", `${Math.max(180, window.innerHeight - top - 12)}px`);
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+    const observer = new ResizeObserver(schedule);
+    if (sidebar.parentElement) observer.observe(sidebar.parentElement);
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { capture: true, passive: true });
+    measure();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule, true);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
   const chosen = questions.filter(question => selection.has(questionKey(question)));
   const needsMigration = chosen.some(question => question.monitor.questionsCount > 1);
   const toggle = (key: string) => setSelection(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next; });
@@ -47,7 +71,7 @@ export default function ProjectQuestionSidebar({ questions, selectedKey, loading
   const count = Number(cadence !== "all") + Number(Boolean(category)) + Number(enabled !== "all");
   const matching = questions.filter(question => question.label.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()) &&
     (!category || question.category === category) && (enabled === "all" || (question.monitor.status === "active") === (enabled === "enabled")) && (cadence === "all" || (cadence === "manual" ? question.monitor.scheduleType === "none" : cadence === "auto" ? ["daily", "weekly"].includes(question.monitor.scheduleType || "") : question.monitor.scheduleType === cadence)));
-  return <aside className="resource-outcomes monitoring-results-panel fm-monitor-config-panel fm-question-sidebar" data-resource-pane="outcomes" data-collapsed={collapsed || undefined} aria-label="监控问题列表">
+  return <aside ref={sidebarRef} className="resource-outcomes monitoring-results-panel fm-monitor-config-panel fm-question-sidebar" data-resource-pane="outcomes" data-collapsed={collapsed || undefined} aria-label="监控问题列表">
     <header className="fm-config-list-heading"><h3>监控问题列表</h3><button type="button" className="fm-config-create" onClick={onAdd} aria-label="添加监控问题"><Plus size={15} />添加</button><button type="button" className="fm-config-collapse" aria-label={collapsed ? "展开监控问题列表" : "折叠监控问题列表"} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</button></header>
     <div className="fm-question-tools"><label className="fm-config-search"><Search size={15} /><input type="search" placeholder="搜索问题" aria-label="搜索监控问题" value={search} onChange={event => setSearch(event.target.value)} /></label>
       <Popover><PopoverTrigger asChild><button type="button" className={`fm-icon-button ${count ? "is-active" : ""}`} aria-label="筛选监控问题"><SlidersHorizontal size={16} />{count > 0 && <sup>{count}</sup>}</button></PopoverTrigger><PopoverContent className="fm-monitor-config-popover fm-question-filter-popover" align="start" sideOffset={8} collisionPadding={12}>
@@ -69,11 +93,14 @@ export default function ProjectQuestionSidebar({ questions, selectedKey, loading
       </button>
     </div>)}{!matching.length && !loading && <div className="fm-config-no-results"><p>{questions.length ? "没有符合条件的问题" : "还没有监控问题"}</p><button type="button" onClick={questions.length ? clearFilters : onAdd}>{questions.length ? "清除搜索和筛选" : "添加第一个问题"}</button></div>}</div>
     <footer className="fm-question-sidebar-footer"><button type="button" onClick={onOpenRecycle}><Trash2 size={14} />回收站{deletedCount ? `（${deletedCount}）` : ""}</button></footer>
-    <Modal open={confirming} onClose={() => { if (!deleting) setConfirming(false); }} title="批量删除问题" description="移入回收站后保留 30 天，可恢复。">
-      <p>将删除所选的 {chosen.length} 个问题。</p><ul className="fm-question-delete-list">{chosen.map(q => <li key={questionKey(q)}>{q.label}</li>)}</ul>
-      {needsMigration && <p className="form-error" role="alert">所选问题中有旧配置共用的问题，需要先完成逐题迁移才能独立删除，避免同时删除其他问题。</p>}
-      {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
-      <footer className="run-confirmation-footer"><button type="button" className="ghost-button" disabled={deleting} onClick={() => setConfirming(false)}>取消</button><button type="button" className="danger-button" disabled={deleting || needsMigration || !chosen.length || !onDeleteMonitor} onClick={() => void deleteSelected()}>{deleting ? "正在删除…" : "移入回收站"}</button></footer>
+    <Modal open={confirming} className="fm-question-delete-dialog" onClose={() => { if (!deleting) setConfirming(false); }} title="批量删除问题" description="移入回收站后保留 30 天，可恢复。">
+      <div className="fm-question-dialog-body">
+        <div className="fm-question-delete-summary"><span className="fm-question-dialog-symbol"><Trash2 size={20} aria-hidden="true" /></span><p>将移入回收站 <strong>{chosen.length}</strong> 个问题</p></div>
+        <ol className="fm-question-delete-list" aria-label="待删除问题">{chosen.map((q, index) => <li key={questionKey(q)}><span className="fm-question-delete-number" aria-hidden="true">{index + 1}</span><div><strong>{q.label}</strong><span>{questionCategoryLabel(q.category)}</span></div></li>)}</ol>
+        {needsMigration && <div className="fm-question-dialog-notice" role="alert"><TriangleAlert size={17} aria-hidden="true" /><p>部分问题共用旧配置，暂不能单独删除。请先完成逐题迁移，避免误删同配置的其他问题。</p></div>}
+        {deleteError && <div className="fm-question-dialog-notice is-error" role="alert"><TriangleAlert size={17} aria-hidden="true" /><p>{deleteError}</p></div>}
+      </div>
+      <footer className="fm-question-dialog-footer"><button type="button" className="ghost-button" disabled={deleting} onClick={() => setConfirming(false)}>取消</button><button type="button" className="danger-button" disabled={deleting || needsMigration || !chosen.length || !onDeleteMonitor} onClick={() => void deleteSelected()}>{deleting ? "正在删除…" : "移入回收站"}</button></footer>
     </Modal>
   </aside>;
 }
