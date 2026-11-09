@@ -1,5 +1,6 @@
 import TimezoneSelect from "./TimezoneSelect";
 import InlineSelect from "./InlineSelect";
+import MonitoringTimePicker from "./MonitoringTimePicker";
 import {
   KEYWORD_CATEGORY_OPTIONS,
   keywordCategoryKey,
@@ -1097,7 +1098,7 @@ function MonitorFormFields({
                 </span>
               </div>
               {scheduleType !== "none" && <>
-                <div className="field"><span className="field-label">执行时间</span><input aria-label="执行时间" type="time" value={localTime} onChange={event => setLocalTime(event.target.value)} /></div>
+                <div className="field"><span className="field-label">执行时间</span><MonitoringTimePicker value={localTime} onChange={setLocalTime} /></div>
                 <div className="field"><span className="field-label">时区</span><TimezoneSelect value={timezone} onChange={setTimezone} label="执行时区" inline={questionOnly} /></div>
               </>}
             </div>

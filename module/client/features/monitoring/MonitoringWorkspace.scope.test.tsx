@@ -271,9 +271,9 @@ function mountWorkspace(options: {
 afterEach(() => { window.history.replaceState({}, "", "/"); vi.unstubAllGlobals(); });
 async function openReportDialog() {
   // 逐题改版：弹窗锁定当前问题/模型/日期，范围可用性经 tRPC monitoring.summary 读取。
-  fireEvent.click(screen.getByRole("button", { name: "下载报告" }));
-  await screen.findByText("合并为一个 Excel 文件");
-  await waitFor(() => expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "导出" }));
+  await screen.findByText("选择需要的内容，每一项单独生成一个文件。");
+  await waitFor(() => expect(screen.getByRole("button", { name: "导出 1 项" })).toBeEnabled());
 }
 
 async function expectOverviewEffective(value: number) {

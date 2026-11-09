@@ -836,8 +836,8 @@ function MonitoringWorkspaceController({
                 <button type="button" className="fm-secondary-button" onClick={() => onOpenDetails(visibleSelectedMonitor)}>
                   <Edit3 size={14} /> 编辑配置
                 </button>
-                <button type="button" className="fm-primary-button fm-report-button" disabled={!serverData || !query.monitorId} title={!serverData ? "演示数据不提供报告下载" : undefined} onClick={() => setReportDialogOpen(true)}>
-                  <Download size={14} /> 下载报告
+                <button type="button" className="fm-primary-button fm-report-button" disabled={!serverData || !query.monitorId} title={!serverData ? "演示数据不提供导出" : undefined} onClick={() => setReportDialogOpen(true)}>
+                  <Download size={14} /> 导出
                 </button>
                 <button type="button" className="fm-primary-button" disabled={requiresSplit || visibleSelectedMonitor.lastRun?.status === "running"} title={splitReason} onClick={() => onRun(visibleSelectedMonitor)}>
                   <Play size={14} /> {visibleSelectedMonitor.lastRun?.status === "running" ? "正在运行" : "立即运行"}

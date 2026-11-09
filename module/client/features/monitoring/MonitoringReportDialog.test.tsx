@@ -9,7 +9,13 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { observable } from "@trpc/server/observable";
 import { TRPCClientError } from "@trpc/client";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { collectExportData, prepareExportFile } from "./monitoringExport";
+vi.mock("./monitoringExport", () => ({ collectExportData: vi.fn(), prepareExportFile: vi.fn() }));
+beforeEach(() => {
+  vi.mocked(collectExportData).mockReset();
+  vi.mocked(prepareExportFile).mockReset();
+});
 import { trpc } from "../../trpc";
 import MonitoringReportDialog from "./MonitoringReportDialog";
 import type { MonitoringQueryState } from "./types";
@@ -99,86 +105,54 @@ function renderDialog(props: { query?: Partial<MonitoringQueryState>; onClose?: 
 it.each([
   ["2024-02-28", "2024-03-01", "2024-02-29", "2024-02-27", "2024-02-29"],
   ["2026-12-31", "2027-01-01", "2026-12-31", "2026-12-30", "2026-12-31"],
-])(
-  "shows inclusive end dates and preserves exclusive request bounds across %s to %s",
-  async (from, to, inclusiveTo, utcFrom, utcTo) => {
-    // jsdom 缺少 URL.createObjectURL，成功收尾无法走完；下载保持挂起，只验证请求边界。
-    const fetcher = vi.fn(async (_url: string, _options?: RequestInit) =>
-      new Promise<Response>(() => {}),
-    );
-    vi.stubGlobal("fetch", fetcher);
-    renderDialog({ query: { from, to } });
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled(),
-    );
-    // 弹窗直接展示当前范围：界面日期含结束当天，下载请求体保持不含当天的 UTC 边界。
-    expect(screen.getByText(`${from} 至 ${inclusiveTo}`)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "下载 Excel" }));
-    const call = await waitFor(() => fetcher.mock.calls.find(([url]) => url.includes("report.xlsx"))!);
-    expect(JSON.parse(String(call[1]!.body))).toMatchObject({
-      from: `${utcFrom}T16:00:00.000Z`,
-      to: `${utcTo}T16:00:00.000Z`,
-    });
-  },
-);
-it("locks the download to the current question/model scope and duplicate submission", async () => {
-  let resolveDownload!: (value: Response) => void;
-  const fetcher = vi.fn(async (_url: string, _options: RequestInit) =>
-    new Promise<Response>((resolve) => {
-      resolveDownload = resolve;
-    }),
-  );
-  vi.stubGlobal("fetch", fetcher);
-  const { close } = renderDialog({});
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled(),
-  );
-  expect(screen.getByText("豆包（网页版）")).toBeVisible();
-  const download = screen.getByRole("button", { name: "下载 Excel" });
-  fireEvent.click(download);
-  fireEvent.click(download);
-  await waitFor(() =>
-    expect(
-      fetcher.mock.calls.filter(([url]) => url.includes("report.xlsx")),
-    ).toHaveLength(1),
-  );
-  const call = fetcher.mock.calls.find(([url]) => url.includes("report.xlsx"))!;
-  expect(JSON.parse(String(call[1]!.body))).toMatchObject({
-    from: "2026-09-13T16:00:00.000Z",
-    to: "2026-09-14T16:00:00.000Z",
-    subject: { kind: "self" },
-    questionIds: [q1],
-    platformIds: [p1],
+])("preserves inclusive displayed dates and exclusive export bounds across %s to %s", async (from, to, inclusiveTo, utcFrom, utcTo) => {
+  vi.mocked(collectExportData).mockImplementation(() => new Promise(() => {}));
+  renderDialog({ query: { from, to } });
+  const button = screen.getByRole("button", { name: "导出 1 项" });
+  await waitFor(() => expect(button).toBeEnabled());
+  expect(screen.getByText(`${from} 至 ${inclusiveTo}`)).toBeVisible();
+  fireEvent.click(button);
+  await waitFor(() => expect(collectExportData).toHaveBeenCalledOnce());
+  expect(vi.mocked(collectExportData).mock.calls[0][1].scope).toMatchObject({
+    from: new Date(`${utcFrom}T16:00:00.000Z`), to: new Date(`${utcTo}T16:00:00.000Z`),
+    questionId: q1, platformId: p1, subject: { kind: "self" },
   });
-  resolveDownload(
-    new Response(JSON.stringify({ error: "请缩小日期范围" }), {
-      status: 422,
-      headers: { "content-type": "application/json" },
-    }),
-  );
+});
+it("prevents empty selection and supports independent single or multiple categories", async () => {
+  renderDialog({});
+  await waitFor(() => expect(screen.getByRole("button", { name: "导出 1 项" })).toBeEnabled());
+  expect(screen.getByText("豆包（网页版）")).toBeVisible();
+  fireEvent.click(screen.getByRole("checkbox", { name: /^问答明细/ }));
+  expect(screen.getByRole("button", { name: "导出" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("checkbox", { name: /^截图/ }));
+  expect(screen.getByRole("button", { name: "导出 1 项" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "全选" }));
+  expect(screen.getByRole("button", { name: "导出 4 项" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "取消全选" }));
+  expect(screen.getByRole("button", { name: "导出" })).toBeDisabled();
+});
+it("locks duplicate submissions and keeps a failed export open for retry", async () => {
+  let rejectRead!: (reason: Error) => void;
+  vi.mocked(collectExportData).mockImplementation(() => new Promise((_resolve, reject) => { rejectRead = reject; }));
+  const { close } = renderDialog({});
+  const button = screen.getByRole("button", { name: "导出 1 项" });
+  await waitFor(() => expect(button).toBeEnabled());
+  fireEvent.click(button); fireEvent.click(button);
+  await waitFor(() => expect(collectExportData).toHaveBeenCalledOnce());
+  rejectRead(new Error("请缩小日期范围"));
   await screen.findByText("请缩小日期范围");
   expect(close).not.toHaveBeenCalled();
-  expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "导出 1 项" })).toBeEnabled();
 });
-it("cancels an in-flight report when the dialog closes", async () => {
-  let downloadSignal: AbortSignal | undefined;
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (url: string, options: RequestInit) => {
-      if (url.includes("report.xlsx")) {
-        downloadSignal = options.signal as AbortSignal;
-        return new Promise<Response>(() => {});
-      }
-      throw new Error(`Unexpected URL: ${url}`);
-    }),
-  );
+it("aborts pending reads when the dialog closes", async () => {
+  vi.mocked(collectExportData).mockImplementation(() => new Promise(() => {}));
   const { close } = renderDialog({});
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "下载 Excel" })).toBeEnabled(),
-  );
-  fireEvent.click(screen.getByRole("button", { name: "下载 Excel" }));
-  await screen.findByRole("button", { name: "取消下载" });
-  fireEvent.click(screen.getByRole("button", { name: "取消下载" }));
-  expect(downloadSignal?.aborted).toBe(true);
+  const button = screen.getByRole("button", { name: "导出 1 项" });
+  await waitFor(() => expect(button).toBeEnabled());
+  fireEvent.click(button);
+  await waitFor(() => expect(collectExportData).toHaveBeenCalledOnce());
+  const signal = vi.mocked(collectExportData).mock.calls[0][2];
+  fireEvent.click(screen.getByRole("button", { name: "取消导出" }));
+  expect(signal.aborted).toBe(true);
   expect(close).toHaveBeenCalledOnce();
 });

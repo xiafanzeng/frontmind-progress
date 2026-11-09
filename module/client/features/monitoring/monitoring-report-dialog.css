@@ -222,3 +222,37 @@
     flex: 1;
   }
 }
+
+/* Scoped export chooser; retain the existing host dialog shell. */
+.fm-report-download-dialog { --module-accent:#3d1560; width:min(760px,calc(100vw - 48px)); max-width:760px; color:#48404c; }
+.fm-report-download-dialog [data-slot="dialog-title"] svg,.fm-report-download-dialog .fm-report-error button { color:#684483; }
+.fm-report-download-dialog .fm-report-current-scope { margin:0; gap:4px; padding:12px 16px; border:1px solid #ece6f0; border-radius:10px; background:#faf9fc; }
+.fm-report-download-dialog .fm-report-current-scope > div { display:grid; grid-template-columns:64px minmax(0,1fr); gap:14px; margin:6px 0; font-size:13px; line-height:20px; }
+.fm-report-download-dialog .fm-report-current-scope dt { color:#8a8193; }
+.fm-report-download-dialog .fm-report-current-scope dd { margin:0; overflow-wrap:anywhere; }
+.fm-export-options { min-width:0; margin:0; padding:0; border:0; }
+.fm-export-options legend { font-size:14px; font-weight:600; color:#51475e; }
+.fm-export-options legend span { margin-left:8px; font-size:12px; font-weight:400; color:#8a8193; }
+.fm-export-selection-tools { display:flex; justify-content:space-between; margin:12px 0; font-size:12px; color:#8a8193; }
+.fm-export-selection-tools button { padding:0; border:0; background:transparent; color:#684483; cursor:pointer; }
+.fm-export-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.fm-export-card { display:flex; gap:10px; padding:16px 13px; border:1px solid #e6e0eb; border-radius:10px; cursor:pointer; background:#fff; align-items:flex-start; }
+.fm-export-card:hover { border-color:#bba9ca; }
+.fm-export-card.is-selected { border-color:#9b80af; background:#f8f5fb; }
+.fm-export-card > input { appearance:auto; flex:none; width:15px; height:15px; margin:3px 0 0; accent-color:#684483; }
+.fm-export-card > svg { color:#84718f; flex:none; margin-top:1px; }
+.fm-export-card-text { display:flex; flex:1; min-width:0; flex-direction:column; gap:8px; font-size:12px; line-height:19px; color:#7d7385; }
+.fm-export-card-text strong { display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:14px; color:#51475e; }
+.fm-export-card-text small { padding:1px 5px; border:1px solid #e4dce9; border-radius:4px; color:#8a7898; font-size:10px; font-weight:500; line-height:16px; }
+.fm-export-card-text .fm-export-sheet-list { color:#9a90a1; font-size:11px; line-height:18px; }
+.fm-export-options:disabled .fm-export-card { cursor:wait; opacity:.7; }
+.fm-export-summary { margin-bottom:0; }
+.fm-export-progress { display:flex; align-items:center; gap:7px; color:#684483; font-size:13px; }
+.fm-export-results { padding:12px 14px; margin-top:14px; border:1px solid #e6e0eb; border-radius:8px; }
+.fm-export-results p { margin:0 0 9px; font-size:12px; line-height:19px; color:#81748b; }
+.fm-export-results a { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:12px; color:#684483; overflow-wrap:anywhere; }
+.fm-export-results a svg { flex:none; }
+.fm-export-results .fm-export-warning { color:#986b28; }
+.fm-report-download-dialog .fm-report-error { white-space:pre-line; }
+.fm-export-footer-count { margin-right:auto; align-self:center; color:#8a8193; font-size:12px; }
+@media(max-width:600px) { .fm-export-grid { grid-template-columns:1fr; } .fm-export-footer-count { display:none; } .fm-export-card { padding:12px; } }
